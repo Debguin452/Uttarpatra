@@ -1,0 +1,24 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@coaching-app/shared": "workspace:*",
+    "@coaching-app/ui": "workspace:*",
+    "@preact/signals": "^1.3.0",
+    "firebase": "^11.0.0",
+    "preact": "^10.24.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
+  }
+}

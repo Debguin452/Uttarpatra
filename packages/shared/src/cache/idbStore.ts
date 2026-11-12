@@ -58,3 +58,16 @@ export async function idbSet<T>(key: string, value: T, ttlMs: number): Promise<v
 export function isFresh(entry: Entry<unknown>): boolean {
   return Date.now() - entry.storedAt < entry.ttlMs;
 }
+
+export async function idbClear(): Promise<void> {
+  try {
+    const db = await openDb();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+  }
+}

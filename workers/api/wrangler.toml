@@ -6,6 +6,7 @@ compatibility_date = "2026-10-01"
 binding = "DB"
 database_name = "coaching_db"
 database_id = "REPLACE_WITH_D1_ID"
+migrations_dir = "../../db/migrations"
 
 [[durable_objects.bindings]]
 name = "SESSIONS"
@@ -13,10 +14,8 @@ class_name = "SessionGuard"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["SessionGuard"]
+new_sqlite_classes = ["SessionGuard"]
 
 [vars]
 FIREBASE_PROJECT_ID = "your-firebase-project-id"
-
-# Secrets (set via `wrangler secret put`, never committed):
-#   TURNSTILE_SECRET
+ALLOWED_ORIGIN = "http://localhost:5173,https://coaching-app.pages.dev"

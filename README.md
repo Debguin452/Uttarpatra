@@ -4,7 +4,7 @@ Free-tier-first architecture for a Bengali/English NEET/JEE coaching
 platform. See `docs/` for the full write-up; this file is the map.
 
 ## Layout
-- `apps/web` — Astro public site (SEO) + the student SPA, one Pages project
+- `apps/web` — student SPA (Vite + Preact, hash routed). The Astro SEO landing pages come in phase 6
 - `apps/admin` — admin SPA, separate Pages project, behind Cloudflare Access
 - `apps/mobile` — Capacitor wrapper for the Android APK (screen-lock, FCM)
 - `workers/api` — Hono API on Cloudflare Workers; the only thing that touches D1
@@ -46,3 +46,30 @@ more files.
   reads. Roles come from the ID token's custom claims instead.
 - See `packages/shared/src/schema.ts` → `QUOTA` for the numeric budgets
   referenced by both the client and the Worker.
+
+## Local setup
+
+```
+pnpm install
+cp apps/web/.env.example apps/web/.env.local
+pnpm db:migrate:local
+pnpm dev:api
+pnpm dev:web
+```
+
+Vite proxies `/api` and `/public` to the Worker on `127.0.0.1:8787`, so `VITE_API_URL` stays empty in development.
+
+## Services to configure
+
+- **Firebase**: create a project, enable Google and Email/Password sign-in, copy the web config into the `VITE_FIREBASE_*` variables, and set `FIREBASE_PROJECT_ID` in `workers/api/wrangler.toml`.
+- **Cloudflare D1**: `wrangler d1 create coaching_db`, paste the id into `wrangler.toml`, then `pnpm db:migrate:remote`.
+- **Turnstile**: set `VITE_TURNSTILE_SITEKEY` and `wrangler secret put TURNSTILE_SECRET`.
+- **UPI**: set `VITE_UPI_ID` and `VITE_UPI_PAYEE`.
+- **CORS**: put your Pages origin in `ALLOWED_ORIGIN` (comma separated).
+- **First admin**: sign in once, then run `wrangler d1 execute coaching_db --remote --command "UPDATE users SET role='super_admin' WHERE uid='<your uid>'"`.
+- **GitHub Actions**: secrets `CF_API_TOKEN`, `CF_ACCOUNT_ID`, `FIREBASE_TOKEN`; repository variables for every `VITE_*` value.
+
+## Conventions
+
+- A test answer is the exact text of the chosen option, and `answer` in `questions_json` must equal one of the strings in `options`.
+- Question JSON per test: `{ id, type, subject, prompt, options[], answer, marks }`. The API never sends `answer` to the client.

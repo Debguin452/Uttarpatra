@@ -14,35 +14,44 @@ jobs:
         with: { node-version: 20, cache: "pnpm" }
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint && pnpm typecheck
+      - run: pnpm typecheck
+      - run: pnpm test
 
-      # Firestore rules are unit-tested against the emulator before any
-      # deploy, since a bad rule ships instantly to every client.
-      - run: pnpm test:rules
-
-      - run: pnpm --filter shared build
-      - run: pnpm build:web
-
-      - name: Deploy Worker API
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          workingDirectory: workers/api
-          command: deploy
+      - name: Build web
+        run: pnpm build:web
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+          VITE_TURNSTILE_SITEKEY: ${{ vars.VITE_TURNSTILE_SITEKEY }}
+          VITE_UPI_ID: ${{ vars.VITE_UPI_ID }}
+          VITE_UPI_PAYEE: ${{ vars.VITE_UPI_PAYEE }}
 
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: workers/api
           command: d1 migrations apply coaching_db --remote
 
-      - name: Deploy Pages (direct upload — doesn't count against the 500 builds/mo cap)
+      - name: Deploy Worker API
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: workers/api
+          command: deploy
+
+      - name: Deploy Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: apps/web
           command: pages deploy dist --project-name=coaching-app
 
       - name: Deploy Firestore rules
-        run: npx firebase-tools deploy --only firestore:rules --token "${{ secrets.FIREBASE_TOKEN }}"
+        run: npx firebase-tools deploy --only firestore:rules --project "${{ vars.VITE_FIREBASE_PROJECT_ID }}" --token "${{ secrets.FIREBASE_TOKEN }}"

@@ -9,7 +9,14 @@
     "esModuleInterop": true,
     "declaration": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "resolveJsonModule": true,
+    "lib": [
+      "ES2022",
+      "DOM"
+    ]
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

@@ -1,47 +1,55 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { firebaseAuth } from "./middleware/firebaseAuth";
-import { deviceLock } from "./middleware/deviceLock";
-import { rateLimit } from "./middleware/rateLimit";
+import { firebaseAuth, requireRegistered } from "./middleware/firebaseAuth";
+import { guard } from "./middleware/guard";
 import { edgeCache } from "./middleware/edgeCache";
 import batches from "./routes/batches";
+import me from "./routes/me";
+import notices from "./routes/notices";
 import payments from "./routes/payments";
+import tests from "./routes/tests";
 import attempts from "./routes/attempts";
 import admin from "./routes/admin";
 
+export { SessionGuard } from "./do/SessionGuard";
+
 export type Env = {
   DB: D1Database;
-  SESSIONS: DurableObjectNamespace; // DeviceLock / RateLimiter DOs
+  SESSIONS: DurableObjectNamespace;
   FIREBASE_PROJECT_ID: string;
   TURNSTILE_SECRET: string;
+  ALLOWED_ORIGIN: string;
 };
 
-const app = new Hono<{ Bindings: Env; Variables: { uid: string; role: string } }>();
+export type AppEnv = { Bindings: Env; Variables: { uid: string; role: string } };
 
-app.use("*", cors({ origin: ["https://your-domain.pages.dev"], credentials: true }));
+const app = new Hono<AppEnv>();
 
-// Public routes (catalog browsing needs no auth — it's also what the
-// static SEO pages read from at build time). Cached at the edge for
-// 5 minutes: a catalog change doesn't need to be instant.
+app.use(
+  "*",
+  cors({
+    origin: (origin, c) => (c.env.ALLOWED_ORIGIN.split(",").includes(origin) ? origin : null),
+    allowHeaders: ["authorization", "content-type", "x-device-id", "cf-turnstile-token"],
+    exposeHeaders: ["x-edge-age"],
+    maxAge: 86400,
+  }),
+);
+
+app.get("/healthz", (c) => c.text("ok"));
+
 app.use("/public/batches", edgeCache(300));
 app.route("/public/batches", batches.public);
 
-// Everything past here requires a verified Firebase ID token.
 app.use("/api/*", firebaseAuth());
-app.use("/api/*", rateLimit({ limit: 60, windowSec: 60 })); // per-uid, via Durable Object
-app.use("/api/session/*", deviceLock());
+app.use("/api/*", guard({ limit: 90, windowSec: 60 }));
+app.route("/api/me", me);
 
-// Lecture lists change rarely; a short edge cache absorbs the burst of
-// everyone opening the same batch right after a lecture gets posted.
-app.use("/api/batches/:id/content", edgeCache(120));
+app.use("/api/*", requireRegistered());
 app.route("/api/batches", batches.authed);
+app.route("/api/notices", notices);
 app.route("/api/payments", payments);
+app.route("/api/tests", tests);
 app.route("/api/attempts", attempts);
-
-// Admin routes carry their own role check inside the router (not just
-// middleware) so every handler fails closed by default.
 app.route("/api/admin", admin);
-
-app.get("/healthz", (c) => c.text("ok"));
 
 export default app;

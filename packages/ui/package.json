@@ -1,0 +1,13 @@
+{
+  "name": "@coaching-app/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./icons": "./src/icons/index.tsx"
+  },
+  "dependencies": {
+    "preact": "^10.24.0"
+  }
+}
