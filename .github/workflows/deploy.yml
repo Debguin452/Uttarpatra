@@ -1,0 +1,48 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: "pnpm" }
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint && pnpm typecheck
+
+      # Firestore rules are unit-tested against the emulator before any
+      # deploy, since a bad rule ships instantly to every client.
+      - run: pnpm test:rules
+
+      - run: pnpm --filter shared build
+      - run: pnpm build:web
+
+      - name: Deploy Worker API
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: workers/api
+          command: deploy
+
+      - name: Apply D1 migrations
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: workers/api
+          command: d1 migrations apply coaching_db --remote
+
+      - name: Deploy Pages (direct upload — doesn't count against the 500 builds/mo cap)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: apps/web
+          command: pages deploy dist --project-name=coaching-app
+
+      - name: Deploy Firestore rules
+        run: npx firebase-tools deploy --only firestore:rules --token "${{ secrets.FIREBASE_TOKEN }}"

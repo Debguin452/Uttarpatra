@@ -1,0 +1,90 @@
+rules_version = '2';
+
+// Firestore here holds ONLY low-value, high-frequency, per-user data:
+// video progress, streaks, bookmarks, planner, live-class chat mirrors,
+// notification read-state. Anything authoritative (payments, entitlements,
+// test scores) lives in D1 behind the Worker API and is never trusted
+// from a client write.
+//
+// Deliberately no get()/exists()/getAfter() calls anywhere below: each
+// one bills as an extra read against the 50k/day free quota. Role and
+// identity checks use only the token's own claims, which are free.
+
+function signedIn() {
+  return request.auth != null;
+}
+
+function isOwner(uid) {
+  return signedIn() && request.auth.uid == uid;
+}
+
+function isStaff() {
+  return signedIn() &&
+    (request.auth.token.role == 'teacher' ||
+     request.auth.token.role == 'support' ||
+     request.auth.token.role == 'super_admin');
+}
+
+function notBlocked() {
+  return signedIn() && request.auth.token.status != 'blocked';
+}
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // users/{uid}/progress/{lectureId} — video position, last chapter.
+    match /users/{uid}/progress/{lectureId} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && notBlocked()
+        && request.resource.data.keys().hasOnly(['positionSec', 'completed', 'updatedAt'])
+        && request.resource.data.positionSec is number;
+    }
+
+    // users/{uid}/planner/{entryId} — study planner, daily goals, streak.
+    match /users/{uid}/planner/{entryId} {
+      allow read, write: if isOwner(uid) && notBlocked();
+    }
+
+    // users/{uid}/bookmarks/{itemId}
+    match /users/{uid}/bookmarks/{itemId} {
+      allow read, write: if isOwner(uid) && notBlocked();
+    }
+
+    // users/{uid}/notifications/{notifId} — read-state only; the
+    // notification content itself is written server-side (Worker, via
+    // the Admin SDK, which bypasses rules).
+    match /users/{uid}/notifications/{notifId} {
+      allow read: if isOwner(uid);
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow create, delete: if false;
+    }
+
+    // liveClasses/{classId}/chat/{messageId} — mirror of the Durable
+    // Object chat, written by the Worker only, read by enrolled clients.
+    match /liveClasses/{classId}/chat/{messageId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // forum/{threadId} and forum/{threadId}/replies/{replyId}
+    match /forum/{threadId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && notBlocked()
+        && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.authorUid) || isStaff();
+
+      match /replies/{replyId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && notBlocked()
+          && request.resource.data.authorUid == request.auth.uid;
+        allow update, delete: if isOwner(resource.data.authorUid) || isStaff();
+      }
+    }
+  }
+}

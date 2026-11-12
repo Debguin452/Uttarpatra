@@ -1,0 +1,126 @@
+/*
+  Design tokens.
+  Direction: an exam mark-sheet, not a SaaS dashboard. Flat panels and
+  hairline rules carry structure; one accent color is spent on meaning
+  (correctness, progress, live) and nowhere else. No shadows, no
+  gradients, 6px radius only on tappable controls.
+*/
+
+:root {
+  color-scheme: light;
+
+  /* ---- Color: 6 named values ---- */
+  --ink: #171B20;          /* primary text / dark surfaces */
+  --paper: #F0F1EC;        /* app background */
+  --surface: #FAFAF7;      /* panels sitting on paper */
+  --line: #D6D2C4;         /* hairline borders, dividers */
+  --muted: #5B6169;        /* secondary text */
+  --mark: #1E6F5C;         /* the one accent: progress, correctness, brand */
+  --mark-paper: #E4EFEB;   /* mark, tinted for fills behind the accent */
+  --signal: #C98A2B;       /* live indicator, streak — attention, not success */
+  --error: #B7432F;        /* wrong answers, overdue, blocked */
+  --error-paper: #F6E8E4;
+
+  --focus-ring: #1E6F5C;
+
+  /* ---- Type ---- */
+  --font-headline: "Source Serif 4", "Noto Serif Bengali", Georgia, serif;
+  --font-ui: "Hind Siliguri", "Inter", system-ui, sans-serif;
+
+  /* Scale (Elements of Typographic Style progression, base 16px) */
+  --text-xs: 0.75rem;    /* 12 — timestamps, helper text */
+  --text-sm: 0.875rem;   /* 14 — secondary UI */
+  --text-base: 1rem;     /* 16 — body */
+  --text-md: 1.25rem;    /* 20 — subheads, card titles */
+  --text-lg: 1.625rem;   /* 26 — section titles */
+  --text-xl: 2.25rem;    /* 36 — hero numbers (streak, score) */
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65; /* Bengali body text needs extra line-height */
+
+  /* ---- Space (4px base) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* ---- Shape ---- */
+  --radius-control: 6px;
+  --radius-sheet: 12px;   /* bottom sheets, modals only */
+  --stroke: 1.5px;        /* icon + hairline stroke weight */
+
+  /* ---- Motion: one speed, respected everywhere ---- */
+  --duration: 160ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---- Layout ---- */
+  --content-max: 640px;   /* keeps line length readable on tablets */
+  --nav-height: 64px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #EDEEEA;
+  --paper: #14171B;
+  --surface: #1B1F24;
+  --line: #30343A;
+  --muted: #9A9FA6;
+  --mark: #49B596;
+  --mark-paper: #16302A;
+  --signal: #E0A54B;
+  --error: #E07A64;
+  --error-paper: #3A211C;
+  --focus-ring: #49B596;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #EDEEEA;
+    --paper: #14171B;
+    --surface: #1B1F24;
+    --line: #30343A;
+    --muted: #9A9FA6;
+    --mark: #49B596;
+    --mark-paper: #16302A;
+    --signal: #E0A54B;
+    --error: #E07A64;
+    --error-paper: #3A211C;
+    --focus-ring: #49B596;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --duration: 0ms; }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+h1, h2, h3, .headline {
+  font-family: var(--font-headline);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  margin: 0;
+}

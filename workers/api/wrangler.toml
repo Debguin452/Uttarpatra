@@ -1,0 +1,22 @@
+name = "coaching-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "coaching_db"
+database_id = "REPLACE_WITH_D1_ID"
+
+[[durable_objects.bindings]]
+name = "SESSIONS"
+class_name = "SessionGuard"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["SessionGuard"]
+
+[vars]
+FIREBASE_PROJECT_ID = "your-firebase-project-id"
+
+# Secrets (set via `wrangler secret put`, never committed):
+#   TURNSTILE_SECRET
