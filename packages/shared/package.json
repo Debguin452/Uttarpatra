@@ -1,0 +1,23 @@
+{
+  "name": "@coaching-app/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./schema": "./src/schema.ts",
+    "./scoring": "./src/scoring.ts",
+    "./pricing": "./src/pricing.ts",
+    "./i18n": "./src/i18n/index.ts",
+    "./cache/idbStore": "./src/cache/idbStore.ts",
+    "./cache/useCachedQuery": "./src/cache/useCachedQuery.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.8",
+    "preact": "^10.24.0",
+    "@preact/signals": "^1.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

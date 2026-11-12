@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { ulid } from "ulidx";
 import { ManualPaymentSubmit } from "@coaching-app/shared/schema";
+import { applyCoupon } from "@coaching-app/shared/pricing";
 import { verifyTurnstile } from "../lib/turnstile";
 import type { Env } from "../index";
 
@@ -27,18 +28,13 @@ app.post("/manual-upi", async (c) => {
   if (couponCode) {
     const coupon = await c.env.DB
       .prepare(
-        `SELECT * FROM coupons WHERE code = ? AND (batch_id IS NULL OR batch_id = ?)
+        `SELECT discount_type, discount_value FROM coupons WHERE code = ? AND (batch_id IS NULL OR batch_id = ?)
          AND (max_uses IS NULL OR used_count < max_uses)
          AND (valid_until IS NULL OR valid_until > unixepoch())`,
       )
       .bind(couponCode, batchId)
-      .first<{ discount_type: string; discount_value: number }>();
-    if (coupon) {
-      amount =
-        coupon.discount_type === "percent"
-          ? Math.round(amount * (1 - coupon.discount_value / 100))
-          : Math.max(0, amount - coupon.discount_value * 100);
-    }
+      .first<{ discount_type: "percent" | "flat"; discount_value: number }>();
+    amount = applyCoupon(amount, coupon ?? null);
   }
 
   const id = ulid();

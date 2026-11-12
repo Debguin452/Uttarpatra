@@ -1,10 +1,9 @@
 import { Hono } from "hono";
 import { AttemptSubmit } from "@coaching-app/shared/schema";
+import { scoreAttempt, type ScorableQuestion } from "@coaching-app/shared/scoring";
 import type { Env } from "../index";
 
 const app = new Hono<{ Bindings: Env; Variables: { uid: string } }>();
-
-type Question = { id: string; answer: string; marks: number };
 
 app.post("/submit", async (c) => {
   const parsed = AttemptSubmit.safeParse(await c.req.json());
@@ -25,20 +24,8 @@ app.post("/submit", async (c) => {
   const hardCap = test.duration_sec + 30; // small grace for network latency
   const effectiveTime = Math.min(timeTakenSec, hardCap);
 
-  const questions: Question[] = JSON.parse(test.questions_json);
-  let score = 0, correct = 0, wrong = 0, skipped = 0;
-  for (const q of questions) {
-    const given = answers[q.id];
-    if (given == null) {
-      skipped++;
-    } else if (given === q.answer) {
-      score += q.marks;
-      correct++;
-    } else {
-      score -= test.negative_mark;
-      wrong++;
-    }
-  }
+  const questions: ScorableQuestion[] = JSON.parse(test.questions_json);
+  const { score, correct, wrong, skipped } = scoreAttempt(questions, answers, test.negative_mark);
 
   await c.env.DB
     .prepare(
