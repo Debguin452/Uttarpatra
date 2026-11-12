@@ -67,6 +67,27 @@ export type UserRow = {
   school: string | null;
 };
 
+export type AdminPayment = {
+  id: string;
+  uid: string;
+  name: string;
+  batch_id: string;
+  amount_paise: number;
+  utr: string | null;
+  coupon_code: string | null;
+  created_at: number;
+};
+
+export type AdminUser = {
+  uid: string;
+  name: string;
+  phone: string | null;
+  role: string;
+  status: "active" | "blocked";
+  device_bound: 0 | 1;
+  bound_at: number | null;
+};
+
 export type Me =
   | { registered: false }
   | { registered: true; user: UserRow; enrollments: { batch_id: string; expires_at: number | null }[] };

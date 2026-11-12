@@ -72,6 +72,15 @@ export function Profile() {
         </Async>
       </section>
 
+      {user && ["support", "super_admin"].includes(user.role) && (
+        <section class="stack">
+          <SectionHead title={t("admin_eyebrow")} />
+          <button class="btn block" onClick={() => go("admin/payments")}>
+            {t("admin_link")}
+          </button>
+        </section>
+      )}
+
       <button class="btn danger block" onClick={logOut}>
         {t("sign_out")}
       </button>

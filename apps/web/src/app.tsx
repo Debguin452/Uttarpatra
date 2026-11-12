@@ -4,6 +4,7 @@ import { fatal } from "./lib/api";
 import { segments } from "./lib/router";
 import { authUser, me, meError } from "./lib/session";
 import { loadMe } from "./lib/session";
+import { Admin } from "./screens/Admin";
 import { Batches } from "./screens/Batches";
 import { BatchDetail } from "./screens/BatchDetail";
 import { Doubt } from "./screens/Doubt";
@@ -22,6 +23,8 @@ import { t } from "@coaching-app/shared/i18n";
 function Screen() {
   const [head, arg] = segments();
   switch (head) {
+    case "admin":
+      return <Admin tab={arg} />;
     case "batches":
       return arg ? <BatchDetail batchId={arg} /> : <Batches />;
     case "enroll":

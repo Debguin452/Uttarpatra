@@ -36,6 +36,15 @@ export function ago(timestamp: number): string {
   return t("synced_ago", { time: label });
 }
 
+export function when(unixSec: number): string {
+  return new Date(unixSec * 1000).toLocaleString(locale.value === "bn" ? "bn-IN" : "en-IN", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function errorText(code: string): string {
   if (code === "payment_pending") return t("payment_pending_exists");
   if (code === "network") return t("offline_notice");

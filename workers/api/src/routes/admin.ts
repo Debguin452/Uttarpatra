@@ -39,10 +39,13 @@ app.post("/payments/review", async (c) => {
   if (!payment) return c.json({ error: "not_found" }, 404);
   if (payment.status !== "pending") return c.json({ error: "already_reviewed" }, 409);
 
+  const claim = await c.env.DB
+    .prepare("UPDATE payments SET status = ?, reviewed_by = ?, reviewed_at = unixepoch() WHERE id = ? AND status = 'pending'")
+    .bind(decision, c.get("uid"), paymentId)
+    .run();
+  if (claim.meta.changes === 0) return c.json({ error: "already_reviewed" }, 409);
+
   const statements = [
-    c.env.DB
-      .prepare("UPDATE payments SET status = ?, reviewed_by = ?, reviewed_at = unixepoch() WHERE id = ? AND status = 'pending'")
-      .bind(decision, c.get("uid"), paymentId),
     c.env.DB
       .prepare("INSERT INTO audit_log (actor_uid, action, target, meta_json) VALUES (?, ?, ?, ?)")
       .bind(c.get("uid"), `payment.${decision}`, paymentId, JSON.stringify({ note })),
@@ -63,6 +66,23 @@ app.post("/payments/review", async (c) => {
 
   await c.env.DB.batch(statements);
   return c.json({ ok: true });
+});
+
+app.get("/users/search", async (c) => {
+  const q = (c.req.query("q") ?? "").trim();
+  if (q.length < 2) return c.json([]);
+  const escaped = q.replace(/[%_\\]/g, (m) => `\\${m}`);
+  const like = `%${escaped}%`;
+  const rows = await c.env.DB
+    .prepare(
+      `SELECT u.uid, u.name, u.phone, u.role, u.status, (d.device_id IS NOT NULL) AS device_bound, d.bound_at
+       FROM users u LEFT JOIN devices d ON d.uid = u.uid
+       WHERE u.uid = ? OR u.name LIKE ? ESCAPE '\\' OR u.phone LIKE ? ESCAPE '\\'
+       ORDER BY u.name LIMIT 20`,
+    )
+    .bind(q, like, like)
+    .all();
+  return c.json(rows.results);
 });
 
 app.post("/users/:uid/reset-device", async (c) => {
