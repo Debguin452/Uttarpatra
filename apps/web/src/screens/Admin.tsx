@@ -7,6 +7,7 @@ import { useBatches } from "../lib/queries";
 import { go } from "../lib/router";
 import { me } from "../lib/session";
 import type { AdminPayment, AdminUser } from "../lib/types";
+import { AdminTeachers } from "./AdminTeachers";
 
 function AdminPayments() {
   const [rows, setRows] = useState<AdminPayment[] | null>(null);
@@ -262,7 +263,8 @@ export function Admin({ tab }: { tab?: string }) {
     );
   }
 
-  const active = tab === "users" ? "users" : "payments";
+  const isSuperAdmin = user!.role === "super_admin";
+  const active = tab === "users" ? "users" : tab === "teachers" && isSuperAdmin ? "teachers" : "payments";
 
   return (
     <div class="screen">
@@ -278,9 +280,16 @@ export function Admin({ tab }: { tab?: string }) {
         <button role="tab" aria-selected={active === "users"} onClick={() => go("admin/users")}>
           {t("admin_tab_users")}
         </button>
+        {isSuperAdmin && (
+          <button role="tab" aria-selected={active === "teachers"} onClick={() => go("admin/teachers")}>
+            {t("admin_tab_teachers")}
+          </button>
+        )}
       </div>
 
-      {active === "payments" ? <AdminPayments /> : <AdminUsers isSuperAdmin={user!.role === "super_admin"} />}
+      {active === "payments" && <AdminPayments />}
+      {active === "users" && <AdminUsers isSuperAdmin={isSuperAdmin} />}
+      {active === "teachers" && <AdminTeachers />}
     </div>
   );
 }

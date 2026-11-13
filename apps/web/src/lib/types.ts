@@ -1,3 +1,5 @@
+import type { Subject } from "@coaching-app/shared/schema";
+
 export type Track = "class11" | "class12" | "neet" | "jee" | "crash" | "one_shot";
 
 export type Batch = {
@@ -86,6 +88,45 @@ export type AdminUser = {
   status: "active" | "blocked";
   device_bound: 0 | 1;
   bound_at: number | null;
+};
+
+export type TeacherApplicationView = {
+  subjects: Subject[];
+  qualification: string;
+  experience_years: number;
+  phone: string;
+  bio: string;
+  demo_url: string | null;
+  status: "pending" | "approved" | "rejected" | "suspended";
+  review_note: string | null;
+  created_at: number;
+};
+
+export type TeacherPortal = {
+  role: string;
+  application: TeacherApplicationView | null;
+  batches: { id: string; title_bn: string; title_en: string; subject: string | null }[];
+};
+
+export type AdminTeacherApplication = {
+  uid: string;
+  name: string;
+  subjects: Subject[];
+  qualification: string;
+  experience_years: number;
+  phone: string;
+  bio: string;
+  demo_url: string | null;
+  created_at: number;
+};
+
+export type AdminTeacher = {
+  uid: string;
+  name: string;
+  phone: string | null;
+  subjects: Subject[] | null;
+  experience_years: number | null;
+  batch_count: number;
 };
 
 export type Me =

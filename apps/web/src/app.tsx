@@ -18,6 +18,7 @@ import { Profile } from "./screens/Profile";
 import { Register } from "./screens/Register";
 import { TestRunner } from "./screens/TestRunner";
 import { Tests } from "./screens/Tests";
+import { TeacherApply } from "./screens/TeacherApply";
 import { t } from "@coaching-app/shared/i18n";
 
 function Screen() {
@@ -31,6 +32,8 @@ function Screen() {
       return arg ? <Enroll batchId={arg} /> : <Batches />;
     case "tests":
       return arg ? <TestRunner testId={arg} /> : <Tests />;
+    case "teach":
+      return <TeacherApply />;
     case "doubt":
       return <Doubt />;
     case "profile":

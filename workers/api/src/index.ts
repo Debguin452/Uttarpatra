@@ -10,6 +10,7 @@ import payments from "./routes/payments";
 import tests from "./routes/tests";
 import attempts from "./routes/attempts";
 import admin from "./routes/admin";
+import teacherApplication from "./routes/teacherApplication";
 
 export { SessionGuard } from "./do/SessionGuard";
 
@@ -50,6 +51,7 @@ app.route("/api/notices", notices);
 app.route("/api/payments", payments);
 app.route("/api/tests", tests);
 app.route("/api/attempts", attempts);
+app.route("/api/teacher-application", teacherApplication);
 app.route("/api/admin", admin);
 
 export default app;

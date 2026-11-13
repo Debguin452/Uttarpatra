@@ -7,7 +7,7 @@ const TABS = [
   { id: "batches", label: "nav_batches", Icon: IconBatches, match: ["batches", "enroll"] },
   { id: "tests", label: "nav_test", Icon: IconTest, match: ["tests"] },
   { id: "doubt", label: "nav_doubt", Icon: IconDoubt, match: ["doubt"] },
-  { id: "profile", label: "nav_profile", Icon: IconProfile, match: ["profile"] },
+  { id: "profile", label: "nav_profile", Icon: IconProfile, match: ["profile", "teach", "admin"] },
 ] as const;
 
 export function Nav() {

@@ -93,7 +93,7 @@ a { color: inherit; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .splash { min-height: 100vh; display: grid; place-content: center; }
 
-.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--ink); border-radius: var(--radius-control); overflow: hidden; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--ink); border-radius: var(--radius-control); overflow: hidden; }
 .seg button { min-height: 44px; border: 0; background: transparent; font-weight: 500; }
 .seg button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
 

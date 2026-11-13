@@ -72,6 +72,15 @@ export function Profile() {
         </Async>
       </section>
 
+      {user && ["student", "teacher"].includes(user.role) && (
+        <section class="stack">
+          <SectionHead title={t("teach_title")} />
+          <button class="btn block" onClick={() => go("teach")}>
+            {user.role === "teacher" ? t("teach_area") : t("teach_cta")}
+          </button>
+        </section>
+      )}
+
       {user && ["support", "super_admin"].includes(user.role) && (
         <section class="stack">
           <SectionHead title={t("admin_eyebrow")} />
