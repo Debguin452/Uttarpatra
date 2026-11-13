@@ -11,8 +11,8 @@
     "build:web": "pnpm --filter web build",
     "deploy:api": "pnpm --filter api exec wrangler deploy",
     "deploy:web": "pnpm --filter web exec wrangler pages deploy dist",
-    "db:migrate:local": "pnpm --filter api exec wrangler d1 migrations apply coaching_db --local",
-    "db:migrate:remote": "pnpm --filter api exec wrangler d1 migrations apply coaching_db --remote",
+    "db:migrate:local": "pnpm --filter api exec wrangler d1 migrations apply database --local",
+    "db:migrate:remote": "pnpm --filter api exec wrangler d1 migrations apply database --remote",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run"
   },

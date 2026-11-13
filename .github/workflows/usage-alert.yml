@@ -17,7 +17,8 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           WHATSAPP_ALERT_URL: ${{ secrets.WHATSAPP_ALERT_URL }}
         run: node infra/scripts/usage-check.mjs
-        # Script (to be filled in Phase 1): pulls today's Workers request
-        # count and D1 row-read/write counts via the GraphQL analytics
-        # API, and Firestore usage via the Cloud Monitoring API, then
-        # posts a wa.me-style alert at 70% and 90% of each daily cap.
+        # Pulls today's Workers request count and D1 row-read/write counts
+        # via the Cloudflare GraphQL Analytics API, and alerts through
+        # WHATSAPP_ALERT_URL at 70% and 90% of each daily free-tier cap.
+        # Firestore usage is NOT covered here: that needs a GCP service
+        # account key, which isn't among the secrets wired up yet.

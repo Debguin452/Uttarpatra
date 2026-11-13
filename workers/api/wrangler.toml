@@ -1,11 +1,11 @@
-name = "coaching-api"
+name = "coaching-app"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "coaching_db"
-database_id = "REPLACE_WITH_D1_ID"
+database_name = "database"
+database_id = "0aebc296-b47b-4f38-bbbe-57f8bbe622ba"
 migrations_dir = "../../db/migrations"
 
 [[durable_objects.bindings]]
@@ -17,5 +17,5 @@ tag = "v1"
 new_sqlite_classes = ["SessionGuard"]
 
 [vars]
-FIREBASE_PROJECT_ID = "your-firebase-project-id"
+FIREBASE_PROJECT_ID = "prism0001"
 ALLOWED_ORIGIN = "http://localhost:5173,https://coaching-app.pages.dev"
