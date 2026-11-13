@@ -11,6 +11,9 @@ import tests from "./routes/tests";
 import attempts from "./routes/attempts";
 import admin from "./routes/admin";
 import teacherApplication from "./routes/teacherApplication";
+import teacher from "./routes/teacher";
+import doubts from "./routes/doubts";
+import banners from "./routes/banners";
 
 export { SessionGuard } from "./do/SessionGuard";
 

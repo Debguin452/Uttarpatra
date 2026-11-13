@@ -248,5 +248,14 @@
   "admin_confirm_suspend_title": "Remove teacher access?",
   "admin_confirm_suspend_body": "{name} will lose the teacher tools and be unassigned from all batches. Their content stays.",
   "already_staff": "Your account already has staff access.",
-  "already_reviewed": "Someone has already decided this."
+  "already_reviewed": "Someone has already decided this.",
+  "role_select_title": "How will you use the app?",
+  "role_select_body": "Pick one — you can tell us more right after.",
+  "role_select_student": "I'm a student",
+  "role_select_student_body": "Join batches, watch lectures, take tests and clear doubts.",
+  "role_select_teacher": "I'm a teacher",
+  "role_select_teacher_body": "Apply to teach — fill a short form and our team will review it.",
+  "register_title_teacher": "A few details first",
+  "register_title_teacher_body": "Just your name and number — the next step is your teaching application.",
+  "teach_continue_as_student": "Continue as a student instead"
 }

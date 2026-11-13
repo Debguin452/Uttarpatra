@@ -1,6 +1,6 @@
 import { t } from "@coaching-app/shared/i18n";
 import { LangToggle } from "../components/LangToggle";
-import { finishWelcome } from "../lib/onboarding";
+import { beginSignup, finishWelcome } from "../lib/onboarding";
 
 const STEPS = [
   { title: "step1_t", body: "step1_b" },
@@ -37,7 +37,7 @@ export function Welcome() {
       <p class="notice pinned small">{t("welcome_device")}</p>
 
       <div class="stack">
-        <button class="btn primary block" onClick={() => finishWelcome("up")}>
+        <button class="btn primary block" onClick={beginSignup}>
           {t("get_started")}
         </button>
         <button class="btn quiet block" onClick={() => finishWelcome("in")}>

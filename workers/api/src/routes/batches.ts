@@ -39,22 +39,32 @@ authedRoutes.get("/:id/content", async (c) => {
   const hit = await cache.match(cacheKey);
   if (hit) return c.json(await hit.json());
 
-  const lectures = await c.env.DB
-    .prepare(
-      "SELECT id, chapter, title_bn, title_en, youtube_id, duration_sec, is_live, live_at FROM lectures WHERE batch_id = ? ORDER BY order_index",
-    )
-    .bind(batchId)
-    .all();
+  const [lectures, notes] = await Promise.all([
+    c.env.DB
+      .prepare(
+        "SELECT id, chapter, title_bn, title_en, youtube_id, duration_sec, is_live, live_at FROM lectures WHERE batch_id = ? ORDER BY order_index",
+      )
+      .bind(batchId)
+      .all(),
+    c.env.DB
+      .prepare(
+        "SELECT id, lecture_id, title_bn, title_en, drive_file_id, kind FROM notes WHERE batch_id = ? ORDER BY created_at DESC",
+      )
+      .bind(batchId)
+      .all(),
+  ]);
+
+  const body = { lectures: lectures.results, notes: notes.results };
 
   c.executionCtx.waitUntil(
     cache.put(
       cacheKey,
-      new Response(JSON.stringify(lectures.results), {
+      new Response(JSON.stringify(body), {
         headers: { "content-type": "application/json", "cache-control": "public, max-age=120" },
       }),
     ),
   );
-  return c.json(lectures.results);
+  return c.json(body);
 });
 
 export default { public: publicRoutes, authed: authedRoutes };

@@ -2,7 +2,9 @@ import { Hono } from "hono";
 import { requireRole } from "../../middleware/firebaseAuth";
 import type { AppEnv } from "../../index";
 import analytics from "./analytics";
+import banners from "./banners";
 import batches from "./batches";
+import materials from "./materials";
 import notices from "./notices";
 import teachers from "./teachers";
 import users from "./users";
@@ -17,5 +19,7 @@ app.route("/", teachers);
 app.route("/notices", notices);
 app.route("/batches", batches);
 app.route("/analytics", analytics);
+app.route("/banners", banners);
+app.route("/materials", materials);
 
 export default app;

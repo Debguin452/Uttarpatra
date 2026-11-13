@@ -57,6 +57,55 @@ app.get("/teachers", requireRole("super_admin"), async (c) => {
   return c.json(rows.results.map((row) => ({ ...row, subjects: row.subjects ? (JSON.parse(row.subjects) as string[]) : null })));
 });
 
+app.get("/teachers/:uid", requireRole("super_admin"), async (c) => {
+  const uid = c.req.param("uid");
+
+  const teacher = await c.env.DB
+    .prepare(
+      `SELECT u.uid, u.name, u.phone, a.subjects, a.qualification, a.experience_years
+       FROM users u LEFT JOIN teacher_applications a ON a.uid = u.uid
+       WHERE u.uid = ? AND u.role = 'teacher'`,
+    )
+    .bind(uid)
+    .first<{ subjects: string | null }>();
+  if (!teacher) return c.json({ error: "not_found" }, 404);
+
+  const [batches, studentCount, doubtsAnswered, avgScore] = await Promise.all([
+    c.env.DB
+      .prepare(
+        `SELECT bt.batch_id, b.title_bn, b.title_en, bt.subject,
+                (SELECT COUNT(*) FROM enrollments e WHERE e.batch_id = bt.batch_id) AS enrolled
+         FROM batch_teachers bt JOIN batches b ON b.id = bt.batch_id
+         WHERE bt.teacher_uid = ? ORDER BY b.title_en`,
+      )
+      .bind(uid)
+      .all(),
+    c.env.DB
+      .prepare(
+        `SELECT COUNT(DISTINCT e.uid) AS n FROM enrollments e
+         WHERE e.batch_id IN (SELECT batch_id FROM batch_teachers WHERE teacher_uid = ?)`,
+      )
+      .bind(uid)
+      .first<{ n: number }>(),
+    c.env.DB.prepare("SELECT COUNT(*) AS n FROM doubts WHERE answered_by = ?").bind(uid).first<{ n: number }>(),
+    c.env.DB
+      .prepare(
+        `SELECT AVG(a.score) AS avg FROM attempts a JOIN tests t ON t.id = a.test_id
+         WHERE a.submitted_at IS NOT NULL AND t.batch_id IN (SELECT batch_id FROM batch_teachers WHERE teacher_uid = ?)`,
+      )
+      .bind(uid)
+      .first<{ avg: number | null }>(),
+  ]);
+
+  return c.json({
+    teacher: { ...teacher, subjects: teacher.subjects ? (JSON.parse(teacher.subjects) as string[]) : null },
+    batches: batches.results,
+    studentCount: studentCount?.n ?? 0,
+    doubtsAnswered: doubtsAnswered?.n ?? 0,
+    avgStudentScore: avgScore?.avg ?? null,
+  });
+});
+
 app.post("/teachers/:uid/suspend", requireRole("super_admin"), async (c) => {
   const uid = c.req.param("uid");
   if (uid === c.get("uid")) return c.json({ error: "cannot_change_self" }, 400);

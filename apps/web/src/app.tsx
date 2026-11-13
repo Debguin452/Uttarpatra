@@ -13,7 +13,8 @@ import { Fatal } from "./screens/Fatal";
 import { Home } from "./screens/Home";
 import { Login } from "./screens/Login";
 import { Welcome } from "./screens/Welcome";
-import { welcomeSeen } from "./lib/onboarding";
+import { RoleSelect } from "./screens/RoleSelect";
+import { awaitingRoleChoice, signupIntent, welcomeSeen } from "./lib/onboarding";
 import { Profile } from "./screens/Profile";
 import { Register } from "./screens/Register";
 import { TestRunner } from "./screens/TestRunner";
@@ -21,8 +22,9 @@ import { Tests } from "./screens/Tests";
 import { TeacherApply } from "./screens/TeacherApply";
 import { t } from "@coaching-app/shared/i18n";
 
-function Screen() {
+function Screen({ pendingTeacher }: { pendingTeacher: boolean }) {
   const [head, arg] = segments();
+  if (pendingTeacher && head !== "profile") return <TeacherApply />;
   switch (head) {
     case "admin":
       return <Admin tab={arg} />;
@@ -48,7 +50,10 @@ export function App() {
 
   const user = authUser.value;
   if (user === undefined) return <Splash />;
-  if (user === null) return welcomeSeen.value ? <Login /> : <Welcome />;
+  if (user === null) {
+    if (awaitingRoleChoice.value) return <RoleSelect />;
+    return welcomeSeen.value ? <Login /> : <Welcome />;
+  }
 
   const profile = me.value;
   if (!profile) {
@@ -62,13 +67,14 @@ export function App() {
       </main>
     );
   }
-  if (!profile.registered) return <Register mode="create" />;
+  if (!profile.registered) return <Register mode="create" intent={signupIntent.value} />;
 
+  const pendingTeacher = profile.user.role === "student" && signupIntent.value === "teacher";
   const running = segments()[0] === "tests" && Boolean(segments()[1]);
   return (
     <div class={running ? "app bare" : "app"}>
-      <Screen />
-      {!running && <Nav />}
+      <Screen pendingTeacher={pendingTeacher} />
+      {!running && <Nav restricted={pendingTeacher} />}
     </div>
   );
 }

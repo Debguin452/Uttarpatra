@@ -5,6 +5,7 @@ import { Loading } from "../components/ui";
 import { api, ApiError } from "../lib/api";
 import { errorText, pick, when } from "../lib/format";
 import { go } from "../lib/router";
+import { clearSignupIntent } from "../lib/onboarding";
 import { loadMe, me } from "../lib/session";
 import type { TeacherApplicationView, TeacherPortal } from "../lib/types";
 
@@ -265,6 +266,9 @@ export function TeacherApply() {
           )}
           <button class="btn primary block" onClick={() => setEditing(true)}>
             {t("teach_reapply")}
+          </button>
+          <button class="btn quiet block" onClick={clearSignupIntent}>
+            {t("teach_continue_as_student")}
           </button>
         </>
       )}

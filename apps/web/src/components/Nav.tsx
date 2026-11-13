@@ -10,12 +10,13 @@ const TABS = [
   { id: "profile", label: "nav_profile", Icon: IconProfile, match: ["profile", "teach", "admin"] },
 ] as const;
 
-export function Nav() {
+export function Nav({ restricted = false }: { restricted?: boolean }) {
   const current = segments()[0] ?? "home";
+  const tabs = restricted ? TABS.filter((tab) => tab.id === "profile") : TABS;
   return (
     <nav class="nav" aria-label="Main">
       <div class="nav-inner">
-        {TABS.map(({ id, label, Icon, match }) => (
+        {tabs.map(({ id, label, Icon, match }) => (
           <a href={`#/${id}`} aria-current={(match as readonly string[]).includes(current) ? "page" : undefined}>
             <Icon size={22} />
             <span>{t(label)}</span>

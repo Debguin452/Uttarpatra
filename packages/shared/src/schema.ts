@@ -113,6 +113,41 @@ export const BulkQuestionRow = z.object({
 });
 export type BulkQuestionRow = z.infer<typeof BulkQuestionRow>;
 
+export const BannerUpsert = z.object({
+  imageUrl: z.string().trim().url().max(500),
+  titleBn: z.string().trim().min(1).max(160),
+  titleEn: z.string().trim().min(1).max(160),
+  batchId: z.string().min(1).nullable().optional(),
+  linkUrl: z.string().trim().url().max(500).optional(),
+  orderIndex: z.number().int().default(0),
+  status: z.enum(["active", "inactive"]).default("active"),
+});
+export type BannerUpsert = z.infer<typeof BannerUpsert>;
+
+export const NoteUpsert = z.object({
+  batchId: z.string().min(1).nullable().optional(),
+  lectureId: z.string().min(1).nullable().optional(),
+  titleBn: z.string().trim().min(1).max(160),
+  titleEn: z.string().trim().min(1).max(160),
+  driveFileId: z.string().trim().min(1).max(200),
+  kind: z.enum(["note", "dpp"]).default("note"),
+  isFree: z.boolean().default(false),
+});
+export type NoteUpsert = z.infer<typeof NoteUpsert>;
+
+export const DoubtCreate = z.object({
+  batchId: z.string().min(1).nullable().optional(),
+  subject: Subject.optional(),
+  questionText: z.string().trim().min(5).max(1000),
+  imageDriveId: z.string().trim().max(200).optional(),
+});
+export type DoubtCreate = z.infer<typeof DoubtCreate>;
+
+export const DoubtAnswer = z.object({
+  answerText: z.string().trim().min(1).max(2000),
+});
+export type DoubtAnswer = z.infer<typeof DoubtAnswer>;
+
 export const DeviceBind = z.object({
   deviceId: z.string().min(16),
   deviceLabel: z.string().max(80).optional(),
