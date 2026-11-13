@@ -1,4 +1,4 @@
-name = "coaching-app"
+name = "coach"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
 
