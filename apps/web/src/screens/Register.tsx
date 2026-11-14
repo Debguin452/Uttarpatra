@@ -7,6 +7,7 @@ import { errorText } from "../lib/format";
 import { go } from "../lib/router";
 import { Select } from "../components/Select";
 import { Logo } from "../components/Logo";
+import { OnboardingProgress } from "../components/OnboardingProgress";
 import type { SignupIntent } from "../lib/onboarding";
 
 export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: SignupIntent }) {
@@ -53,7 +54,11 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
   return (
     <main class={mode === "create" ? "center" : "screen"}>
       {mode === "create" && <Logo width={130} />}
+      {mode === "create" && <OnboardingProgress step={3} />}
       <h1 class="title">{isTeacherSignup ? t("register_title_teacher") : t("register_title")}</h1>
+      {mode === "create" && name.trim().length > 1 && (
+        <p class="muted">{t("register_greeting", { name: name.trim().split(" ")[0] ?? "" })}</p>
+      )}
       {isTeacherSignup && <p class="muted">{t("register_title_teacher_body")}</p>}
       <form class="stack" onSubmit={submit}>
         <div class="field">

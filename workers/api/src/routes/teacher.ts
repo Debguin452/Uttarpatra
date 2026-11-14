@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { DoubtAnswer } from "@coaching-app/shared/schema";
-import { requireRole } from "../middleware/firebaseAuth";
+import { requireTeacherAccess } from "../middleware/firebaseAuth";
 import type { AppEnv } from "../index";
 
 const app = new Hono<AppEnv>();
 
-app.use("*", requireRole("teacher"));
+app.use("*", requireTeacherAccess());
 
 const MY_BATCHES = "SELECT batch_id FROM batch_teachers WHERE teacher_uid = ?";
 

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { PaymentReview, RoleUpdate, EnrollGrant } from "@coaching-app/shared/schema";
+import { PaymentReview, RoleUpdate, EnrollGrant, TeacherAccessUpdate } from "@coaching-app/shared/schema";
 import { requireRole } from "../../middleware/firebaseAuth";
 import type { AppEnv } from "../../index";
 
@@ -77,7 +77,8 @@ app.get("/users/search", async (c) => {
   const like = `%${escaped}%`;
   const rows = await c.env.DB
     .prepare(
-      `SELECT u.uid, u.name, u.phone, u.role, u.status, (d.device_id IS NOT NULL) AS device_bound, d.bound_at
+      `SELECT u.uid, u.name, u.phone, u.role, u.status, u.is_teacher,
+              (d.device_id IS NOT NULL) AS device_bound, d.bound_at
        FROM users u LEFT JOIN devices d ON d.uid = u.uid
        WHERE u.uid = ? OR u.name LIKE ? ESCAPE '\\' OR u.phone LIKE ? ESCAPE '\\'
        ORDER BY u.name LIMIT 20`,
@@ -93,7 +94,7 @@ app.get("/users/:uid", async (c) => {
   const [user, enrollments, payments, attemptStats] = await Promise.all([
     c.env.DB
       .prepare(
-        `SELECT u.uid, u.role, u.name, u.phone, u.student_class, u.board, u.school, u.status,
+        `SELECT u.uid, u.role, u.name, u.phone, u.student_class, u.board, u.school, u.status, u.is_teacher,
                 u.created_at, (d.device_id IS NOT NULL) AS device_bound, d.bound_at
          FROM users u LEFT JOIN devices d ON d.uid = u.uid WHERE u.uid = ?`,
       )
@@ -184,6 +185,31 @@ app.post("/users/:uid/role", requireRole("super_admin"), async (c) => {
         .prepare("UPDATE teacher_applications SET status = 'suspended', updated_at = unixepoch() WHERE uid = ?")
         .bind(uid),
     );
+  }
+  await c.env.DB.batch(statements);
+  return c.json({ ok: true });
+});
+
+app.post("/users/:uid/teacher-access", requireRole("super_admin"), async (c) => {
+  const parsed = TeacherAccessUpdate.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
+  const uid = c.req.param("uid");
+  const { enabled } = parsed.data;
+
+  const target = await c.env.DB.prepare("SELECT role FROM users WHERE uid = ?").bind(uid).first<{ role: string }>();
+  if (!target) return c.json({ error: "not_found" }, 404);
+  if (target.role !== "support" && target.role !== "super_admin") {
+    return c.json({ error: "not_an_admin" }, 400);
+  }
+
+  const statements = [
+    c.env.DB
+      .prepare("UPDATE users SET is_teacher = ?, updated_at = unixepoch() WHERE uid = ?")
+      .bind(enabled ? 1 : 0, uid),
+    audit(c.env.DB, c.get("uid"), "user.teacher_access", uid, { enabled }),
+  ];
+  if (!enabled) {
+    statements.push(c.env.DB.prepare("DELETE FROM batch_teachers WHERE teacher_uid = ?").bind(uid));
   }
   await c.env.DB.batch(statements);
   return c.json({ ok: true });

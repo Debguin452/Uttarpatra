@@ -2,6 +2,7 @@ import { t } from "@coaching-app/shared/i18n";
 import { IconBatches, IconProfile } from "@coaching-app/ui/icons";
 import { LangToggle } from "../components/LangToggle";
 import { Logo } from "../components/Logo";
+import { OnboardingProgress } from "../components/OnboardingProgress";
 import { chooseSignupRole } from "../lib/onboarding";
 
 export function RoleSelect() {
@@ -9,6 +10,7 @@ export function RoleSelect() {
     <main class="center">
       <Logo width={150} />
       <LangToggle />
+      <OnboardingProgress step={1} />
       <div class="stack">
         <h1 class="title">{t("role_select_title")}</h1>
         <p class="muted">{t("role_select_body")}</p>

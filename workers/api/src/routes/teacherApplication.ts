@@ -19,6 +19,7 @@ const app = new Hono<AppEnv>();
 app.get("/", async (c) => {
   const uid = c.get("uid");
   const role = c.get("role");
+  const hasTeacherAccess = role === "teacher" || c.get("isTeacher");
 
   const row = await c.env.DB
     .prepare(
@@ -29,7 +30,7 @@ app.get("/", async (c) => {
     .first<ApplicationRow>();
 
   const batches =
-    role === "teacher"
+    hasTeacherAccess
       ? (
           await c.env.DB
             .prepare(
@@ -44,6 +45,7 @@ app.get("/", async (c) => {
 
   return c.json({
     role,
+    isTeacher: hasTeacherAccess,
     application: row ? { ...row, subjects: JSON.parse(row.subjects) as string[] } : null,
     batches,
   });

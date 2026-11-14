@@ -101,6 +101,11 @@ export const RoleUpdate = z.object({
 });
 export type RoleUpdate = z.infer<typeof RoleUpdate>;
 
+export const TeacherAccessUpdate = z.object({
+  enabled: z.boolean(),
+});
+export type TeacherAccessUpdate = z.infer<typeof TeacherAccessUpdate>;
+
 export const EnrollGrant = z.object({
   batchId: z.string().min(1),
   expiresAt: z.number().int().positive().nullable().optional(),

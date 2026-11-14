@@ -355,5 +355,16 @@
   "select_none": "ঠিক করা নেই",
   "select_search": "খুঁজুন",
   "select_no_results": "কিছু পাওয়া যায়নি",
-  "class_group_other": "অন্যান্য"
+  "class_group_other": "অন্যান্য",
+  "admin_teacher_access": "শিক্ষক অ্যাক্সেস",
+  "admin_grant_teacher": "শিক্ষক অ্যাক্সেস দিন",
+  "admin_revoke_teacher": "শিক্ষক অ্যাক্সেস বাতিল করুন",
+  "admin_confirm_grant_teacher_title": "শিক্ষক অ্যাক্সেস দেবেন?",
+  "admin_confirm_grant_teacher_body": "{name} তার অ্যাডমিন ভূমিকা বজায় রাখবে এবং শিক্ষক টুলও ব্যবহার করতে পারবে, ব্যাচেও যুক্ত করা যাবে।",
+  "admin_confirm_revoke_teacher_title": "শিক্ষক অ্যাক্সেস বাতিল করবেন?",
+  "admin_confirm_revoke_teacher_body": "{name} শিক্ষক টুল হারাবে এবং সব ব্যাচ থেকে সরিয়ে দেওয়া হবে। অ্যাডমিন ভূমিকা অপরিবর্তিত থাকবে।",
+  "onboarding_step_role": "ভূমিকা",
+  "onboarding_step_account": "অ্যাকাউন্ট",
+  "onboarding_step_profile": "প্রোফাইল",
+  "register_greeting": "পরিচিত হয়ে ভালো লাগলো, {name}!"
 }

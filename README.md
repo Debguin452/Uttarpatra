@@ -17,10 +17,13 @@ Every account signs in with Google or email. The server decides what the account
 
 Staff accounts (support and super admin) land in the admin console and never see the student screens.
 
+A support or super admin account can also hold teacher access as an add-on, set independently of `role` via the `is_teacher` flag on `users`. This does not change which console the account lands in; it only unlocks `/api/teacher` and lets the account be assigned to batches like a regular teacher. A super admin grants or revokes it from the user search result in the admin console. Revoking it unassigns the account from every batch.
+
 ## What is built
 
 **Student app (`apps/web`)**
 - Welcome and first-time guidance, Google and email sign-in, password reset, one-device lock
+- Sign-up shows a three-step progress indicator (role, account, profile) and greets the student by first name once they type it
 - Registration with class 5 to 12 or dropper, language switch (English and Bengali), light and dark theme
 - Batch catalogue filtered by class and exam, defaulting to the student's own class
 - Enrolling by manual UPI: coupon quote, UTR, compressed screenshot, Turnstile check
@@ -30,7 +33,7 @@ Staff accounts (support and super admin) land in the admin console and never see
 
 **Admin console (staff only, loaded on demand)**
 - Payments: review queue, screenshot view, approve or reject
-- Users: search, reset device, block or unblock
+- Users: search, reset device, block or unblock, grant or revoke teacher access for support and super admin accounts
 - Batches: create, edit, publish, archive, assign teachers by subject
 - Teachers: approve or reject applications, remove access
 - Notices: global or per batch, pinned
@@ -84,8 +87,8 @@ Quota habits that shape the code:
 | `/api/me` | Signed in | Profile, enrollments |
 | `/api/batches`, `/api/notices`, `/api/subjects`, `/api/tests`, `/api/attempts`, `/api/payments`, `/api/doubts` | Registered users | Learning, tests, payments |
 | `/api/teacher-application` | Registered users | Apply and check status |
-| `/api/teacher` | Teachers | Roster and doubts for assigned batches |
-| `/api/admin` | Support and super admin | Console. Payment review, user search, device reset and notices are open to support. Analytics, audit log, batch edits, roles, enrollments, blocking and subjects are super admin only |
+| `/api/teacher` | Teachers, and support/super admin accounts with `is_teacher` set | Roster and doubts for assigned batches |
+| `/api/admin` | Support and super admin | Console. Payment review, user search, device reset and notices are open to support. Analytics, audit log, batch edits, roles, enrollments, blocking, subjects and granting/revoking teacher access are super admin only |
 
 ## Local setup
 
@@ -122,6 +125,7 @@ pnpm --filter api exec wrangler d1 execute database --remote \
 | `0002_teachers.sql` | Teacher applications |
 | `0003_content.sql` | Banners, note kinds |
 | `0004_academic_levels.sql` | Classes 5 to 12 and CUET as batch tracks, the `subjects` table |
+| `0005_dual_teacher_access.sql` | `is_teacher` flag on `users`, letting a support or super admin account also hold teacher access |
 
 SQLite cannot change a `CHECK` constraint in place, so `0004` rebuilds `batches`. D1 rejects the usual rename-and-drop trick when other tables point at the table. The pattern that works is: defer foreign keys, copy rows to a plain stash table, drop, recreate, insert back, drop the stash. Use it for any future table rebuild and test it on a database that already contains rows in the child tables before shipping.
 

@@ -26,14 +26,15 @@ export function firebaseAuth(): MiddlewareHandler<AppEnv> {
     }
 
     const row = await c.env.DB
-      .prepare("SELECT role, status FROM users WHERE uid = ?")
+      .prepare("SELECT role, status, is_teacher FROM users WHERE uid = ?")
       .bind(uid)
-      .first<{ role: string; status: string }>();
+      .first<{ role: string; status: string; is_teacher: number }>();
 
     if (row?.status === "blocked") return c.json({ error: "account_blocked" }, 403);
 
     c.set("uid", uid);
     c.set("role", row?.role ?? "guest");
+    c.set("isTeacher", Boolean(row?.is_teacher));
     await next();
   };
 }
@@ -49,6 +50,20 @@ export function requireRegistered(): MiddlewareHandler<AppEnv> {
 export function requireRole(...roles: string[]): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
     if (!roles.includes(c.get("role"))) return c.json({ error: "forbidden" }, 403);
+    await next();
+  };
+}
+
+// Grants teacher-area access to real teachers, and to support/super_admin
+// accounts that have been given the is_teacher add-on (see admin/users.ts
+// POST /users/:uid/teacher-access).
+export function requireTeacherAccess(): MiddlewareHandler<AppEnv> {
+  return async (c, next) => {
+    const role = c.get("role");
+    const isAdmin = role === "support" || role === "super_admin";
+    if (role !== "teacher" && !(isAdmin && c.get("isTeacher"))) {
+      return c.json({ error: "forbidden" }, 403);
+    }
     await next();
   };
 }

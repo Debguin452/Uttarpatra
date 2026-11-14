@@ -26,7 +26,7 @@ export type Env = {
   ALLOWED_ORIGIN: string;
 };
 
-export type AppEnv = { Bindings: Env; Variables: { uid: string; role: string } };
+export type AppEnv = { Bindings: Env; Variables: { uid: string; role: string; isTeacher: boolean } };
 
 const app = new Hono<AppEnv>();
 

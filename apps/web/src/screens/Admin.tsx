@@ -123,7 +123,7 @@ export function AdminPayments() {
   );
 }
 
-type Confirm = { kind: "reset" | "block" | "unblock"; user: AdminUser };
+type Confirm = { kind: "reset" | "block" | "unblock" | "grant_teacher" | "revoke_teacher"; user: AdminUser };
 
 export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [query, setQuery] = useState("");
@@ -153,10 +153,14 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       if (confirm.kind === "reset") {
         await api(`/api/admin/users/${confirm.user.uid}/reset-device`, { method: "POST" });
         setRows((r) => (r ?? []).map((u) => (u.uid === confirm.user.uid ? { ...u, device_bound: 0, bound_at: null } : u)));
-      } else {
+      } else if (confirm.kind === "block" || confirm.kind === "unblock") {
         const status = confirm.kind === "block" ? "blocked" : "active";
         await api(`/api/admin/users/${confirm.user.uid}/status`, { body: { status } });
         setRows((r) => (r ?? []).map((u) => (u.uid === confirm.user.uid ? { ...u, status } : u)));
+      } else {
+        const enabled = confirm.kind === "grant_teacher";
+        await api(`/api/admin/users/${confirm.user.uid}/teacher-access`, { body: { enabled } });
+        setRows((r) => (r ?? []).map((u) => (u.uid === confirm.user.uid ? { ...u, is_teacher: enabled ? 1 : 0 } : u)));
       }
       setConfirm(null);
     } catch (e) {
@@ -203,11 +207,26 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                     {t(u.status === "blocked" ? "admin_blocked" : "admin_active")}
                   </span>{" "}
                   · {u.device_bound ? t("admin_device_bound") : t("admin_device_none")}
+                  {Boolean(u.is_teacher) && (
+                    <>
+                      {" "}
+                      · <span class="badge mark">{t("admin_teacher_access")}</span>
+                    </>
+                  )}
                 </span>
                 <span class="side" style="flex-direction:column;align-items:stretch;gap:6px">
                   {Boolean(u.device_bound) && (
                     <button class="btn small quiet" onClick={() => setConfirm({ kind: "reset", user: u })} disabled={busyUid === u.uid}>
                       {t("admin_reset_device")}
+                    </button>
+                  )}
+                  {isSuperAdmin && (u.role === "support" || u.role === "super_admin") && (
+                    <button
+                      class={u.is_teacher ? "btn small danger" : "btn small quiet"}
+                      onClick={() => setConfirm({ kind: u.is_teacher ? "revoke_teacher" : "grant_teacher", user: u })}
+                      disabled={busyUid === u.uid}
+                    >
+                      {t(u.is_teacher ? "admin_revoke_teacher" : "admin_grant_teacher")}
                     </button>
                   )}
                   {isSuperAdmin && (
@@ -230,7 +249,7 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           <h2 class="subtitle">{t(`admin_confirm_${confirm.kind}_title`)}</h2>
           <p class="muted small">{t(`admin_confirm_${confirm.kind}_body`, { name: confirm.user.name })}</p>
           <button
-            class={confirm.kind === "block" ? "btn danger block" : "btn primary block"}
+            class={confirm.kind === "block" || confirm.kind === "revoke_teacher" ? "btn danger block" : "btn primary block"}
             onClick={act}
             disabled={busyUid === confirm.user.uid}
           >

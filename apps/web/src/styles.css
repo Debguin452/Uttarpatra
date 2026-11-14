@@ -8,7 +8,7 @@ a { color: inherit; }
 .app { max-width: var(--content-max); margin: 0 auto; min-height: 100%; padding: var(--safe-top) 0 calc(var(--nav-height) + var(--safe-bottom) + var(--space-5)); }
 .app.bare { padding-bottom: var(--space-6); }
 .screen { padding: var(--space-4); display: grid; gap: var(--space-5); align-content: start; }
-.center { min-height: 100vh; display: grid; place-content: center; gap: var(--space-3); padding: var(--space-5); max-width: 28rem; margin: 0 auto; }
+.center { min-height: 100vh; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: stretch; gap: var(--space-3); padding: var(--space-5); max-width: 28rem; margin: 0 auto; }
 
 .eyebrow { font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .title { font-size: var(--text-lg); }
@@ -98,6 +98,15 @@ a { color: inherit; }
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--ink); border-radius: var(--radius-control); overflow: hidden; }
 .seg button { min-height: 44px; border: 0; background: transparent; font-weight: 500; }
 .seg button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+
+.onb-progress { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; justify-content: center; gap: var(--space-4); }
+.onb-step { display: grid; justify-items: center; gap: var(--space-1); text-align: center; }
+.onb-dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-content: center; border: 1px solid var(--line); font-size: var(--text-sm); font-weight: 600; color: var(--muted); }
+.onb-label { font-size: var(--text-sm); color: var(--muted); }
+.onb-step-current .onb-dot { border-color: var(--ink); color: var(--ink); }
+.onb-step-current .onb-label { color: var(--ink); font-weight: 500; }
+.onb-step-done .onb-dot { background: var(--mark); border-color: var(--mark); color: var(--paper); }
+.onb-step-done .onb-label { color: var(--ink); }
 
 .steps { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--ink); }
 .steps li { display: grid; grid-template-columns: 40px 1fr; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--line); align-items: start; }

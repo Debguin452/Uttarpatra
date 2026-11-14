@@ -86,6 +86,7 @@ export type AdminUser = {
   phone: string | null;
   role: string;
   status: "active" | "blocked";
+  is_teacher: 0 | 1;
   device_bound: 0 | 1;
   bound_at: number | null;
 };

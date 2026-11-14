@@ -355,5 +355,16 @@
   "select_none": "Not set",
   "select_search": "Search",
   "select_no_results": "No matches",
-  "class_group_other": "Other"
+  "class_group_other": "Other",
+  "admin_teacher_access": "Teacher access",
+  "admin_grant_teacher": "Grant teacher access",
+  "admin_revoke_teacher": "Revoke teacher access",
+  "admin_confirm_grant_teacher_title": "Give teacher access?",
+  "admin_confirm_grant_teacher_body": "{name} keeps their admin role and can also use the teacher tools and be assigned to batches.",
+  "admin_confirm_revoke_teacher_title": "Revoke teacher access?",
+  "admin_confirm_revoke_teacher_body": "{name} will lose the teacher tools and be unassigned from all batches. Their admin role is unchanged.",
+  "onboarding_step_role": "Role",
+  "onboarding_step_account": "Account",
+  "onboarding_step_profile": "Profile",
+  "register_greeting": "Nice to meet you, {name}!"
 }

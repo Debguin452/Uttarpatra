@@ -108,11 +108,17 @@ app.post("/:id/teachers", requireRole("super_admin"), async (c) => {
 
   const [batch, teacher, knownSubject] = await Promise.all([
     c.env.DB.prepare("SELECT 1 FROM batches WHERE id = ?").bind(batchId).first(),
-    c.env.DB.prepare("SELECT role FROM users WHERE uid = ?").bind(uid).first<{ role: string }>(),
+    c.env.DB
+      .prepare("SELECT role, is_teacher FROM users WHERE uid = ?")
+      .bind(uid)
+      .first<{ role: string; is_teacher: number }>(),
     subject ? c.env.DB.prepare("SELECT 1 FROM subjects WHERE id = ?").bind(subject).first() : Promise.resolve(true),
   ]);
   if (!batch) return c.json({ error: "not_found" }, 404);
-  if (teacher?.role !== "teacher") return c.json({ error: "not_a_teacher" }, 400);
+  const isAdmin = teacher?.role === "support" || teacher?.role === "super_admin";
+  if (teacher?.role !== "teacher" && !(isAdmin && teacher?.is_teacher)) {
+    return c.json({ error: "not_a_teacher" }, 400);
+  }
   if (!knownSubject) return c.json({ error: "invalid_subject" }, 400);
 
   await c.env.DB.batch([

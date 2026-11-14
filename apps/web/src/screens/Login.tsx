@@ -12,6 +12,7 @@ import { authErrorKey } from "../lib/authErrors";
 import { loginMode, showWelcome, type LoginMode } from "../lib/onboarding";
 import { LangToggle } from "../components/LangToggle";
 import { Logo } from "../components/Logo";
+import { OnboardingProgress } from "../components/OnboardingProgress";
 
 type View = LoginMode | "reset";
 
@@ -93,6 +94,7 @@ export function Login() {
     <main class="center">
       <Logo width={150} />
       <LangToggle />
+      {view === "up" && <OnboardingProgress step={2} />}
       <h1 class="title">{view === "in" ? t("sign_in") : t("create_account")}</h1>
 
       <div class="seg" role="tablist">
