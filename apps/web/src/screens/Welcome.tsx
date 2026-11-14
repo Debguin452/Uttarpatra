@@ -1,5 +1,6 @@
 import { t } from "@coaching-app/shared/i18n";
 import { LangToggle } from "../components/LangToggle";
+import { Logo } from "../components/Logo";
 import { beginSignup, finishWelcome } from "../lib/onboarding";
 
 const STEPS = [
@@ -11,6 +12,7 @@ const STEPS = [
 export function Welcome() {
   return (
     <main class="center">
+      <Logo width={240} />
       <LangToggle />
       <div class="stack">
         <h1 class="title">{t("welcome_title")}</h1>

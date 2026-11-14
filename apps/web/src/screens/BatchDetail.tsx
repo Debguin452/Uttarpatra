@@ -2,27 +2,28 @@ import { useEffect, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { Async, Loading, SectionHead } from "../components/ui";
 import { money, pick } from "../lib/format";
-import { useBatches, useLectures } from "../lib/queries";
+import { useBatchContent, useBatches, useMyBatches } from "../lib/queries";
 import { go } from "../lib/router";
 import { markOpenedLecture } from "../lib/onboarding";
 import { enrolledIds } from "../lib/session";
 import type { Lecture } from "../lib/types";
 
 const embed = (id: string) => `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
+const driveLink = (id: string) => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
 
-function Lectures({ batchId }: { batchId: string }) {
-  const lectures = useLectures(batchId);
+function Content({ batchId }: { batchId: string }) {
+  const content = useBatchContent(batchId);
   const [active, setActive] = useState<Lecture | null>(null);
 
   useEffect(() => {
-    if (lectures.data && lectures.data.length > 0) markOpenedLecture();
-  }, [lectures.data]);
+    if (content.data && content.data.lectures.length > 0) markOpenedLecture();
+  }, [content.data]);
 
   return (
-    <Async q={lectures}>
-      {(rows) => {
-        const current = active ?? rows[0] ?? null;
-        const chapters = [...new Set(rows.map((r) => r.chapter))];
+    <Async q={content}>
+      {({ lectures, notes }) => {
+        const current = active ?? lectures[0] ?? null;
+        const chapters = [...new Set(lectures.map((r) => r.chapter))];
         return (
           <div class="stack">
             {current && (
@@ -35,16 +36,19 @@ function Lectures({ batchId }: { batchId: string }) {
                 />
               </div>
             )}
+
             <SectionHead title={t("lectures")} />
+            {lectures.length === 0 && <p class="muted small">{t("no_lectures")}</p>}
             {chapters.map((chapter) => (
-              <div class="stack">
+              <div class="stack" key={chapter}>
                 <p class="eyebrow">{chapter}</p>
                 <div class="list">
-                  {rows
+                  {lectures
                     .filter((r) => r.chapter === chapter)
                     .map((lecture) => (
                       <button
                         class="item"
+                        key={lecture.id}
                         aria-current={current?.id === lecture.id ? "true" : undefined}
                         onClick={() => {
                           setActive(lecture);
@@ -61,6 +65,29 @@ function Lectures({ batchId }: { batchId: string }) {
                 </div>
               </div>
             ))}
+
+            <SectionHead title={t("study_materials")} />
+            {notes.length === 0 ? (
+              <p class="muted small">{t("no_materials")}</p>
+            ) : (
+              <div class="list">
+                {notes.map((note) => (
+                  <a
+                    class="item"
+                    key={note.id}
+                    href={driveLink(note.drive_file_id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="text-decoration:none"
+                  >
+                    <span class="name">{pick(note, "title")}</span>
+                    <span class="side">
+                      <span class="badge">{note.kind === "dpp" ? t("material_dpp") : t("material_note")}</span>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         );
       }}
@@ -69,20 +96,23 @@ function Lectures({ batchId }: { batchId: string }) {
 }
 
 export function BatchDetail({ batchId }: { batchId: string }) {
-  const batches = useBatches();
+  const catalog = useBatches();
+  const mine = useMyBatches();
   const enrolled = enrolledIds().has(batchId);
+  const batch = catalog.data?.find((b) => b.id === batchId) ?? mine.data?.find((b) => b.id === batchId);
+  const waiting = !batch && (catalog.isLoading || mine.isLoading);
 
   return (
     <div class="screen">
       <button class="btn small quiet" style="justify-self:start" onClick={() => go("batches")}>
         {t("back")}
       </button>
-      {!batches.data ? (
+      {waiting ? (
         <Loading />
+      ) : !batch ? (
+        <p class="muted">{t("no_batches")}</p>
       ) : (
         (() => {
-          const batch = batches.data.find((b) => b.id === batchId);
-          if (!batch) return <p class="muted">{t("no_batches")}</p>;
           const open = enrolled || batch.kind === "free";
           return (
             <>
@@ -92,7 +122,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
                 {pick(batch, "summary") && <p class="muted">{pick(batch, "summary")}</p>}
               </header>
               {open ? (
-                <Lectures batchId={batch.id} />
+                <Content batchId={batch.id} />
               ) : (
                 <div class="stack">
                   {batch.preview_video_id && (

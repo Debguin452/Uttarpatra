@@ -44,3 +44,8 @@ export function enrolledIds(): Set<string> {
 export function uid(): string {
   return authUser.value?.uid ?? "anon";
 }
+
+export function currentRole(): string {
+  const current = me.value;
+  return current && current.registered ? current.user.role : "guest";
+}

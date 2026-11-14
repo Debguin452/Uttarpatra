@@ -1,6 +1,6 @@
-import type { Subject } from "@coaching-app/shared/schema";
+import type { Subject, Track } from "@coaching-app/shared/schema";
 
-export type Track = "class11" | "class12" | "neet" | "jee" | "crash" | "one_shot";
+export type { Track };
 
 export type Batch = {
   id: string;
@@ -156,3 +156,18 @@ export type SubmitResult = {
   timeTakenSec: number;
   onTime: boolean;
 };
+
+export type BatchNote = {
+  id: string;
+  lecture_id: string | null;
+  title_bn: string;
+  title_en: string;
+  drive_file_id: string;
+  kind: string;
+};
+
+export type BatchContent = { lectures: Lecture[]; notes: BatchNote[] };
+
+export type MyBatch = Batch & { status: "published" | "archived"; expires_at: number | null };
+
+export type SubjectRow = { id: string; name_bn: string; name_en: string; active: number; sort_order: number };

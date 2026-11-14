@@ -1,9 +1,16 @@
 {
-  "name": "Coaching App",
-  "short_name": "Coaching",
+  "name": "উত্তরপত্র Coaching Institute",
+  "short_name": "উত্তরপত্র",
+  "description": "Classes 5 to 12, NEET, JEE and CUET preparation in Bengali and English.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#F0F1EC",
-  "theme_color": "#1E6F5C",
-  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "theme_color": "#03297E",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }

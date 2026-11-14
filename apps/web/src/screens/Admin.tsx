@@ -4,12 +4,9 @@ import { Loading, Sheet } from "../components/ui";
 import { api, ApiError } from "../lib/api";
 import { errorText, money, pick, when } from "../lib/format";
 import { useBatches } from "../lib/queries";
-import { go } from "../lib/router";
-import { me } from "../lib/session";
 import type { AdminPayment, AdminUser } from "../lib/types";
-import { AdminTeachers } from "./AdminTeachers";
 
-function AdminPayments() {
+export function AdminPayments() {
   const [rows, setRows] = useState<AdminPayment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -128,7 +125,7 @@ function AdminPayments() {
 
 type Confirm = { kind: "reset" | "block" | "unblock"; user: AdminUser };
 
-function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [query, setQuery] = useState("");
   const [rows, setRows] = useState<AdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -245,51 +242,5 @@ function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         </Sheet>
       )}
     </>
-  );
-}
-
-export function Admin({ tab }: { tab?: string }) {
-  const user = me.value && me.value.registered ? me.value.user : null;
-  const isStaff = user ? ["support", "super_admin"].includes(user.role) : false;
-
-  if (!isStaff) {
-    return (
-      <div class="screen">
-        <p class="error-text">{t("admin_forbidden")}</p>
-        <button class="btn block" onClick={() => go("home")}>
-          {t("back")}
-        </button>
-      </div>
-    );
-  }
-
-  const isSuperAdmin = user!.role === "super_admin";
-  const active = tab === "users" ? "users" : tab === "teachers" && isSuperAdmin ? "teachers" : "payments";
-
-  return (
-    <div class="screen">
-      <header class="stack">
-        <p class="eyebrow">{t("admin_eyebrow")}</p>
-        <h1 class="title">{t("admin_title")}</h1>
-      </header>
-
-      <div class="seg" role="tablist">
-        <button role="tab" aria-selected={active === "payments"} onClick={() => go("admin/payments")}>
-          {t("admin_tab_payments")}
-        </button>
-        <button role="tab" aria-selected={active === "users"} onClick={() => go("admin/users")}>
-          {t("admin_tab_users")}
-        </button>
-        {isSuperAdmin && (
-          <button role="tab" aria-selected={active === "teachers"} onClick={() => go("admin/teachers")}>
-            {t("admin_tab_teachers")}
-          </button>
-        )}
-      </div>
-
-      {active === "payments" && <AdminPayments />}
-      {active === "users" && <AdminUsers isSuperAdmin={isSuperAdmin} />}
-      {active === "teachers" && <AdminTeachers />}
-    </div>
   );
 }

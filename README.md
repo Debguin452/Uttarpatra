@@ -1,51 +1,91 @@
-# Coaching App — monorepo
+# উত্তরপত্র Coaching Institute
 
-Free-tier-first architecture for a Bengali/English NEET/JEE coaching
-platform. See `docs/` for the full write-up; this file is the map.
+Learning platform for a Bengali and English coaching institute. It serves school students in **Classes 5 to 12** and aspirants preparing for **NEET, JEE and CUET**.
+
+It is built to run on free tiers: Cloudflare Pages and Workers, D1, Durable Objects, Firebase Authentication. Production is the Pages project `uttarpatro` with the Worker `coach`.
+
+## What each role gets
+
+Every account signs in with Google or email. The server decides what the account can do. The client only chooses which screens to draw.
+
+| Role | How they get it | Experience |
+|---|---|---|
+| Student | Default after sign-up | Student app: batches, lectures, materials, notices, tests, payments |
+| Teacher | Chooses "teacher" at sign-up, applies, a super admin approves | Application status and assigned batches. Roster and doubts exist as API only |
+| Support | Set by a super admin | Admin console: payments, users, batches (read), notices |
+| Super admin | Set in the database (see below) | Admin console: everything, including teachers, batches, subjects |
+
+Staff accounts (support and super admin) land in the admin console and never see the student screens.
+
+## What is built
+
+**Student app (`apps/web`)**
+- Welcome and first-time guidance, Google and email sign-in, password reset, one-device lock
+- Registration with class 5 to 12 or dropper, language switch (English and Bengali), light and dark theme
+- Batch catalogue filtered by class and exam, defaulting to the student's own class
+- Enrolling by manual UPI: coupon quote, UTR, compressed screenshot, Turnstile check
+- My batches (archived batches stay visible to students who own them), YouTube lectures, study materials from Google Drive, notices
+- Timed tests: server-held timer, question palette, mark for review, one attempt, server-side scoring
+- Profile, payment history, teacher application
+
+**Admin console (staff only, loaded on demand)**
+- Payments: review queue, screenshot view, approve or reject
+- Users: search, reset device, block or unblock
+- Batches: create, edit, publish, archive, assign teachers by subject
+- Teachers: approve or reject applications, remove access
+- Notices: global or per batch, pinned
+- Subjects: add, rename, switch off. Teachers and batch assignments pick from this list
+
+**API only, no screen yet**
+- Doubts: students ask and list, teachers answer
+- Teacher roster and student detail for assigned batches
+- Banners (public list) and banner and material management
+- Admin analytics overview, audit log, user detail, manual enroll and revoke, role change
+
+The route table in `workers/api/src/routes.test.ts` lists every endpoint and fails if one stops being mounted.
 
 ## Layout
-- `apps/web` — student SPA (Vite + Preact, hash routed). The Astro SEO landing pages come in phase 6
-- `apps/admin` — admin SPA, separate Pages project, behind Cloudflare Access
-- `apps/mobile` — Capacitor wrapper for the Android APK (screen-lock, FCM)
-- `workers/api` — Hono API on Cloudflare Workers; the only thing that touches D1
-- `workers/live` — Durable Objects: live-class chat, device lock, rate limiter
-- `packages/shared` — Zod schemas + quota constants, imported by both web and api
-- `packages/ui` — design tokens (`tokens.css`) and the custom icon set
-- `db/migrations` — D1 schema
-- `firebase` — Firestore rules + emulator rule tests
 
-## Build order (what "gradually" means here)
+```
+apps/web          Student app and admin console. Vite, Preact, hash routing
+workers/api       Hono API on Cloudflare Workers. The only code that touches D1
+packages/shared   Zod schemas, scoring, pricing, analytics maths, i18n, cache helpers
+packages/ui       Design tokens (tokens.css) and the custom icon set
+db/migrations     D1 schema, 0001 to 0004
+firebase          Firestore rules
+infra/scripts     Usage check used by the alert workflow
+.github/workflows deploy.yml and usage-alert.yml
+```
 
-1. **Foundation** — this scaffold: schema, rules, auth middleware, token
-   system, icon set. ✅ done in this pass.
-2. **Identity & money** — real Firebase project wiring, custom-claims
-   setter script, manual-UPI flow end-to-end, admin approval queue.
-3. **Learning** — batch catalog UI, YouTube embeds, notes via Drive,
-   notices, FCM push.
-4. **Test engine** — exam-taking UI (timer, palette, mark-for-review),
-   bulk question import from Excel/CSV, server-side scoring (already
-   stubbed in `workers/api/src/routes/attempts.ts`), leaderboard
-   snapshotting.
-5. **Live & community** — YouTube Live + Durable Object chat/polls,
-   doubt threads, small-group WebRTC doubt calls.
-6. **Ship** — SEO pass (robots.txt, sitemap, JSON-LD), PWA install,
-   signed Capacitor APK, optional Play Store listing.
+`apps/admin`, `apps/mobile` and `workers/live` from the original plan do not exist. The admin console lives inside `apps/web` and is split into its own bundle, so students never download it.
 
-Each phase ends with something you can actually click through — not just
-more files.
+## Architecture
 
-## Quota discipline (why some things look unusual)
+Every request to `/api/*` passes, in order: Firebase token check, then one Durable Object call that enforces the one-device lock and a per-user rate limit, then a registration check, then the route. Roles are read from D1 on each request, so a change applies immediately. Public batch and banner lists are cached at the edge for five minutes.
 
-- Test questions are stored as one JSON blob per test, and an attempt's
-  answers as one JSON blob per attempt — so a 300-student mock exam costs
-  a few hundred D1 row-writes, not tens of thousands.
-- Per-user, high-frequency data (video position, streak, bookmarks) goes
-  straight from the client to Firestore and never touches the Worker, so
-  it doesn't compete with payments/tests for the 100k req/day Worker cap.
-- Firestore rules never call `get()`/`exists()` — those bill as extra
-  reads. Roles come from the ID token's custom claims instead.
-- See `packages/shared/src/schema.ts` → `QUOTA` for the numeric budgets
-  referenced by both the client and the Worker.
+Quota habits that shape the code:
+- A test's questions are one JSON blob, and an attempt's answers are one JSON blob, so a 300-student exam costs hundreds of D1 writes, not tens of thousands.
+- Scoring happens on the server. The client never receives the correct answers, and the timer is held server-side.
+- Durable Object rate-limit counters live in memory, so they cost no storage writes.
+- Firestore rules never call `get()` or `exists()`. The web app does not use Firestore yet.
+- Numeric budgets live in `QUOTA` in `packages/shared/src/schema.ts`.
+
+## Classes, exams and subjects
+
+- A batch has one `track`: `class5` to `class12`, `neet`, `jee`, `cuet`, `crash`, `one_shot`.
+- A student's class is `5` to `12` or `dropper`.
+- Subjects are rows in the `subjects` table, seeded with 19 (science, languages, social science, commerce, humanities, CUET general test). Super admins add or switch off subjects in the console. Teacher applications and batch assignments validate against this table on the server.
+
+## API summary
+
+| Prefix | Who | Purpose |
+|---|---|---|
+| `/public/batches`, `/public/banners` | Anyone | Catalogue and banners, edge cached |
+| `/api/me` | Signed in | Profile, enrollments |
+| `/api/batches`, `/api/notices`, `/api/subjects`, `/api/tests`, `/api/attempts`, `/api/payments`, `/api/doubts` | Registered users | Learning, tests, payments |
+| `/api/teacher-application` | Registered users | Apply and check status |
+| `/api/teacher` | Teachers | Roster and doubts for assigned batches |
+| `/api/admin` | Support and super admin | Console. Payment review, user search, device reset and notices are open to support. Analytics, audit log, batch edits, roles, enrollments, blocking and subjects are super admin only |
 
 ## Local setup
 
@@ -61,15 +101,64 @@ Vite proxies `/api` and `/public` to the Worker on `127.0.0.1:8787`, so `VITE_AP
 
 ## Services to configure
 
-- **Firebase**: create a project, enable Google and Email/Password sign-in, copy the web config into the `VITE_FIREBASE_*` variables, and set `FIREBASE_PROJECT_ID` in `workers/api/wrangler.toml`.
-- **Cloudflare D1**: `wrangler d1 create coaching_db`, paste the id into `wrangler.toml`, then `pnpm db:migrate:remote`.
-- **Turnstile**: set `VITE_TURNSTILE_SITEKEY` and `wrangler secret put TURNSTILE_SECRET`.
-- **UPI**: set `VITE_UPI_ID` and `VITE_UPI_PAYEE`.
-- **CORS**: put your Pages origin in `ALLOWED_ORIGIN` (comma separated).
-- **First admin**: sign in once, then run `wrangler d1 execute coaching_db --remote --command "UPDATE users SET role='super_admin' WHERE uid='<your uid>'"`.
-- **GitHub Actions**: secrets `CF_API_TOKEN`, `CF_ACCOUNT_ID`, `FIREBASE_TOKEN`; repository variables for every `VITE_*` value.
+- **Firebase**: enable Google and Email/Password sign-in. Put the web config in the `VITE_FIREBASE_*` variables and the project id in `FIREBASE_PROJECT_ID` in `workers/api/wrangler.toml`.
+- **D1**: database name `database`. Its id is in `wrangler.toml`. Apply schema with `pnpm db:migrate:remote`.
+- **Turnstile**: `VITE_TURNSTILE_SITEKEY`, and `wrangler secret put TURNSTILE_SECRET` in `workers/api`.
+- **UPI**: `VITE_UPI_ID` and `VITE_UPI_PAYEE`.
+- **CORS**: list the Pages origins in `ALLOWED_ORIGIN`, comma separated.
+- **GitHub Actions**: secrets `CF_API_TOKEN`, `CF_ACCOUNT_ID`, `FIREBASE_TOKEN`, and a repository variable for every `VITE_*` value.
+- **First super admin**: sign in once, copy your UID from Firebase Console, Authentication, Users, then run:
+
+```
+pnpm --filter api exec wrangler d1 execute database --remote \
+  --command "UPDATE users SET role='super_admin' WHERE uid='<your uid>'"
+```
+
+## Database migrations
+
+| File | Adds |
+|---|---|
+| `0001_core.sql` | Users, batches, lectures, notes, tests, attempts, payments, coupons, doubts, audit log |
+| `0002_teachers.sql` | Teacher applications |
+| `0003_content.sql` | Banners, note kinds |
+| `0004_academic_levels.sql` | Classes 5 to 12 and CUET as batch tracks, the `subjects` table |
+
+SQLite cannot change a `CHECK` constraint in place, so `0004` rebuilds `batches`. D1 rejects the usual rename-and-drop trick when other tables point at the table. The pattern that works is: defer foreign keys, copy rows to a plain stash table, drop, recreate, insert back, drop the stash. Use it for any future table rebuild and test it on a database that already contains rows in the child tables before shipping.
+
+## Design system and brand
+
+- Palette: brand navy `#03297E` as the single accent, gold for live and pinned states, warm grey paper, graphite ink. Dark theme has its own tokens. All of it lives in `packages/ui/src/tokens.css`.
+- Type: Source Serif 4 and Noto Serif Bengali for headings and numbers, Hind Siliguri for all interface text.
+- Direction: an exam mark-sheet. Hairline rules and flat panels, no gradients, no shadows.
+- Logo and icons are in `apps/web/public`: `logo.webp` for the interface, plus app icons, a maskable icon, an Apple touch icon and a favicon cut from the supplied logo. The `Logo` component renders `logo.webp`.
+- Dropdowns use one `Select` component: a bottom sheet on phones, a popover on larger screens, search for lists over eight items, keyboard and screen-reader support. Do not add native `<select>` elements.
+
+## Languages
+
+All visible text goes through `t()` with keys in `packages/shared/src/i18n/en.json` and `bn.json`. Both files must have the same keys. A key missing from either shows as its raw name on screen, so add both together.
+
+## Testing
+
+```
+pnpm typecheck
+pnpm test
+```
+
+Unit tests cover scoring, pricing, analytics maths, the cache layer, i18n and the API route table. CI runs both before deploying. Behaviour that needs a database, such as the migrations and role rules, was checked against a local D1 using Wrangler's `getPlatformProxy` with simulated users in each role.
 
 ## Conventions
 
-- A test answer is the exact text of the chosen option, and `answer` in `questions_json` must equal one of the strings in `options`.
+- A test answer is the exact text of the chosen option. `answer` in `questions_json` must equal one of the strings in `options`.
 - Question JSON per test: `{ id, type, subject, prompt, options[], answer, marks }`. The API never sends `answer` to the client.
+- Never trust the client for access. Every route checks the role and, for teachers, the batch assignment.
+- Routes that change money, roles or access write to `audit_log`.
+- New TypeScript is written without inline comments. Keep functions small and names plain.
+
+## Next
+
+1. Teacher panel: batches, roster, doubts. The API exists.
+2. Teacher authoring: lectures, live class scheduling, notes, tests.
+3. Student doubts screen and banners on the home screen. The API exists.
+4. Admin insights and audit log screens, user detail, manual enroll and revoke. The API exists.
+5. Attendance, DPP submissions, result review and leaderboards.
+6. Public landing page for search and sharing.

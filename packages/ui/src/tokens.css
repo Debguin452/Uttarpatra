@@ -15,13 +15,13 @@
   --surface: #FAFAF7;      /* panels sitting on paper */
   --line: #D6D2C4;         /* hairline borders, dividers */
   --muted: #5B6169;        /* secondary text */
-  --mark: #1E6F5C;         /* the one accent: progress, correctness, brand */
-  --mark-paper: #E4EFEB;   /* mark, tinted for fills behind the accent */
+  --mark: #03297E;         /* the one accent: brand navy. Progress, correctness, primary actions */
+  --mark-paper: #E2E8F5;   /* mark, tinted for fills behind the accent */
   --signal: #C98A2B;       /* live indicator, streak — attention, not success */
   --error: #B7432F;        /* wrong answers, overdue, blocked */
   --error-paper: #F6E8E4;
 
-  --focus-ring: #1E6F5C;
+  --focus-ring: #03297E;
 
   /* ---- Type ---- */
   --font-headline: "Source Serif 4", "Noto Serif Bengali", Georgia, serif;
@@ -71,12 +71,12 @@
   --surface: #1B1F24;
   --line: #30343A;
   --muted: #9A9FA6;
-  --mark: #49B596;
-  --mark-paper: #16302A;
+  --mark: #8FB0F5;
+  --mark-paper: #172340;
   --signal: #E0A54B;
   --error: #E07A64;
   --error-paper: #3A211C;
-  --focus-ring: #49B596;
+  --focus-ring: #8FB0F5;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -87,12 +87,12 @@
     --surface: #1B1F24;
     --line: #30343A;
     --muted: #9A9FA6;
-    --mark: #49B596;
-    --mark-paper: #16302A;
+    --mark: #8FB0F5;
+    --mark-paper: #172340;
     --signal: #E0A54B;
     --error: #E07A64;
     --error-paper: #3A211C;
-    --focus-ring: #49B596;
+    --focus-ring: #8FB0F5;
   }
 }
 

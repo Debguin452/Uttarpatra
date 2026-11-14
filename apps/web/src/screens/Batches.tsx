@@ -8,13 +8,24 @@ import { go } from "../lib/router";
 import { enrolledIds, me } from "../lib/session";
 import type { Batch } from "../lib/types";
 
-const FILTERS = ["all", "class11", "class12", "neet", "jee", "free"] as const;
+const GRADES = ["class5", "class6", "class7", "class8", "class9", "class10", "class11", "class12"] as const;
+const FILTERS = ["all", ...GRADES, "neet", "jee", "cuet", "free"] as const;
 type Filter = (typeof FILTERS)[number];
 
 const matches = (batch: Batch, filter: Filter) =>
   filter === "all" || (filter === "free" ? batch.kind === "free" : batch.track === filter);
 
-const CLASS_FILTER: Record<string, Filter> = { "11": "class11", "12": "class12", dropper: "neet" };
+const CLASS_FILTER: Record<string, Filter> = {
+  "5": "class5",
+  "6": "class6",
+  "7": "class7",
+  "8": "class8",
+  "9": "class9",
+  "10": "class10",
+  "11": "class11",
+  "12": "class12",
+  dropper: "neet",
+};
 
 function defaultFilter(): Filter {
   const profile = me.value && me.value.registered ? me.value.user : null;
@@ -25,12 +36,14 @@ export function Batches() {
   const [filter, setFilter] = useState<Filter>(defaultFilter);
   const batches = useBatches();
   const enrolled = enrolledIds();
+  const own = defaultFilter();
+  const ordered = own === "all" ? FILTERS : (["all", own, ...FILTERS.filter((f) => f !== "all" && f !== own)] as readonly Filter[]);
 
   return (
     <div class="screen">
       <h1 class="title">{t("batches_title")}</h1>
       <div class="chips" role="group">
-        {FILTERS.map((f) => (
+        {ordered.map((f) => (
           <button class="chip" aria-pressed={filter === f} onClick={() => setFilter(f)}>
             {t(`filter_${f}`)}
           </button>

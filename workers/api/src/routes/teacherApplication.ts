@@ -56,6 +56,13 @@ app.put("/", async (c) => {
   if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
   const { subjects, qualification, experienceYears, phone, bio, demoUrl } = parsed.data;
 
+  const unique = [...new Set(subjects)];
+  const known = await c.env.DB
+    .prepare(`SELECT COUNT(*) AS n FROM subjects WHERE active = 1 AND id IN (${unique.map(() => "?").join(",")})`)
+    .bind(...unique)
+    .first<{ n: number }>();
+  if (known?.n !== unique.length) return c.json({ error: "invalid_subject" }, 400);
+
   await c.env.DB
     .prepare(
       `INSERT INTO teacher_applications (uid, subjects, qualification, experience_years, phone, bio, demo_url)
@@ -66,7 +73,7 @@ app.put("/", async (c) => {
          demo_url = excluded.demo_url, status = 'pending', review_note = NULL,
          reviewed_by = NULL, reviewed_at = NULL, updated_at = unixepoch()`,
     )
-    .bind(c.get("uid"), JSON.stringify([...new Set(subjects)]), qualification, experienceYears, phone, bio, demoUrl ?? null)
+    .bind(c.get("uid"), JSON.stringify(unique), qualification, experienceYears, phone, bio, demoUrl ?? null)
     .run();
 
   return c.json({ ok: true });

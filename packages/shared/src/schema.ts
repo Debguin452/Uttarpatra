@@ -5,17 +5,35 @@ export const Role = z.enum(["student", "teacher", "support", "super_admin"]);
 export const ProfileUpsert = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().regex(/^[6-9][0-9]{9}$/, "Enter a 10-digit mobile number").optional(),
-  studentClass: z.enum(["11", "12", "dropper"]).optional(),
+  studentClass: z.enum(["5", "6", "7", "8", "9", "10", "11", "12", "dropper"]).optional(),
   board: z.string().max(40).optional(),
   school: z.string().max(120).optional(),
 });
 export type ProfileUpsert = z.infer<typeof ProfileUpsert>;
 
-export const Subject = z.enum(["physics", "chemistry", "biology", "mathematics"]);
+export const TRACKS = [
+  "class5",
+  "class6",
+  "class7",
+  "class8",
+  "class9",
+  "class10",
+  "class11",
+  "class12",
+  "neet",
+  "jee",
+  "cuet",
+  "crash",
+  "one_shot",
+] as const;
+export const Track = z.enum(TRACKS);
+export type Track = z.infer<typeof Track>;
+
+export const Subject = z.string().regex(/^[a-z][a-z0-9_]{1,39}$/, "Invalid subject");
 export type Subject = z.infer<typeof Subject>;
 
 export const TeacherApplication = z.object({
-  subjects: z.array(Subject).min(1).max(4),
+  subjects: z.array(Subject).min(1).max(8),
   qualification: z.string().trim().min(2).max(120),
   experienceYears: z.number().int().min(0).max(60),
   phone: z.string().regex(/^[6-9][0-9]{9}$/, "Enter a 10-digit mobile number"),
@@ -45,7 +63,7 @@ export const BatchUpsert = z
     id: z.string().regex(/^[a-z0-9-]{3,60}$/, "Use lowercase letters, numbers and hyphens only"),
     titleBn: z.string().trim().min(1).max(120),
     titleEn: z.string().trim().min(1).max(120),
-    track: z.enum(["class11", "class12", "neet", "jee", "crash", "one_shot"]),
+    track: Track,
     kind: z.enum(["paid", "free"]).default("paid"),
     pricePaise: z.number().int().min(0).default(0),
     summaryBn: z.string().max(2000).optional(),
@@ -62,6 +80,16 @@ export const BatchUpsert = z
     }
   });
 export type BatchUpsert = z.infer<typeof BatchUpsert>;
+
+export const SubjectUpsert = z.object({
+  id: Subject,
+  nameBn: z.string().trim().min(1).max(60),
+  nameEn: z.string().trim().min(1).max(60),
+  active: z.boolean().default(true),
+  sortOrder: z.number().int().min(0).max(9999).default(100),
+});
+export type SubjectUpsert = z.infer<typeof SubjectUpsert>;
+export const SubjectUpdate = SubjectUpsert.omit({ id: true });
 
 export const TeacherAssign = z.object({
   uid: z.string().min(1),

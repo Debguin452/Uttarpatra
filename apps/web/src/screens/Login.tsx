@@ -11,6 +11,7 @@ import { auth } from "../lib/firebase";
 import { authErrorKey } from "../lib/authErrors";
 import { loginMode, showWelcome, type LoginMode } from "../lib/onboarding";
 import { LangToggle } from "../components/LangToggle";
+import { Logo } from "../components/Logo";
 
 type View = LoginMode | "reset";
 
@@ -60,6 +61,7 @@ export function Login() {
   if (view === "reset") {
     return (
       <main class="center">
+        <Logo width={140} />
         <h1 class="title">{t("reset_title")}</h1>
         <form class="stack" onSubmit={submit}>
           <div class="field">
@@ -89,6 +91,7 @@ export function Login() {
 
   return (
     <main class="center">
+      <Logo width={150} />
       <LangToggle />
       <h1 class="title">{view === "in" ? t("sign_in") : t("create_account")}</h1>
 

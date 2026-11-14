@@ -1,15 +1,15 @@
 import { useEffect, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
-import { Subject, TeacherApplication } from "@coaching-app/shared/schema";
+import { TeacherApplication } from "@coaching-app/shared/schema";
 import { Loading } from "../components/ui";
 import { api, ApiError } from "../lib/api";
 import { errorText, pick, when } from "../lib/format";
+import { useSubjects } from "../lib/queries";
+import { subjectNames } from "../lib/subjects";
 import { go } from "../lib/router";
 import { clearSignupIntent } from "../lib/onboarding";
 import { loadMe, me } from "../lib/session";
 import type { TeacherApplicationView, TeacherPortal } from "../lib/types";
-
-const SUBJECTS = Subject.options;
 
 function ApplicationForm({
   initial,
@@ -21,6 +21,8 @@ function ApplicationForm({
   onSaved: () => void;
 }) {
   const profilePhone = me.value && me.value.registered ? (me.value.user.phone ?? "") : "";
+  const subjectRows = useSubjects();
+  const options = (subjectRows.data ?? []).filter((s) => s.active);
   const [subjects, setSubjects] = useState<string[]>(initial?.subjects ?? []);
   const [qualification, setQualification] = useState(initial?.qualification ?? "");
   const [experience, setExperience] = useState(String(initial?.experience_years ?? ""));
@@ -67,9 +69,9 @@ function ApplicationForm({
       <div class="field">
         <label>{t("teach_subjects")}</label>
         <div class="chips" role="group">
-          {SUBJECTS.map((subject) => (
-            <button type="button" class="chip" aria-pressed={subjects.includes(subject)} onClick={() => toggle(subject)}>
-              {t(`subject_${subject}`)}
+          {options.map((subject) => (
+            <button type="button" class="chip" aria-pressed={subjects.includes(subject.id)} onClick={() => toggle(subject.id)}>
+              {pick(subject, "name")}
             </button>
           ))}
         </div>
@@ -132,10 +134,11 @@ function ApplicationForm({
 }
 
 function Summary({ application }: { application: TeacherApplicationView }) {
+  const subjectRows = useSubjects();
   return (
     <div class="panel">
       <p class="small muted">{when(application.created_at)}</p>
-      <strong>{application.subjects.map((s) => t(`subject_${s}`)).join(", ")}</strong>
+      <strong>{subjectNames(subjectRows.data, application.subjects)}</strong>
       <p class="small">
         {application.qualification} · {t("admin_experience", { years: application.experience_years })}
       </p>
@@ -147,6 +150,7 @@ function Summary({ application }: { application: TeacherApplicationView }) {
 }
 
 export function TeacherApply() {
+  const subjectRows = useSubjects();
   const [data, setData] = useState<TeacherPortal | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -218,7 +222,7 @@ export function TeacherApply() {
               {batches.map((batch) => (
                 <div class="item" key={batch.id}>
                   <span class="name">{pick(batch, "title")}</span>
-                  {batch.subject && <span class="meta">{t(`subject_${batch.subject}`)}</span>}
+                  {batch.subject && <span class="meta">{subjectNames(subjectRows.data, [batch.subject])}</span>}
                 </div>
               ))}
             </div>

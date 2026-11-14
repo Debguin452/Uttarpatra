@@ -1,24 +1,27 @@
 import { t } from "@coaching-app/shared/i18n";
 import { IconChevronRight } from "@coaching-app/ui/icons";
 import { GettingStarted } from "../components/GettingStarted";
+import { Logo } from "../components/Logo";
 import { Async, SectionHead, SyncNote } from "../components/ui";
 import { greeting, pick } from "../lib/format";
-import { useBatches, useNotices, useTests } from "../lib/queries";
+import { useMyBatches, useNotices, useTests } from "../lib/queries";
 import { go } from "../lib/router";
-import { enrolledIds, me } from "../lib/session";
+import { me } from "../lib/session";
 
 export function Home() {
-  const batches = useBatches();
+  const batches = useMyBatches();
   const notices = useNotices();
   const tests = useTests();
-  const enrolled = enrolledIds();
   const name = me.value && me.value.registered ? me.value.user.name.split(" ")[0] : "";
 
   return (
     <div class="screen">
-      <header class="stack">
-        <p class="eyebrow">{greeting()}</p>
-        <h1 class="title">{name}</h1>
+      <header class="row-between">
+        <div class="stack">
+          <p class="eyebrow">{greeting()}</p>
+          <h1 class="title">{name}</h1>
+        </div>
+        <Logo width={56} start />
       </header>
 
       <GettingStarted testDone={Boolean(tests.data?.some((row) => row.submitted_at))} />
@@ -34,7 +37,7 @@ export function Home() {
         />
         <Async q={batches}>
           {(rows) => {
-            const mine = rows.filter((b) => enrolled.has(b.id));
+            const mine = rows;
             if (mine.length === 0) return <p class="muted small">{t("no_batches")}</p>;
             return (
               <div class="list">
@@ -42,6 +45,7 @@ export function Home() {
                   <button class="item" onClick={() => go(`batches/${b.id}`)}>
                     <span class="name">{pick(b, "title")}</span>
                     <span class="side">
+                      {b.status === "archived" && <span class="badge">{t("batch_archived")}</span>}
                       <IconChevronRight size={18} />
                     </span>
                   </button>

@@ -4,7 +4,6 @@ import { fatal } from "./lib/api";
 import { segments } from "./lib/router";
 import { authUser, me, meError } from "./lib/session";
 import { loadMe } from "./lib/session";
-import { Admin } from "./screens/Admin";
 import { Batches } from "./screens/Batches";
 import { BatchDetail } from "./screens/BatchDetail";
 import { Doubt } from "./screens/Doubt";
@@ -21,13 +20,16 @@ import { TestRunner } from "./screens/TestRunner";
 import { Tests } from "./screens/Tests";
 import { TeacherApply } from "./screens/TeacherApply";
 import { t } from "@coaching-app/shared/i18n";
+import { lazyScreen } from "./components/lazyScreen";
+
+const AdminShell = lazyScreen<Record<string, never>>(() =>
+  import("./screens/admin/AdminShell").then((m) => m.AdminShell as never),
+);
 
 function Screen({ pendingTeacher }: { pendingTeacher: boolean }) {
   const [head, arg] = segments();
   if (pendingTeacher && head !== "profile") return <TeacherApply />;
   switch (head) {
-    case "admin":
-      return <Admin tab={arg} />;
     case "batches":
       return arg ? <BatchDetail batchId={arg} /> : <Batches />;
     case "enroll":
@@ -68,6 +70,8 @@ export function App() {
     );
   }
   if (!profile.registered) return <Register mode="create" intent={signupIntent.value} />;
+
+  if (profile.user.role === "support" || profile.user.role === "super_admin") return <AdminShell />;
 
   const pendingTeacher = profile.user.role === "student" && signupIntent.value === "teacher";
   const running = segments()[0] === "tests" && Boolean(segments()[1]);

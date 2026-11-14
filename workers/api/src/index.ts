@@ -6,6 +6,7 @@ import { edgeCache } from "./middleware/edgeCache";
 import batches from "./routes/batches";
 import me from "./routes/me";
 import notices from "./routes/notices";
+import subjects from "./routes/subjects";
 import payments from "./routes/payments";
 import tests from "./routes/tests";
 import attempts from "./routes/attempts";
@@ -43,6 +44,8 @@ app.get("/healthz", (c) => c.text("ok"));
 
 app.use("/public/batches", edgeCache(300));
 app.route("/public/batches", batches.public);
+app.use("/public/banners", edgeCache(300));
+app.route("/public/banners", banners);
 
 app.use("/api/*", firebaseAuth());
 app.use("/api/*", guard({ limit: 90, windowSec: 60 }));
@@ -51,9 +54,12 @@ app.route("/api/me", me);
 app.use("/api/*", requireRegistered());
 app.route("/api/batches", batches.authed);
 app.route("/api/notices", notices);
+app.route("/api/subjects", subjects);
 app.route("/api/payments", payments);
 app.route("/api/tests", tests);
 app.route("/api/attempts", attempts);
+app.route("/api/doubts", doubts);
+app.route("/api/teacher", teacher);
 app.route("/api/teacher-application", teacherApplication);
 app.route("/api/admin", admin);
 

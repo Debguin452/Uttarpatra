@@ -5,6 +5,8 @@ import { api, ApiError } from "../lib/api";
 import { authUser, loadMe, me } from "../lib/session";
 import { errorText } from "../lib/format";
 import { go } from "../lib/router";
+import { Select } from "../components/Select";
+import { Logo } from "../components/Logo";
 import type { SignupIntent } from "../lib/onboarding";
 
 export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: SignupIntent }) {
@@ -50,6 +52,7 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
 
   return (
     <main class={mode === "create" ? "center" : "screen"}>
+      {mode === "create" && <Logo width={130} />}
       <h1 class="title">{isTeacherSignup ? t("register_title_teacher") : t("register_title")}</h1>
       {isTeacherSignup && <p class="muted">{t("register_title_teacher_body")}</p>}
       <form class="stack" onSubmit={submit}>
@@ -74,12 +77,20 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
           <>
             <div class="field">
               <label for="class">{t("student_class")}</label>
-              <select id="class" class="input" value={studentClass} onChange={(e) => setStudentClass(e.currentTarget.value)}>
-                <option value="" />
-                <option value="11">{t("class_11")}</option>
-                <option value="12">{t("class_12")}</option>
-                <option value="dropper">{t("class_dropper")}</option>
-              </select>
+              <Select
+              id="class"
+              value={studentClass}
+              onChange={setStudentClass}
+              options={[
+                { value: "", label: t("select_none") },
+                ...["5", "6", "7", "8", "9", "10", "11", "12"].map((grade) => ({
+                  value: grade,
+                  label: t(`class_${grade}`),
+                  group: t("admin_group_school"),
+                })),
+                { value: "dropper", label: t("class_dropper"), group: t("class_group_other") },
+              ]}
+            />
               <span class="hint">{t("class_hint")}</span>
             </div>
             <div class="field">

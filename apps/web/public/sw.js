@@ -1,5 +1,5 @@
-const SHELL_CACHE = "shell-v2";
-const SHELL_ASSETS = ["/", "/offline.html", "/manifest.json", "/icon.svg"];
+const SHELL_CACHE = "shell-v3";
+const SHELL_ASSETS = ["/", "/offline.html", "/manifest.json", "/logo.webp", "/favicon.ico"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_ASSETS)));

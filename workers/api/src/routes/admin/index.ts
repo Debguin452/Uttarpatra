@@ -7,6 +7,7 @@ import batches from "./batches";
 import materials from "./materials";
 import notices from "./notices";
 import teachers from "./teachers";
+import subjects from "./subjects";
 import users from "./users";
 
 const app = new Hono<AppEnv>();
@@ -18,6 +19,7 @@ app.route("/", users);
 app.route("/", teachers);
 app.route("/notices", notices);
 app.route("/batches", batches);
+app.route("/subjects", subjects);
 app.route("/analytics", analytics);
 app.route("/banners", banners);
 app.route("/materials", materials);

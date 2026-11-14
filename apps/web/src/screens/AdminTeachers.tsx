@@ -3,12 +3,14 @@ import { t } from "@coaching-app/shared/i18n";
 import { Loading, SectionHead, Sheet } from "../components/ui";
 import { api, ApiError } from "../lib/api";
 import { errorText, when } from "../lib/format";
+import { useSubjects } from "../lib/queries";
+import { subjectNames } from "../lib/subjects";
 import type { AdminTeacher, AdminTeacherApplication } from "../lib/types";
 
-const subjectList = (subjects: string[] | null) =>
-  subjects && subjects.length > 0 ? subjects.map((s) => t(`subject_${s}`)).join(", ") : "—";
 
 export function AdminTeachers() {
+  const subjectRows = useSubjects();
+  const subjectList = (ids: string[] | null) => subjectNames(subjectRows.data, ids);
   const [applications, setApplications] = useState<AdminTeacherApplication[] | null>(null);
   const [teachers, setTeachers] = useState<AdminTeacher[] | null>(null);
   const [error, setError] = useState<string | null>(null);

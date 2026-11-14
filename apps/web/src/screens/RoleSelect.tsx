@@ -1,11 +1,13 @@
 import { t } from "@coaching-app/shared/i18n";
 import { IconBatches, IconProfile } from "@coaching-app/ui/icons";
 import { LangToggle } from "../components/LangToggle";
+import { Logo } from "../components/Logo";
 import { chooseSignupRole } from "../lib/onboarding";
 
 export function RoleSelect() {
   return (
     <main class="center">
+      <Logo width={150} />
       <LangToggle />
       <div class="stack">
         <h1 class="title">{t("role_select_title")}</h1>
