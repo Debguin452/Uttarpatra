@@ -130,6 +130,59 @@ export type AdminTeacher = {
   batch_count: number;
 };
 
+export type TeacherStudentRow = {
+  uid: string;
+  name: string;
+  phone: string | null;
+  student_class: string | null;
+  batches_with_me: number;
+};
+
+export type TeacherStudentDetail = {
+  student: {
+    uid: string;
+    name: string;
+    phone: string | null;
+    student_class: string | null;
+    board: string | null;
+    school: string | null;
+  };
+  enrollments: { batch_id: string; title_bn: string; title_en: string; created_at: number }[];
+  attempts: {
+    title_bn: string;
+    title_en: string;
+    score: number;
+    correct_count: number;
+    wrong_count: number;
+    submitted_at: number;
+  }[];
+};
+
+export type TeacherDoubt = {
+  id: string;
+  uid: string;
+  name: string;
+  batch_id: string | null;
+  batch_title_en: string | null;
+  subject: string | null;
+  question_text: string;
+  image_drive_id: string | null;
+  status: "open" | "answered";
+  answer_text: string | null;
+  created_at: number;
+};
+
+export type MyDoubt = {
+  id: string;
+  batch_id: string | null;
+  subject: string | null;
+  question_text: string;
+  image_drive_id: string | null;
+  status: "open" | "answered";
+  answer_text: string | null;
+  created_at: number;
+};
+
 export type Me =
   | { registered: false }
   | { registered: true; user: UserRow; enrollments: { batch_id: string; expires_at: number | null }[] };

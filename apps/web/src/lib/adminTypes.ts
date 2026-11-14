@@ -53,3 +53,40 @@ export type AdminSubject = {
   sort_order: number;
   assignment_count: number;
 };
+
+export type AdminNote = {
+  id: string;
+  batch_id: string | null;
+  batch_title_en: string | null;
+  lecture_id: string | null;
+  title_bn: string;
+  title_en: string;
+  drive_file_id: string;
+  kind: "note" | "dpp";
+  is_free: number;
+  created_at: number;
+};
+
+export type AdminBanner = {
+  id: string;
+  image_url: string;
+  title_bn: string;
+  title_en: string;
+  batch_id: string | null;
+  link_url: string | null;
+  order_index: number;
+  status: "active" | "inactive";
+  created_at: number;
+};
+
+export type AuditLogEntry = {
+  id: number;
+  actor_uid: string;
+  actor_name: string | null;
+  action: string;
+  target: string;
+  meta_json: string | null;
+  created_at: number;
+};
+
+export type AuditLogPage = { entries: AuditLogEntry[]; nextCursor: number | null };

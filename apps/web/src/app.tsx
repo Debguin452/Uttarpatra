@@ -26,6 +26,10 @@ const AdminShell = lazyScreen<Record<string, never>>(() =>
   import("./screens/admin/AdminShell").then((m) => m.AdminShell as never),
 );
 
+const TeacherShell = lazyScreen<Record<string, never>>(() =>
+  import("./screens/teacher/TeacherShell").then((m) => m.TeacherShell as never),
+);
+
 function Screen({ pendingTeacher }: { pendingTeacher: boolean }) {
   const [head, arg] = segments();
   if (pendingTeacher && head !== "profile") return <TeacherApply />;
@@ -72,6 +76,7 @@ export function App() {
   if (!profile.registered) return <Register mode="create" intent={signupIntent.value} />;
 
   if (profile.user.role === "support" || profile.user.role === "super_admin") return <AdminShell />;
+  if (profile.user.role === "teacher") return <TeacherShell />;
 
   const pendingTeacher = profile.user.role === "student" && signupIntent.value === "teacher";
   const running = segments()[0] === "tests" && Boolean(segments()[1]);

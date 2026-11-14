@@ -7,7 +7,10 @@ import { AdminPayments, AdminUsers } from "../Admin";
 import { AdminTeachers } from "../AdminTeachers";
 import { Profile } from "../Profile";
 import { Register } from "../Register";
+import { AdminAnalytics } from "./AdminAnalytics";
+import { AdminBanners } from "./AdminBanners";
 import { AdminBatchEditor, AdminBatches } from "./AdminBatches";
+import { AdminMaterials } from "./AdminMaterials";
 import { AdminNotices } from "./AdminNotices";
 import { AdminSubjects } from "./AdminSubjects";
 
@@ -15,9 +18,12 @@ const TABS = [
   { id: "payments", label: "admin_tab_payments", superOnly: false },
   { id: "users", label: "admin_tab_users", superOnly: false },
   { id: "batches", label: "admin_tab_batches", superOnly: false },
+  { id: "materials", label: "admin_tab_materials", superOnly: false },
   { id: "notices", label: "admin_tab_notices", superOnly: false },
+  { id: "banners", label: "admin_tab_banners", superOnly: false },
   { id: "teachers", label: "admin_tab_teachers", superOnly: true },
   { id: "subjects", label: "admin_tab_subjects", superOnly: true },
+  { id: "analytics", label: "admin_tab_analytics", superOnly: true },
 ] as const;
 
 export function AdminShell() {
@@ -83,7 +89,9 @@ export function AdminShell() {
           </>
         )}
         {current === "batches" && (sub ? <AdminBatchEditor id={sub} /> : <AdminBatches />)}
+        {current === "materials" && <AdminMaterials />}
         {current === "notices" && <AdminNotices />}
+        {current === "banners" && <AdminBanners />}
         {current === "teachers" && (
           <>
             <h1 class="title">{t("admin_tab_teachers")}</h1>
@@ -91,6 +99,7 @@ export function AdminShell() {
           </>
         )}
         {current === "subjects" && <AdminSubjects />}
+        {current === "analytics" && <AdminAnalytics />}
         {current === "profile" && (tab === "edit" ? <Register mode="edit" /> : (
           <div class="stack">
             <LangToggle />
