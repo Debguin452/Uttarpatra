@@ -64,7 +64,7 @@ export function useCachedQuery<T>(
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    async function loadThenMaybeRevalidate() {
       const cached = await idbGet<T>(key);
       if (cancelled) return;
       if (cached) {
@@ -80,8 +80,25 @@ export function useCachedQuery<T>(
         setState((s) => ({ ...s, isLoading: true }));
         revalidate(null, null);
       }
-    })();
-    return () => void (cancelled = true);
+    }
+    void loadThenMaybeRevalidate();
+
+    // Mount-time freshness is not enough: an installed app that's
+    // backgrounded and resumed (the normal lifecycle on mobile) never
+    // remounts this component, so without this listener data past its
+    // TTL would otherwise sit stale for the rest of the session. This
+    // is the data-side counterpart of the service-worker update check
+    // in main.tsx — both exist so a long-lived session converges back
+    // to current instead of silently drifting from it.
+    function onVisible() {
+      if (document.visibilityState === "visible") void loadThenMaybeRevalidate();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 

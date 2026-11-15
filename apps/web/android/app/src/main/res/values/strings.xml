@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">উত্তরপত্র</string>
+    <string name="title_activity_main">উত্তরপত্র</string>
+    <string name="package_name">com.uttarpatro.app</string>
+    <string name="custom_url_scheme">com.uttarpatro.app</string>
+</resources>

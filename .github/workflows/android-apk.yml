@@ -1,0 +1,82 @@
+name: android-apk
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "versionName shown to users (e.g. 1.0.3). Leave blank to keep 1.0."
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: "pnpm" }
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build web assets
+        run: pnpm build:web
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+          VITE_TURNSTILE_SITEKEY: ${{ vars.VITE_TURNSTILE_SITEKEY }}
+          VITE_UPI_ID: ${{ vars.VITE_UPI_ID }}
+          VITE_UPI_PAYEE: ${{ vars.VITE_UPI_PAYEE }}
+
+      - name: Sync into the Android project
+        working-directory: apps/web
+        run: npx cap sync android
+
+      - name: Set versionName
+        if: ${{ inputs.version_name != '' }}
+        working-directory: apps/web/android/app
+        run: sed -i "s/versionName \".*\"/versionName \"${{ inputs.version_name }}\"/" build.gradle
+
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      # ubuntu-latest ships the Android SDK/build-tools preinstalled —
+      # see actions/runner-images — so no separate SDK setup action.
+
+      - name: Decode release keystore
+        id: signing
+        working-directory: apps/web/android
+        run: |
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+            cat > app/keystore.properties <<EOF
+          storeFile=release.keystore
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+            echo "has_keystore=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_keystore=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build debug APK
+        working-directory: apps/web/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Build release APK
+        if: steps.signing.outputs.has_keystore == 'true'
+        working-directory: apps/web/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: apps/web/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        if: steps.signing.outputs.has_keystore == 'true'
+        with:
+          name: app-release
+          path: apps/web/android/app/build/outputs/apk/release/app-release.apk
