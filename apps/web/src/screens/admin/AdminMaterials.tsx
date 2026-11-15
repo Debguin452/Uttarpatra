@@ -16,7 +16,7 @@ type Draft = {
   titleBn: string;
   titleEn: string;
   driveFileId: string;
-  kind: "note" | "dpp";
+  kind: "note" | "dpp" | "flashcard" | "formula";
   isFree: boolean;
 };
 
@@ -129,8 +129,7 @@ export function AdminMaterials() {
           <button class="item" key={note.id} onClick={() => setDraft(toDraft(note))}>
             <span class="name">{pick(note, "title")}</span>
             <span class="meta">
-              {note.batch_title_en ?? t("admin_audience_all")} · {t(note.kind === "dpp" ? "material_dpp" : "material_note")} ·{" "}
-              {when(note.created_at)}
+              {note.batch_title_en ?? t("admin_audience_all")} · {t(`material_${note.kind}`)} · {when(note.created_at)}
             </span>
             <span class="side">{Boolean(note.is_free) && <span class="badge mark">{t("free")}</span>}</span>
           </button>
@@ -172,6 +171,8 @@ export function AdminMaterials() {
                 options={[
                   { id: "note", label: t("material_note") },
                   { id: "dpp", label: t("material_dpp") },
+                  { id: "flashcard", label: t("material_flashcard") },
+                  { id: "formula", label: t("material_formula") },
                 ]}
               />
             </Field>

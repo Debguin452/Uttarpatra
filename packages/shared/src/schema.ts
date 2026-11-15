@@ -157,13 +157,57 @@ export const BannerUpsert = z.object({
 });
 export type BannerUpsert = z.infer<typeof BannerUpsert>;
 
+export const LectureUpsert = z.object({
+  batchId: z.string().min(1),
+  chapter: z.string().trim().min(1).max(120),
+  titleBn: z.string().trim().min(1).max(160),
+  titleEn: z.string().trim().min(1).max(160),
+  youtubeId: z.string().trim().min(1).max(60),
+  durationSec: z.number().int().positive().optional(),
+  orderIndex: z.number().int().default(0),
+  isLive: z.boolean().default(false),
+  liveAt: z.number().int().positive().nullable().optional(),
+});
+export type LectureUpsert = z.infer<typeof LectureUpsert>;
+
+export const CouponUpsert = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(3)
+    .max(30)
+    .transform((v) => v.toUpperCase()),
+  discountType: z.enum(["percent", "flat"]),
+  discountValue: z.number().int().positive(),
+  maxUses: z.number().int().positive().nullable().optional(),
+  validFrom: z.number().int().positive().nullable().optional(),
+  validUntil: z.number().int().positive().nullable().optional(),
+  batchId: z.string().min(1).nullable().optional(),
+});
+export type CouponUpsert = z.infer<typeof CouponUpsert>;
+
+export const TestUpsert = z.object({
+  batchId: z.string().min(1).nullable().optional(),
+  titleBn: z.string().trim().min(1).max(160),
+  titleEn: z.string().trim().min(1).max(160),
+  kind: z.enum(["full_mock", "chapter", "daily_quiz", "pyq", "scholarship"]),
+  durationSec: z.number().int().positive(),
+  totalMarks: z.number().int().positive(),
+  negativeMark: z.number().min(0).default(0),
+  questions: z.array(BulkQuestionRow).min(1),
+  opensAt: z.number().int().positive().nullable().optional(),
+  closesAt: z.number().int().positive().nullable().optional(),
+  status: z.enum(["draft", "scheduled", "live", "closed"]).default("draft"),
+});
+export type TestUpsert = z.infer<typeof TestUpsert>;
+
 export const NoteUpsert = z.object({
   batchId: z.string().min(1).nullable().optional(),
   lectureId: z.string().min(1).nullable().optional(),
   titleBn: z.string().trim().min(1).max(160),
   titleEn: z.string().trim().min(1).max(160),
   driveFileId: z.string().trim().min(1).max(200),
-  kind: z.enum(["note", "dpp"]).default("note"),
+  kind: z.enum(["note", "dpp", "flashcard", "formula"]).default("note"),
   isFree: z.boolean().default(false),
 });
 export type NoteUpsert = z.infer<typeof NoteUpsert>;

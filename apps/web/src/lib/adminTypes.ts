@@ -62,9 +62,78 @@ export type AdminNote = {
   title_bn: string;
   title_en: string;
   drive_file_id: string;
-  kind: "note" | "dpp";
+  kind: "note" | "dpp" | "flashcard" | "formula";
   is_free: number;
   created_at: number;
+};
+
+export type AdminLecture = {
+  id: string;
+  batch_id: string;
+  batch_title_en: string;
+  chapter: string;
+  title_bn: string;
+  title_en: string;
+  youtube_id: string;
+  duration_sec: number | null;
+  order_index: number;
+  is_live: number;
+  live_at: number | null;
+  created_at: number;
+};
+
+export type AdminCoupon = {
+  code: string;
+  discount_type: "percent" | "flat";
+  discount_value: number;
+  max_uses: number | null;
+  used_count: number;
+  valid_from: number | null;
+  valid_until: number | null;
+  batch_id: string | null;
+  batch_title_en: string | null;
+};
+
+export type AdminTestRow = {
+  id: string;
+  batch_id: string | null;
+  batch_title_en: string | null;
+  title_bn: string;
+  title_en: string;
+  kind: "full_mock" | "chapter" | "daily_quiz" | "pyq" | "scholarship";
+  duration_sec: number;
+  total_marks: number;
+  negative_mark: number;
+  opens_at: number | null;
+  closes_at: number | null;
+  status: "draft" | "scheduled" | "live" | "closed";
+  created_at: number;
+  attempt_count: number;
+};
+
+export type AdminTestQuestion = {
+  id?: string;
+  subject: string;
+  type: "mcq" | "assertion_reason" | "true_false" | "match" | "case_based";
+  prompt: string;
+  options: string[];
+  answer: string;
+  marks: number;
+};
+
+export type AdminTestDetail = {
+  id: string;
+  batch_id: string | null;
+  title_bn: string;
+  title_en: string;
+  kind: AdminTestRow["kind"];
+  duration_sec: number;
+  total_marks: number;
+  negative_mark: number;
+  questions_json: string;
+  opens_at: number | null;
+  closes_at: number | null;
+  status: AdminTestRow["status"];
 };
 
 export type AdminBanner = {

@@ -25,6 +25,17 @@ export type Lecture = {
   live_at: number | null;
 };
 
+export type LiveLecture = {
+  id: string;
+  batch_id: string;
+  batch_title_bn: string;
+  batch_title_en: string;
+  title_bn: string;
+  title_en: string;
+  youtube_id: string;
+  live_at: number;
+};
+
 export type Notice = {
   id: string;
   title_bn: string;

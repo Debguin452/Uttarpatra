@@ -10,15 +10,21 @@ import { Register } from "../Register";
 import { AdminAnalytics } from "./AdminAnalytics";
 import { AdminBanners } from "./AdminBanners";
 import { AdminBatchEditor, AdminBatches } from "./AdminBatches";
+import { AdminCoupons } from "./AdminCoupons";
+import { AdminLectures } from "./AdminLectures";
 import { AdminMaterials } from "./AdminMaterials";
 import { AdminNotices } from "./AdminNotices";
 import { AdminSubjects } from "./AdminSubjects";
+import { AdminTests } from "./AdminTests";
 
 const TABS = [
   { id: "payments", label: "admin_tab_payments", superOnly: false },
   { id: "users", label: "admin_tab_users", superOnly: false },
   { id: "batches", label: "admin_tab_batches", superOnly: false },
+  { id: "lectures", label: "admin_tab_lectures", superOnly: false },
   { id: "materials", label: "admin_tab_materials", superOnly: false },
+  { id: "tests", label: "admin_tab_tests", superOnly: false },
+  { id: "coupons", label: "admin_tab_coupons", superOnly: false },
   { id: "notices", label: "admin_tab_notices", superOnly: false },
   { id: "banners", label: "admin_tab_banners", superOnly: false },
   { id: "teachers", label: "admin_tab_teachers", superOnly: true },
@@ -89,7 +95,10 @@ export function AdminShell() {
           </>
         )}
         {current === "batches" && (sub ? <AdminBatchEditor id={sub} /> : <AdminBatches />)}
+        {current === "lectures" && <AdminLectures />}
         {current === "materials" && <AdminMaterials />}
+        {current === "tests" && <AdminTests />}
+        {current === "coupons" && <AdminCoupons />}
         {current === "notices" && <AdminNotices />}
         {current === "banners" && <AdminBanners />}
         {current === "teachers" && (

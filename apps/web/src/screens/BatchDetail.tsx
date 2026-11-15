@@ -1,23 +1,41 @@
 import { useEffect, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { Async, Loading, SectionHead } from "../components/ui";
+import { setContinueLearning } from "../lib/continueLearning";
 import { money, pick } from "../lib/format";
 import { useBatchContent, useBatches, useMyBatches } from "../lib/queries";
 import { go } from "../lib/router";
 import { markOpenedLecture } from "../lib/onboarding";
 import { enrolledIds } from "../lib/session";
-import type { Lecture } from "../lib/types";
+import type { Batch, Lecture } from "../lib/types";
 
 const embed = (id: string) => `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
 const driveLink = (id: string) => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
 
-function Content({ batchId }: { batchId: string }) {
-  const content = useBatchContent(batchId);
+function Content({ batch }: { batch: Batch }) {
+  const content = useBatchContent(batch.id);
   const [active, setActive] = useState<Lecture | null>(null);
+
+  const lectures = content.data?.lectures ?? [];
+  const current = active ?? lectures[0] ?? null;
 
   useEffect(() => {
     if (content.data && content.data.lectures.length > 0) markOpenedLecture();
   }, [content.data]);
+
+  useEffect(() => {
+    if (!current) return;
+    setContinueLearning({
+      batchId: batch.id,
+      batchTitleBn: batch.title_bn,
+      batchTitleEn: batch.title_en,
+      lectureId: current.id,
+      titleBn: current.title_bn,
+      titleEn: current.title_en,
+      chapter: current.chapter,
+      at: Date.now(),
+    });
+  }, [current?.id]);
 
   return (
     <Async q={content}>
@@ -122,7 +140,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
                 {pick(batch, "summary") && <p class="muted">{pick(batch, "summary")}</p>}
               </header>
               {open ? (
-                <Content batchId={batch.id} />
+                <Content batch={batch} />
               ) : (
                 <div class="stack">
                   {batch.preview_video_id && (

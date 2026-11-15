@@ -29,6 +29,31 @@ authedRoutes.get("/mine", async (c) => {
   return c.json(rows.results);
 });
 
+// "Today's live classes": live lectures starting within the next 24h (plus a
+// 2h grace window for ones already under way) across batches the student is
+// enrolled in, or any free batch.
+authedRoutes.get("/live-today", async (c) => {
+  const uid = c.get("uid");
+  const now = Math.floor(Date.now() / 1000);
+  const rows = await c.env.DB
+    .prepare(
+      `SELECT l.id, l.batch_id, b.title_bn AS batch_title_bn, b.title_en AS batch_title_en,
+              l.title_bn, l.title_en, l.youtube_id, l.live_at
+       FROM lectures l JOIN batches b ON b.id = l.batch_id
+       WHERE l.is_live = 1 AND l.live_at IS NOT NULL
+         AND l.live_at BETWEEN ?1 AND ?2
+         AND b.status = 'published'
+         AND (
+           b.kind = 'free'
+           OR EXISTS (SELECT 1 FROM enrollments e WHERE e.uid = ?3 AND e.batch_id = b.id AND (e.expires_at IS NULL OR e.expires_at > unixepoch()))
+         )
+       ORDER BY l.live_at LIMIT 20`,
+    )
+    .bind(now - 7200, now + 86400, uid)
+    .all();
+  return c.json(rows.results);
+});
+
 authedRoutes.get("/:id/content", async (c) => {
   const batchId = c.req.param("id");
   const uid = c.get("uid");
