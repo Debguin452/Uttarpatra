@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#03297E" />
+<title>উত্তরপত্র Coaching Institute — Classes 5–12, NEET, JEE, CUET</title>
+<meta name="description" content="Batches, lectures, study materials, timed tests and doubt-clearing for Classes 5 to 12, NEET, JEE and CUET — in Bengali and English." />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600&family=Noto+Serif+Bengali:wght@500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap"
+/>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #171B20;
+    --paper: #F0F1EC;
+    --surface: #FAFAF7;
+    --line: #D6D2C4;
+    --muted: #5B6169;
+    --mark: #03297E;
+    --mark-paper: #E2E8F5;
+    --signal: #C98A2B;
+    --font-headline: "Source Serif 4", "Noto Serif Bengali", Georgia, serif;
+    --font-ui: "Hind Siliguri", "Inter", system-ui, sans-serif;
+    --content-max: 920px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ink: #EDEEEA;
+      --paper: #14171B;
+      --surface: #1B1F24;
+      --line: #30343A;
+      --muted: #9A9FA6;
+      --mark: #8FB0F5;
+      --mark-paper: #172340;
+      --signal: #E0A54B;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--font-headline); font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; margin: 0; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
+  .skip { position: absolute; left: -9999px; top: 0; background: var(--mark); color: var(--paper); padding: 10px 16px; z-index: 10; }
+  .skip:focus { left: 12px; top: 12px; }
+
+  .wrap { max-width: var(--content-max); margin: 0 auto; padding: 0 20px; }
+
+  header.site { border-bottom: 1.5px solid var(--line); }
+  .site-row { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .brand img { width: 34px; height: auto; display: block; }
+  .brand span { font-family: var(--font-headline); font-size: 1.15rem; font-weight: 600; }
+  .site-links { display: flex; align-items: center; gap: 22px; }
+  .site-links a.plain { font-size: 0.95rem; color: var(--muted); text-decoration: none; }
+  .site-links a.plain:hover { color: var(--ink); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 42px; padding: 0 18px; border-radius: 6px; border: 1.5px solid var(--ink);
+    font: inherit; font-weight: 500; font-size: 0.95rem; text-decoration: none; white-space: nowrap;
+  }
+  .btn.primary { background: var(--mark); border-color: var(--mark); color: var(--paper); }
+  .nav-toggle { display: none; background: none; border: 1.5px solid var(--line); border-radius: 6px; width: 42px; height: 42px; }
+  .nav-toggle span, .nav-toggle::before, .nav-toggle::after { content: ""; display: block; width: 18px; height: 1.5px; background: var(--ink); margin: 4px auto; }
+
+  main { animation: rise 520ms cubic-bezier(.2,0,0,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .hero { padding: 56px 0 36px; }
+  .hero .mark { font-family: var(--font-headline); font-size: 0.95rem; color: var(--muted); margin: 0 0 10px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 2.9rem); max-width: 18ch; }
+  .hero p.lede { margin: 18px 0 0; max-width: 56ch; color: var(--muted); font-size: 1.05rem; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+  .ledger { border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--line); }
+  .ledger .wrap { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .ledger .cell { padding: 18px 20px 18px 0; border-left: 1px solid var(--line); padding-left: 20px; }
+  .ledger .cell:first-child { border-left: none; padding-left: 0; }
+  .ledger .cell strong { display: block; font-family: var(--font-headline); font-size: 1.05rem; margin-bottom: 2px; }
+  .ledger .cell span { display: block; font-size: 0.85rem; color: var(--muted); }
+
+  section.track { padding: 52px 0; border-bottom: 1.5px solid var(--line); }
+  section.track:last-of-type { border-bottom: none; }
+  .track-head { display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 28px; max-width: 46ch; }
+  .track-head h2 { font-size: 1.6rem; }
+  .track-head p { margin: 0; color: var(--muted); }
+  .rows { display: grid; }
+  .row { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 20px; padding: 18px 0; border-top: 1px solid var(--line); align-items: baseline; }
+  .rows .row:last-child { border-bottom: 1px solid var(--line); }
+  .row .label { font-weight: 600; }
+  .row .desc { color: var(--muted); }
+  .track.teacher .row .label { color: var(--signal); }
+  .note { margin-top: 18px; font-size: 0.9rem; color: var(--muted); border-left: 2px solid var(--line); padding-left: 14px; }
+
+  .steps { counter-reset: step; display: grid; gap: 0; }
+  .step { display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 20px 0; border-top: 1px solid var(--line); }
+  .steps .step:last-child { border-bottom: 1px solid var(--line); }
+  .step .num { counter-increment: step; font-family: var(--font-headline); font-size: 1.3rem; color: var(--mark); }
+  .step .num::before { content: counter(step); }
+  .step h3 { font-size: 1.05rem; margin-bottom: 4px; }
+  .step p { margin: 0; color: var(--muted); }
+
+  .closer { padding: 52px 0 64px; }
+  .closer .panel { border: 1.5px solid var(--ink); border-radius: 6px; padding: 34px 28px; display: grid; gap: 14px; }
+  .closer h2 { font-size: 1.5rem; }
+  .closer p { margin: 0; color: var(--muted); max-width: 56ch; }
+
+  footer.site { border-top: 1.5px solid var(--line); padding: 32px 0 40px; }
+  footer.site .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: flex-start; }
+  footer.site .tagline { font-size: 0.85rem; color: var(--muted); max-width: 40ch; }
+  footer.site .links { display: flex; gap: 18px; font-size: 0.9rem; }
+  footer.site .links a { text-decoration: none; color: var(--muted); }
+  footer.site .links a:hover { color: var(--ink); }
+  footer.site .copy { width: 100%; font-size: 0.8rem; color: var(--muted); margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+
+  @media (max-width: 760px) {
+    .ledger .wrap { grid-template-columns: repeat(2, 1fr); }
+    .ledger .cell:nth-child(3) { border-left: none; padding-left: 0; }
+    .ledger .cell:nth-child(odd) { border-left: none; padding-left: 0; }
+    .row { grid-template-columns: 1fr; gap: 4px; }
+  }
+  @media (max-width: 620px) {
+    .site-links .btn.secondary-link { display: none; }
+    .nav-toggle { display: block; }
+    .site-links { position: fixed; inset: 0 0 auto auto; margin-top: 68px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 6px; flex-direction: column; align-items: stretch; padding: 10px; gap: 2px; width: 220px; transform-origin: top right; display: none; }
+    .site-links.open { display: flex; }
+    .site-links a.plain, .site-links .btn { width: 100%; padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="wrap site-row">
+    <a class="brand" href="/landing.html">
+      <img src="/logo.webp" alt="" width="640" height="532" />
+      <span>উত্তরপত্র</span>
+    </a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="site-links" aria-label="Menu" onclick="
+      var open = this.getAttribute('aria-expanded') === 'true';
+      this.setAttribute('aria-expanded', String(!open));
+      document.getElementById('site-links').classList.toggle('open', !open);
+    "></button>
+    <nav class="site-links" id="site-links">
+      <a class="plain" href="#students">For students</a>
+      <a class="plain" href="#teachers">For teachers</a>
+      <a class="plain secondary-link" href="/privacy.html">Privacy</a>
+      <a class="plain secondary-link" href="/terms.html">Terms</a>
+      <a class="btn primary" href="/">Sign in</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap">
+      <p class="mark">উত্তরপত্র Coaching Institute</p>
+      <h1>The answer sheet, before the exam.</h1>
+      <p class="lede">
+        Batches, recorded lectures, study materials, timed tests and doubt-clearing for Classes 5 to 12, NEET, JEE
+        and CUET — in Bengali and English, on one account.
+      </p>
+      <div class="cta-row">
+        <a class="btn primary" href="/">Start as a student</a>
+        <a class="btn" href="/">Apply to teach</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="ledger">
+    <div class="wrap">
+      <div class="cell"><strong>Classes 5–12</strong><span>plus droppers</span></div>
+      <div class="cell"><strong>NEET · JEE · CUET</strong><span>crash &amp; one-shot batches too</span></div>
+      <div class="cell"><strong>বাংলা + English</strong><span>switch any time</span></div>
+      <div class="cell"><strong>19 subjects</strong><span>across every stream</span></div>
+    </div>
+  </div>
+
+  <section class="track student" id="students">
+    <div class="wrap">
+      <div class="track-head">
+        <h2>What a student gets</h2>
+        <p>Everything stays scoped to the batches you're actually enrolled in.</p>
+      </div>
+      <div class="rows">
+        <div class="row"><span class="label">Batches</span><span class="desc">A catalogue filtered by your class and exam, with the ones you've joined always one tap away — archived batches stay visible too.</span></div>
+        <div class="row"><span class="label">Lectures &amp; materials</span><span class="desc">Recorded classes and notes, organised by batch, not scattered across group chats.</span></div>
+        <div class="row"><span class="label">Timed tests</span><span class="desc">A real exam clock, a question palette, mark-for-review, one attempt — scored the moment you submit.</span></div>
+        <div class="row"><span class="label">Doubts</span><span class="desc">Ask a question against your batch. It reaches the teachers assigned to it.</span></div>
+        <div class="row"><span class="label">Notices</span><span class="desc">Batch and institute announcements, pinned when they matter.</span></div>
+        <div class="row"><span class="label">Enrolling</span><span class="desc">Pay by UPI, add the reference number and a screenshot, and a coordinator confirms it.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="track teacher" id="teachers">
+    <div class="wrap">
+      <div class="track-head">
+        <h2>What a teacher gets</h2>
+        <p>Teaching access is reviewed, not automatic — and separate from how students sign up.</p>
+      </div>
+      <div class="rows">
+        <div class="row"><span class="label">Apply to teach</span><span class="desc">List your subjects, qualification and experience, and add a short demo video.</span></div>
+        <div class="row"><span class="label">Review</span><span class="desc">A super admin reviews every application before it's approved — you'll see the decision and any note.</span></div>
+        <div class="row"><span class="label">Your batches</span><span class="desc">Once approved, a console of your own shows exactly which batches and subjects you're assigned to.</span></div>
+      </div>
+      <p class="note">Roster view and in-app doubt answering are on the way — the application and assignment flow above is live today.</p>
+    </div>
+  </section>
+
+  <section class="track">
+    <div class="wrap">
+      <div class="track-head">
+        <h2>How you start</h2>
+        <p>The same account can apply for either role later — nothing is locked in on day one.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><span class="num" aria-hidden="true"></span><div><h3>Sign in</h3><p>With Google or an email and password. No separate app to install.</p></div></div>
+        <div class="step"><span class="num" aria-hidden="true"></span><div><h3>Tell us who you are</h3><p>Your class and board as a student, or your subjects and experience if you'd rather teach.</p></div></div>
+        <div class="step"><span class="num" aria-hidden="true"></span><div><h3>Get going</h3><p>Join a batch and start studying, or wait for your teaching application to be reviewed.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="closer">
+    <div class="wrap">
+      <div class="panel">
+        <h2>Ready when you are.</h2>
+        <p>Sign in with Google or your email — setting up your profile takes under a minute.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="/">Get started</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div>
+      <p class="tagline">শিক্ষাই আমাদের লক্ষ্য, সফলতাই আমাদের প্রয়াস — education is our goal, success is our endeavour.</p>
+      <p class="tagline" style="margin-top:8px">
+        Kolkata, West Bengal ·
+        <a href="tel:+917596975833">+91 75969 75833</a> ·
+        <a href="mailto:tutionclassesmrroy@gmail.com">tutionclassesmrroy@gmail.com</a>
+      </p>
+    </div>
+    <nav class="links">
+      <a href="#students">For students</a>
+      <a href="#teachers">For teachers</a>
+      <a href="/privacy.html">Privacy policy</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/">Sign in</a>
+    </nav>
+    <p class="copy">© <span id="y"></span> উত্তরপত্র Coaching Institute.</p>
+  </div>
+</footer>
+
+<script>
+  document.getElementById("y").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
