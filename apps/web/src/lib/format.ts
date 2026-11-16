@@ -48,6 +48,6 @@ export function when(unixSec: number): string {
 export function errorText(code: string): string {
   if (code === "payment_pending") return t("payment_pending_exists");
   if (code === "network") return t("offline_notice");
-  if (["rate_limited", "utr_already_used", "coupon_invalid", "already_submitted", "already_staff", "already_reviewed", "invalid_subject", "batch_id_taken", "subject_id_taken", "not_a_teacher", "batch_not_found", "not_found", "cannot_change_self"].includes(code)) return t(code);
+  if (["rate_limited", "utr_already_used", "coupon_invalid", "already_submitted", "already_staff", "already_reviewed", "invalid_subject", "batch_id_taken", "subject_id_taken", "not_a_teacher", "batch_not_found", "not_found", "cannot_change_self", "not_your_batch"].includes(code)) return t(code);
   return t("something_wrong");
 }

@@ -508,5 +508,14 @@
   "admin_bulk_result": "Added {added}, skipped {rejected}",
   "admin_fix_errors": "Please fix the highlighted fields.",
   "material_flashcard": "Flashcard",
-  "material_formula": "Formula sheet"
+  "material_formula": "Formula sheet",
+  "leaderboard": "Leaderboard",
+  "your_rank": "Your rank: #{rank} of {total}",
+  "you": "You",
+  "teach_tab_lectures": "Lectures",
+  "teach_tab_materials": "Materials",
+  "teach_tab_tests": "Tests",
+  "teach_tab_notices": "Notices",
+  "teach_batch_required_hint": "Only your own batches — a teacher can't post a notice to everyone.",
+  "not_your_batch": "That batch isn't assigned to you."
 }

@@ -14,9 +14,17 @@ import type { TeacherDoubt, TeacherPortal, TeacherStudentDetail, TeacherStudentR
 import { useLoad } from "../../lib/useLoad";
 import { Profile } from "../Profile";
 import { Register } from "../Register";
+import { TeacherLectures } from "./TeacherLectures";
+import { TeacherMaterials } from "./TeacherMaterials";
+import { TeacherNotices } from "./TeacherNotices";
+import { TeacherTests } from "./TeacherTests";
 
 const TABS = [
   { id: "batches", label: "teach_tab_batches" },
+  { id: "lectures", label: "teach_tab_lectures" },
+  { id: "materials", label: "teach_tab_materials" },
+  { id: "tests", label: "teach_tab_tests" },
+  { id: "notices", label: "teach_tab_notices" },
   { id: "students", label: "teach_tab_students" },
   { id: "doubts", label: "teach_tab_doubts" },
 ] as const;
@@ -307,6 +315,14 @@ export function TeacherShell() {
           )
         ) : current === "batches" ? (
           <TeacherBatches />
+        ) : current === "lectures" ? (
+          <TeacherLectures />
+        ) : current === "materials" ? (
+          <TeacherMaterials />
+        ) : current === "tests" ? (
+          <TeacherTests />
+        ) : current === "notices" ? (
+          <TeacherNotices />
         ) : current === "students" ? (
           <TeacherStudents />
         ) : (

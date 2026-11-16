@@ -508,5 +508,14 @@
   "admin_bulk_result": "{added}টি যোগ হয়েছে, {rejected}টি বাদ দেওয়া হয়েছে",
   "admin_fix_errors": "চিহ্নিত ঘরগুলো ঠিক করুন।",
   "material_flashcard": "ফ্ল্যাশকার্ড",
-  "material_formula": "ফর্মুলা শিট"
+  "material_formula": "ফর্মুলা শিট",
+  "leaderboard": "লিডারবোর্ড",
+  "your_rank": "তোমার র‍্যাঙ্ক: #{rank}, মোট {total} জনের মধ্যে",
+  "you": "তুমি",
+  "teach_tab_lectures": "লেকচার",
+  "teach_tab_materials": "ম্যাটেরিয়াল",
+  "teach_tab_tests": "টেস্ট",
+  "teach_tab_notices": "নোটিশ",
+  "teach_batch_required_hint": "শুধু তোমার নিজের ব্যাচ — শিক্ষক সবাইকে নোটিশ পাঠাতে পারবে না।",
+  "not_your_batch": "এই ব্যাচটি তোমাকে দেওয়া হয়নি।"
 }
