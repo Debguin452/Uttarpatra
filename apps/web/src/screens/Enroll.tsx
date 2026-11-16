@@ -143,7 +143,7 @@ export function Enroll({ batchId }: { batchId: string }) {
         </div>
         <Turnstile onToken={setToken} />
         {error && <p class="error-text">{error}</p>}
-        <button class="btn primary block" type="submit" disabled={!ready}>
+        <button class="btn primary stamp block" type="submit" disabled={!ready}>
           {t("submit_payment")}
         </button>
       </form>

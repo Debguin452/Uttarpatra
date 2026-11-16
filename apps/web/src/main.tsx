@@ -3,6 +3,7 @@ import { locale, setLocale } from "@coaching-app/shared/i18n";
 import { App } from "./app";
 import { applyTheme } from "./lib/theme";
 import { startSession } from "./lib/session";
+import "./fonts.css";
 import "./styles.css";
 
 applyTheme();

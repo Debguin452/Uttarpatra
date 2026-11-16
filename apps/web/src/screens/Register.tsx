@@ -21,9 +21,18 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const [failure, setFailure] = useState<string | null>(null);
+  // Client-side gate only, pending the real guardian-consent capture
+  // (a DB column + verification flow) that DPDP Rule 10 will require
+  // once it's in force — see Privacy.tsx. This at least stops signup
+  // without the acknowledgment, rather than shipping no check at all.
+  const [guardianAware, setGuardianAware] = useState(false);
 
   async function submit(event: Event) {
     event.preventDefault();
+    if (mode === "create" && !isTeacherSignup && !guardianAware) {
+      setFailure(t("guardian_required"));
+      return;
+    }
     const parsed = ProfileUpsert.safeParse({
       name,
       phone: phone || undefined,
@@ -107,6 +116,19 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
               <input id="school" class="input" value={school} onInput={(e) => setSchool(e.currentTarget.value)} />
             </div>
           </>
+        )}
+        {mode === "create" && !isTeacherSignup && (
+          <label class="check">
+            <input
+              type="checkbox"
+              checked={guardianAware}
+              onChange={(e) => setGuardianAware(e.currentTarget.checked)}
+            />
+            <span class="small">
+              {t("guardian_aware")} {t("legal_preamble")} <a href="#/terms">{t("terms_title")}</a> {t("and")}{" "}
+              <a href="#/privacy">{t("privacy_title")}</a>.
+            </span>
+          </label>
         )}
         {failure && <p class="error-text">{failure}</p>}
         <button class="btn primary block" type="submit" disabled={busy}>

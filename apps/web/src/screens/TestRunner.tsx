@@ -228,7 +228,7 @@ function Running({ started, onDone }: { started: StartedTest; onDone: (result: S
           <h2 class="subtitle">{t("submit_confirm_title")}</h2>
           <p class="muted">{t("submit_confirm_body", { answered, total: questions.length })}</p>
           {submitError && <p class="error-text">{submitError}</p>}
-          <button class="btn primary block" onClick={submit} disabled={busy}>
+          <button class="btn primary stamp block" onClick={submit} disabled={busy}>
             {t("confirm_submit")}
           </button>
           {!timeUp && (

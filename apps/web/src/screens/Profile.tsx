@@ -90,6 +90,11 @@ export function Profile() {
         </section>
       )}
 
+      <section class="stack">
+        <a href="#/terms" class="hint">{t("terms_title")}</a>
+        <a href="#/privacy" class="hint">{t("privacy_title")}</a>
+      </section>
+
       <button class="btn danger block" onClick={logOut}>
         {t("sign_out")}
       </button>

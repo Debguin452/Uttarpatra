@@ -45,6 +45,10 @@ export function Welcome() {
         <button class="btn quiet block" onClick={() => finishWelcome("in")}>
           {t("have_account")}
         </button>
+        <p class="hint legal-links">
+          {t("legal_preamble")} <a href="#/terms">{t("terms_title")}</a> {t("and")}{" "}
+          <a href="#/privacy">{t("privacy_title")}</a>.
+        </p>
       </div>
     </main>
   );

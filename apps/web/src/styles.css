@@ -165,3 +165,107 @@ select.input { padding-right: var(--space-3); }
 .logo.start { margin-inline: 0; }
 
 .brand-row { display: flex; align-items: center; gap: var(--space-2); }
+
+/* ============================================================
+   Answer-sheet design language
+   Used where the app is asking to be *read carefully* (legal
+   pages, notes, results) rather than tapped through quickly —
+   the margin rail, ruled lines and red-pen marks only show up
+   there, not on every screen, so they stay meaningful.
+   ============================================================ */
+
+/* Ruled paper: faint horizontal rules at a fixed interval, like a
+   school exercise book. A gradient, not a repeated element, so it
+   never fights with the actual text's own line-height. */
+.ruled {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(1.65em - 1px),
+    var(--line) calc(1.65em - 1px),
+    var(--line) 1.65em
+  );
+  background-attachment: local;
+}
+
+/* Margin rail: the red vertical line down the left of a ruled page.
+   A fixed inset keeps it clear of the text regardless of column width. */
+.legal { position: relative; }
+.legal-body {
+  padding-left: calc(var(--space-5) + 2px);
+  padding-top: var(--space-2);
+  line-height: var(--leading-relaxed);
+}
+.legal-body::before {
+  content: "";
+  position: absolute;
+  top: var(--space-6);
+  bottom: var(--space-5);
+  left: var(--space-5);
+  width: 2px;
+  background: color-mix(in srgb, var(--error) 55%, transparent);
+}
+.legal-body h2 { font-family: var(--font-headline); font-size: var(--text-md); margin: var(--space-5) 0 var(--space-2); }
+.legal-body h2:first-child { margin-top: 0; }
+.legal-body p, .legal-body li { color: var(--ink); }
+.legal-body ul { padding-left: var(--space-4); display: grid; gap: var(--space-2); }
+.legal-back { margin-bottom: var(--space-2); }
+
+/* Red-pen strokes: a corrective underline for things that are wrong
+   or need attention — never used for ordinary emphasis. */
+.pen-mark {
+  text-decoration: underline;
+  text-decoration-color: var(--error);
+  text-decoration-thickness: 2px;
+  text-decoration-style: wavy;
+  text-underline-offset: 3px;
+}
+.error-text { position: relative; }
+
+/* Stamp buttons: for the handful of actions a student commits to
+   rather than just navigates with — enrolling, submitting a test.
+   A slight rotation and a double border read as a rubber stamp
+   without needing an image asset. */
+.btn.stamp {
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: var(--text-sm);
+  transform: rotate(-1.2deg);
+  position: relative;
+}
+.btn.stamp::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.btn.stamp:active { transform: rotate(-1.2deg) scale(0.97); }
+
+/* OMR bubble: the existing .letter cell (already its own grid column
+   in .option) becomes an actual bubble — circular, outlined, filled
+   solid once chosen — instead of a plain lettered square. No layout
+   change, since .option's grid-template-columns is untouched. */
+.option .letter {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--muted);
+  display: grid;
+  place-content: center;
+  font-size: var(--text-sm);
+}
+.option[aria-checked="true"] .letter {
+  border-color: var(--mark);
+  background: var(--mark);
+  color: var(--paper);
+}
+
+/* The exam palette's number cells get the same bubble treatment for
+   an answered question. */
+.cell.done { border-radius: 50%; }

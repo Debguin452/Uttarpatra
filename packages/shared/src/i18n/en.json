@@ -517,5 +517,12 @@
   "teach_tab_tests": "Tests",
   "teach_tab_notices": "Notices",
   "teach_batch_required_hint": "Only your own batches — a teacher can't post a notice to everyone.",
-  "not_your_batch": "That batch isn't assigned to you."
+  "not_your_batch": "That batch isn't assigned to you.",
+  "privacy_title": "Privacy Policy",
+  "terms_title": "Terms of Service",
+  "legal_updated": "Last updated",
+  "legal_preamble": "By continuing you agree to our",
+  "and": "and",
+  "guardian_aware": "A parent or guardian is aware I'm creating this account, and I agree to our",
+  "guardian_required": "Please confirm a parent or guardian is aware before continuing."
 }

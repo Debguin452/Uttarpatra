@@ -1,0 +1,19 @@
+/*
+ * Self-hosted, per-script subsets — no request to fonts.googleapis.com
+ * or fonts.gstatic.com at runtime. Only the Bengali and Latin subsets
+ * ship (no Cyrillic/Greek/Vietnamese that the Google Fonts CDN link
+ * was otherwise sending to every visitor), and only the weights the
+ * stylesheet actually uses.
+ */
+@import "@fontsource/hind-siliguri/bengali-400.css";
+@import "@fontsource/hind-siliguri/bengali-500.css";
+@import "@fontsource/hind-siliguri/bengali-600.css";
+@import "@fontsource/hind-siliguri/latin-400.css";
+@import "@fontsource/hind-siliguri/latin-500.css";
+@import "@fontsource/hind-siliguri/latin-600.css";
+
+@import "@fontsource/noto-serif-bengali/bengali-500.css";
+@import "@fontsource/noto-serif-bengali/bengali-600.css";
+
+@import "@fontsource/source-serif-4/latin-500.css";
+@import "@fontsource/source-serif-4/latin-600.css";
