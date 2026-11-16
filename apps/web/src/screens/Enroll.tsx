@@ -6,7 +6,9 @@ import { Turnstile } from "../components/Turnstile";
 import { api, ApiError } from "../lib/api";
 import { compressImage } from "../lib/compressImage";
 import { errorText, money, pick } from "../lib/format";
-import { useBatches } from "../lib/queries";
+import { invalidateQuery } from "@coaching-app/shared/cache/useCachedQuery";
+import { paymentsKey, useBatches } from "../lib/queries";
+import { uid } from "../lib/session";
 import { go } from "../lib/router";
 
 const UPI_ID: string = import.meta.env.VITE_UPI_ID ?? "";
@@ -70,6 +72,9 @@ export function Enroll({ batchId }: { batchId: string }) {
         body: { batchId, utr: utr.trim(), couponCode: applied ?? undefined, screenshotBase64: screenshot },
         headers: { "cf-turnstile-token": token },
       });
+      // The payment list is cached for a minute; drop it so the new
+      // pending payment shows up on Profile straight away.
+      await invalidateQuery(paymentsKey(uid()));
       setDone(true);
     } catch (e) {
       setError(errorText(e instanceof ApiError ? e.code : "network"));

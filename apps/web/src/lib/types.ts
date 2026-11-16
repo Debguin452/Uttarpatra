@@ -236,3 +236,12 @@ export type BatchContent = { lectures: Lecture[]; notes: BatchNote[] };
 export type MyBatch = Batch & { status: "published" | "archived"; expires_at: number | null };
 
 export type SubjectRow = { id: string; name_bn: string; name_en: string; active: number; sort_order: number };
+
+export type PublicBanner = {
+  id: string;
+  image_url: string;
+  title_bn: string;
+  title_en: string;
+  batch_id: string | null;
+  link_url: string | null;
+};

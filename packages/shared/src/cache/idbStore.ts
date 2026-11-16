@@ -55,6 +55,20 @@ export async function idbSet<T>(key: string, value: T, ttlMs: number): Promise<v
   }
 }
 
+export async function idbDelete(key: string): Promise<void> {
+  try {
+    const db = await openDb();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    /* best-effort */
+  }
+}
+
 export function isFresh(entry: Entry<unknown>): boolean {
   return Date.now() - entry.storedAt < entry.ttlMs;
 }

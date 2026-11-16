@@ -20,3 +20,10 @@ describe("isFresh", () => {
     expect(isFresh({ value: null, storedAt: Date.now() - ttlMs + 1, ttlMs })).toBe(true);
   });
 });
+
+describe("idbDelete", () => {
+  it("resolves without throwing when IndexedDB is unavailable", async () => {
+    const { idbDelete } = await import("./idbStore");
+    await expect(idbDelete("missing-key")).resolves.toBeUndefined();
+  });
+});

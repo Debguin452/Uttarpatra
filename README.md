@@ -39,11 +39,11 @@ A support or super admin account can also hold teacher access as an add-on, set 
 - Notices: global or per batch, pinned
 - Subjects: add, rename, switch off. Teachers and batch assignments pick from this list
 
+**Home strip**
+- Public banners from `/public/banners` show as a strip on Home
+
 **API only, no screen yet**
-- Doubts: students ask and list, teachers answer
-- Teacher roster and student detail for assigned batches
-- Banners (public list) and banner and material management
-- Admin analytics overview, audit log, user detail, manual enroll and revoke, role change
+- Admin user detail, manual enroll and revoke, role change
 
 The route table in `workers/api/src/routes.test.ts` lists every endpoint and fails if one stops being mounted.
 

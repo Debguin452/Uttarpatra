@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { idbGet, idbSet, isFresh } from "./idbStore";
+import { idbDelete, idbGet, idbSet, isFresh } from "./idbStore";
 
 type QueryState<T> = {
   data: T | null;
@@ -12,6 +12,14 @@ type QueryState<T> = {
 // Dedupe concurrent callers (e.g. Home and a widget both asking for the
 // same batch list on mount) into one network request.
 const inflight = new Map<string, Promise<unknown>>();
+
+/**
+ * Drop a cached query after a write so the next screen that reads it
+ * fetches fresh data instead of showing the pre-write copy.
+ */
+export async function invalidateQuery(...keys: string[]): Promise<void> {
+  await Promise.all(keys.map((k) => idbDelete(k)));
+}
 
 /**
  * Cache-then-network with a TTL. On mount: paint the cached value
@@ -42,7 +50,10 @@ export function useCachedQuery<T>(
       if (!promise) {
         promise = fetcher();
         inflight.set(key, promise);
-        promise.finally(() => inflight.delete(key));
+        // Swallow on this side-chain only; the awaiting caller below still
+        // sees the rejection. Without the catch, a failed request surfaces
+        // as an unhandled rejection in the console.
+        promise.then(() => inflight.delete(key), () => inflight.delete(key));
       }
       const fresh = await promise;
       await idbSet(key, fresh, ttlMs);

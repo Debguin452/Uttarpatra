@@ -1,6 +1,7 @@
 import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { IconChevronRight } from "@coaching-app/ui/icons";
+import { Banners } from "../components/Banners";
 import { GettingStarted } from "../components/GettingStarted";
 import { Logo } from "../components/Logo";
 import { Async, SectionHead, SyncNote } from "../components/ui";
@@ -103,6 +104,7 @@ export function Home() {
         <SearchResults query={query} batches={batches} tests={tests} notices={notices} />
       ) : (
         <>
+          <Banners />
           {continuing && (
             <section class="stack">
               <SectionHead title={t("continue_learning")} />
