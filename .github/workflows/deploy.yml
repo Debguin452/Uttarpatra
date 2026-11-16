@@ -51,7 +51,7 @@ jobs:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: apps/web
-          command: pages deploy dist --project-name=uttarpatro
+          command: pages deploy dist --project-name=uttarpatra
 
       - name: Deploy Firestore rules
         run: |
