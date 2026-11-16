@@ -18,4 +18,4 @@ new_sqlite_classes = ["SessionGuard"]
 
 [vars]
 FIREBASE_PROJECT_ID = "prism0001"
-ALLOWED_ORIGIN = "http://localhost:5173,https://uttarpatro.pages.dev,https://localhost"
+ALLOWED_ORIGIN = "http://localhost:5173,https://uttarpatro.pages.dev,https://uttarpatra.pages.dev,https://localhost"
