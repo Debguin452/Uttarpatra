@@ -1,4 +1,6 @@
 import { t } from "@coaching-app/shared/i18n";
+import { Avatar } from "../components/Avatar";
+import { AvatarPicker } from "../components/AvatarPicker";
 import { LangToggle } from "../components/LangToggle";
 import { Async, SectionHead } from "../components/ui";
 import { money, pick } from "../lib/format";
@@ -22,14 +24,22 @@ export function Profile() {
   return (
     <div class="screen">
       <header class="row-between">
-        <div class="stack">
-          <h1 class="title">{user?.name}</h1>
-          <p class="muted small">{[user?.phone, user?.board, user?.school].filter(Boolean).join(" · ")}</p>
+        <div class="avatar-head">
+          <Avatar photo={user?.photo_url} name={user?.name} size={56} />
+          <div class="stack">
+            <h1 class="title">{user?.name}</h1>
+            <p class="muted small">{[user?.phone, user?.board, user?.school].filter(Boolean).join(" · ")}</p>
+          </div>
         </div>
         <button class="btn small quiet" onClick={() => go("profile/edit")}>
           {t("edit")}
         </button>
       </header>
+
+      <section class="stack">
+        <SectionHead title={t("avatar_title")} />
+        <AvatarPicker />
+      </section>
 
       <section class="stack">
         <SectionHead title={t("language")} />

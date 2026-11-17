@@ -10,7 +10,7 @@ const audit = (db: D1Database, actor: string, action: string, target: string, me
     .prepare("INSERT INTO audit_log (actor_uid, action, target, meta_json) VALUES (?, ?, ?, ?)")
     .bind(actor, action, target, meta === undefined ? null : JSON.stringify(meta));
 
-const COLUMNS = `title_bn, title_en, track, kind, price_paise, summary_bn, summary_en, preview_video_id, status`;
+const COLUMNS = `title_bn, title_en, track, kind, price_paise, summary_bn, summary_en, preview_video_id, banner_url, status`;
 
 app.get("/", async (c) => {
   const rows = await c.env.DB
@@ -51,7 +51,7 @@ app.post("/", requireRole("super_admin"), async (c) => {
 
   await c.env.DB.batch([
     c.env.DB
-      .prepare(`INSERT INTO batches (id, ${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .prepare(`INSERT INTO batches (id, ${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .bind(
         b.id,
         b.titleBn,
@@ -62,6 +62,7 @@ app.post("/", requireRole("super_admin"), async (c) => {
         b.summaryBn ?? null,
         b.summaryEn ?? null,
         b.previewVideoId ?? null,
+        b.bannerUrl ?? null,
         b.status,
       ),
     audit(c.env.DB, c.get("uid"), "batch.create", b.id, { status: b.status }),
@@ -78,7 +79,7 @@ app.put("/:id", requireRole("super_admin"), async (c) => {
   const claim = await c.env.DB
     .prepare(
       `UPDATE batches SET title_bn = ?, title_en = ?, track = ?, kind = ?, price_paise = ?,
-              summary_bn = ?, summary_en = ?, preview_video_id = ?, status = ?, updated_at = unixepoch()
+              summary_bn = ?, summary_en = ?, preview_video_id = ?, banner_url = ?, status = ?, updated_at = unixepoch()
        WHERE id = ?`,
     )
     .bind(
@@ -90,6 +91,7 @@ app.put("/:id", requireRole("super_admin"), async (c) => {
       b.summaryBn ?? null,
       b.summaryEn ?? null,
       b.previewVideoId ?? null,
+      b.bannerUrl ?? null,
       b.status,
       id,
     )

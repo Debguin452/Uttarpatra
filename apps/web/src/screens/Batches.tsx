@@ -57,6 +57,16 @@ export function Batches() {
             <div class="stack">
               <div class="list">
                 {visible.map((b) => (
+                  <div class="batch-row" key={b.id}>
+                    {b.banner_url && (
+                      <img
+                        class="batch-banner"
+                        src={b.banner_url}
+                        alt=""
+                        loading="lazy"
+                        onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")}
+                      />
+                    )}
                   <button class="item" onClick={() => go(`batches/${b.id}`)}>
                     <span class="name">{pick(b, "title")}</span>
                     <span class="meta">
@@ -67,6 +77,7 @@ export function Batches() {
                       <IconChevronRight size={18} />
                     </span>
                   </button>
+                  </div>
                 ))}
               </div>
               <SyncNote syncedAt={batches.syncedAt} isStale={batches.isStale} />

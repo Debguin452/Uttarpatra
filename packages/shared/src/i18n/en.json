@@ -519,5 +519,13 @@
   "already_enrolled": "You are already enrolled in this batch.",
   "turnstile_failed": "Verification failed. Please wait a moment and try again.",
   "invalid_input": "Some details look wrong. Please check them and try again.",
-  "batch_is_free": "This batch is free, so no payment is needed."
+  "batch_is_free": "This batch is free, so no payment is needed.",
+  "teachers_title": "Your teachers",
+  "teacher_experience": "{years} years of experience",
+  "avatar_title": "Profile picture",
+  "avatar_upload": "Upload photo",
+  "avatar_remove": "Remove",
+  "avatar_choose": "Or pick an avatar",
+  "admin_batch_banner": "Batch banner",
+  "admin_batch_banner_hint": "A 16:9 image link that starts with https://. Students see it on this batch."
 }

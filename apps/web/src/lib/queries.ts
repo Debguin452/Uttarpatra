@@ -2,7 +2,7 @@ import { useCachedQuery } from "@coaching-app/shared/cache/useCachedQuery";
 import { api } from "./api";
 import { uid } from "./session";
 import { testsKey } from "./testCache";
-import type { Banner, Batch, BatchContent, LeaderboardRow, LiveLecture, MyBatch, Notice, Payment, SubjectRow, TestResult, TestRow } from "./types";
+import type { Banner, Batch, BatchContent, BatchTeacher, LeaderboardRow, LiveLecture, MyBatch, Notice, Payment, SubjectRow, TestResult, TestRow } from "./types";
 
 export const useBatches = () =>
   useCachedQuery<Batch[]>("public:batches", () => api<Batch[]>("/public/batches", { auth: false }));
@@ -25,6 +25,13 @@ export const useBatchContent = (batchId: string) =>
   useCachedQuery<BatchContent>(`${uid()}:content:${batchId}`, () => api<BatchContent>(`/api/batches/${batchId}/content`), {
     ttlMs: 2 * 60_000,
   });
+
+export const useBatchTeachers = (batchId: string) =>
+  useCachedQuery<BatchTeacher[]>(
+    `${uid()}:batch-teachers:${batchId}`,
+    () => api<BatchTeacher[]>(`/api/batches/${encodeURIComponent(batchId)}/teachers`),
+    { ttlMs: 10 * 60_000 },
+  );
 
 export const paymentsKey = (forUid: string) => `${forUid}:payments`;
 

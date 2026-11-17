@@ -12,6 +12,7 @@ export type Batch = {
   summary_bn: string | null;
   summary_en: string | null;
   preview_video_id: string | null;
+  banner_url: string | null;
 };
 
 export type Lecture = {
@@ -78,6 +79,7 @@ export type UserRow = {
   student_class: string | null;
   board: string | null;
   school: string | null;
+  photo_url: string | null;
 };
 
 export type AdminPayment = {
@@ -263,3 +265,13 @@ export type BatchContent = { lectures: Lecture[]; notes: BatchNote[] };
 export type MyBatch = Batch & { status: "published" | "archived"; expires_at: number | null };
 
 export type SubjectRow = { id: string; name_bn: string; name_en: string; active: number; sort_order: number };
+
+export type BatchTeacher = {
+  name: string;
+  photo_url: string | null;
+  subject_bn: string | null;
+  subject_en: string | null;
+  qualification: string | null;
+  experience_years: number | null;
+  bio: string | null;
+};

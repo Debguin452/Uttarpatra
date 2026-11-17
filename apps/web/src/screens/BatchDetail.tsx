@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { Async, Loading, SectionHead } from "../components/ui";
+import { TeacherCards } from "../components/TeacherCards";
 import { setContinueLearning } from "../lib/continueLearning";
 import { money, pick } from "../lib/format";
 import { useBatchContent, useBatches, useMyBatches } from "../lib/queries";
@@ -134,11 +135,20 @@ export function BatchDetail({ batchId }: { batchId: string }) {
           const open = enrolled || batch.kind === "free";
           return (
             <>
+              {batch.banner_url && (
+                <img
+                  class="batch-banner"
+                  src={batch.banner_url}
+                  alt=""
+                  onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")}
+                />
+              )}
               <header class="stack">
                 <p class="eyebrow">{t(`filter_${batch.track}`)}</p>
                 <h1 class="title">{pick(batch, "title")}</h1>
                 {pick(batch, "summary") && <p class="muted">{pick(batch, "summary")}</p>}
               </header>
+              <TeacherCards batchId={batch.id} />
               {open ? (
                 <Content batch={batch} />
               ) : (

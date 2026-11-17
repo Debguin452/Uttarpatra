@@ -69,6 +69,13 @@ export const BatchUpsert = z
     summaryBn: z.string().max(2000).optional(),
     summaryEn: z.string().max(2000).optional(),
     previewVideoId: z.string().regex(/^[A-Za-z0-9_-]{11}$/, "Not a YouTube video id").optional(),
+    bannerUrl: z
+      .string()
+      .trim()
+      .url()
+      .max(500)
+      .refine((url) => url.startsWith("https://"), "Use a link that starts with https://")
+      .optional(),
     status: z.enum(["draft", "published", "archived"]).default("draft"),
   })
   .superRefine((batch, ctx) => {
@@ -224,6 +231,20 @@ export const DoubtAnswer = z.object({
   answerText: z.string().trim().min(1).max(2000),
 });
 export type DoubtAnswer = z.infer<typeof DoubtAnswer>;
+
+// A profile picture is either one of the built-in avatars ("preset:owl") or a
+// small square photo the user chose, sent as a data URL (the app shrinks it
+// to a few KB first). null removes it.
+const AVATAR_PRESET = /^preset:[a-z0-9-]{1,24}$/;
+const AVATAR_IMAGE = /^data:image\/(jpeg|webp|png);base64,[A-Za-z0-9+/]+={0,2}$/;
+export const AvatarUpdate = z.object({
+  photo: z
+    .string()
+    .max(40_000)
+    .refine((value) => AVATAR_PRESET.test(value) || AVATAR_IMAGE.test(value), "Not a valid avatar")
+    .nullable(),
+});
+export type AvatarUpdate = z.infer<typeof AvatarUpdate>;
 
 export const QUOTA = {
   maxScreenshotBytes: 150_000,

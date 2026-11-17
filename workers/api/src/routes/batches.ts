@@ -6,7 +6,7 @@ const publicRoutes = new Hono<{ Bindings: Env }>();
 publicRoutes.get("/", async (c) => {
   const rows = await c.env.DB
     .prepare(
-      "SELECT id, title_bn, title_en, track, kind, price_paise, summary_bn, summary_en, preview_video_id FROM batches WHERE status = 'published' ORDER BY created_at DESC",
+      "SELECT id, title_bn, title_en, track, kind, price_paise, summary_bn, summary_en, preview_video_id, banner_url FROM batches WHERE status = 'published' ORDER BY created_at DESC",
     )
     .all();
   return c.json(rows.results);
@@ -18,7 +18,7 @@ authedRoutes.get("/mine", async (c) => {
   const rows = await c.env.DB
     .prepare(
       `SELECT b.id, b.title_bn, b.title_en, b.track, b.kind, b.price_paise, b.summary_bn, b.summary_en,
-              b.preview_video_id, b.status, e.expires_at
+              b.preview_video_id, b.banner_url, b.status, e.expires_at
        FROM enrollments e JOIN batches b ON b.id = e.batch_id
        WHERE e.uid = ? AND b.status IN ('published', 'archived')
          AND (e.expires_at IS NULL OR e.expires_at > unixepoch())
@@ -50,6 +50,33 @@ authedRoutes.get("/live-today", async (c) => {
        ORDER BY l.live_at LIMIT 20`,
     )
     .bind(now - 7200, now + 86400, uid)
+    .all();
+  return c.json(rows.results);
+});
+
+// Teachers assigned to a batch, as students see them: name, photo, the subject
+// they take and the profile they wrote when they applied. Phone numbers and
+// ids are never sent. Only approved teachers show their qualification and bio.
+authedRoutes.get("/:id/teachers", async (c) => {
+  const batchId = c.req.param("id");
+  const batch = await c.env.DB
+    .prepare("SELECT 1 FROM batches WHERE id = ? AND status IN ('published', 'archived')")
+    .bind(batchId)
+    .first();
+  if (!batch) return c.json({ error: "not_found" }, 404);
+
+  const rows = await c.env.DB
+    .prepare(
+      `SELECT u.name, u.photo_url, s.name_bn AS subject_bn, s.name_en AS subject_en,
+              ta.qualification, ta.experience_years, ta.bio
+       FROM batch_teachers bt
+       JOIN users u ON u.uid = bt.teacher_uid AND u.status = 'active'
+       LEFT JOIN subjects s ON s.id = bt.subject
+       LEFT JOIN teacher_applications ta ON ta.uid = bt.teacher_uid AND ta.status = 'approved'
+       WHERE bt.batch_id = ?
+       ORDER BY u.name`,
+    )
+    .bind(batchId)
     .all();
   return c.json(rows.results);
 });

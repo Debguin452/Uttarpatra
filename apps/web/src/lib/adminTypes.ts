@@ -26,6 +26,7 @@ export type AdminBatchDetail = {
     summary_bn: string | null;
     summary_en: string | null;
     preview_video_id: string | null;
+    banner_url: string | null;
     status: BatchStatus;
     created_at: number;
     updated_at: number;

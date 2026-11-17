@@ -91,6 +91,7 @@ type FormState = {
   summaryBn: string;
   summaryEn: string;
   video: string;
+  banner: string;
   status: BatchStatus;
 };
 
@@ -104,6 +105,7 @@ const BLANK: FormState = {
   summaryBn: "",
   summaryEn: "",
   video: "",
+  banner: "",
   status: "draft",
 };
 
@@ -118,6 +120,7 @@ function fromBatch(b: AdminBatchDetail["batch"]): FormState {
     summaryBn: b.summary_bn ?? "",
     summaryEn: b.summary_en ?? "",
     video: b.preview_video_id ?? "",
+    banner: b.banner_url ?? "",
     status: b.status,
   };
 }
@@ -293,6 +296,7 @@ function BatchForm({
       summaryBn: form.summaryBn.trim() || undefined,
       summaryEn: form.summaryEn.trim() || undefined,
       previewVideoId: videoId ?? undefined,
+      bannerUrl: form.banner.trim() || undefined,
       status: form.status,
     });
     if (!parsed.success) {
@@ -428,6 +432,9 @@ function BatchForm({
                 value={form.summaryBn}
                 onInput={(e) => patch({ summaryBn: (e.currentTarget as HTMLTextAreaElement).value })}
               />
+            </Field>
+            <Field id="banner" label={t("admin_batch_banner")} hint={t("admin_batch_banner_hint")} error={problem("bannerUrl")} span>
+              <input id="banner" class="input" inputMode="url" placeholder="https://" value={form.banner} onInput={(e) => patch({ banner: e.currentTarget.value })} />
             </Field>
             <Field id="video" label={t("admin_preview_video")} hint={t("admin_preview_video_hint")} error={problem("previewVideoId")} span>
               <input id="video" class="input" value={form.video} onInput={(e) => patch({ video: e.currentTarget.value })} />
