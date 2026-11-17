@@ -125,8 +125,8 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
               onChange={(e) => setGuardianAware(e.currentTarget.checked)}
             />
             <span class="small">
-              {t("guardian_aware")} {t("legal_preamble")} <a href="#/terms">{t("terms_title")}</a> {t("and")}{" "}
-              <a href="#/privacy">{t("privacy_title")}</a>.
+              {t("guardian_aware")} {t("legal_preamble")} <a href="/terms.html" target="_blank" rel="noopener noreferrer">{t("terms_title")}</a> {t("and")}{" "}
+              <a href="/privacy.html" target="_blank" rel="noopener noreferrer">{t("privacy_title")}</a>.
             </span>
           </label>
         )}

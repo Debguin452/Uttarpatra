@@ -188,29 +188,6 @@ select.input { padding-right: var(--space-3); }
   background-attachment: local;
 }
 
-/* Margin rail: the red vertical line down the left of a ruled page.
-   A fixed inset keeps it clear of the text regardless of column width. */
-.legal { position: relative; }
-.legal-body {
-  padding-left: calc(var(--space-5) + 2px);
-  padding-top: var(--space-2);
-  line-height: var(--leading-relaxed);
-}
-.legal-body::before {
-  content: "";
-  position: absolute;
-  top: var(--space-6);
-  bottom: var(--space-5);
-  left: var(--space-5);
-  width: 2px;
-  background: color-mix(in srgb, var(--error) 55%, transparent);
-}
-.legal-body h2 { font-family: var(--font-headline); font-size: var(--text-md); margin: var(--space-5) 0 var(--space-2); }
-.legal-body h2:first-child { margin-top: 0; }
-.legal-body p, .legal-body li { color: var(--ink); }
-.legal-body ul { padding-left: var(--space-4); display: grid; gap: var(--space-2); }
-.legal-back { margin-bottom: var(--space-2); }
-
 /* Red-pen strokes: a corrective underline for things that are wrong
    or need attention — never used for ordinary emphasis. */
 .pen-mark {

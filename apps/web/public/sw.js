@@ -1,5 +1,5 @@
-const SHELL_CACHE = "shell-v3";
-const SHELL_ASSETS = ["/", "/offline.html", "/manifest.json", "/logo.webp", "/favicon.ico"];
+const SHELL_CACHE = "shell-v4";
+const SHELL_ASSETS = ["/", "/offline.html", "/manifest.json", "/logo.webp", "/favicon.ico", "/privacy.html", "/terms.html"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_ASSETS)));
@@ -35,7 +35,10 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(async () => (await caches.match("/")) ?? (await caches.match("/offline.html"))),
+      fetch(request).catch(async () =>
+        (await caches.match(url.pathname === "/privacy.html" || url.pathname === "/terms.html" ? url.pathname : "/")) ??
+        (await caches.match("/offline.html")),
+      ),
     );
   }
 });

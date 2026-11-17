@@ -91,8 +91,8 @@ export function Profile() {
       )}
 
       <section class="stack">
-        <a href="#/terms" class="hint">{t("terms_title")}</a>
-        <a href="#/privacy" class="hint">{t("privacy_title")}</a>
+        <a href="/terms.html" target="_blank" rel="noopener noreferrer" class="hint">{t("terms_title")}</a>
+        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" class="hint">{t("privacy_title")}</a>
       </section>
 
       <button class="btn danger block" onClick={logOut}>

@@ -19,8 +19,6 @@ import { Register } from "./screens/Register";
 import { TestRunner } from "./screens/TestRunner";
 import { Tests } from "./screens/Tests";
 import { TeacherApply } from "./screens/TeacherApply";
-import { Privacy } from "./screens/Privacy";
-import { Terms } from "./screens/Terms";
 import { t } from "@coaching-app/shared/i18n";
 import { lazyScreen } from "./components/lazyScreen";
 
@@ -56,12 +54,14 @@ function Screen({ pendingTeacher }: { pendingTeacher: boolean }) {
 export function App() {
   if (fatal.value) return <Fatal />;
 
-  // Privacy/Terms must be reachable with no account at all — a parent
-  // reading these before letting their child sign up, or a student
-  // checking them from the Welcome screen, has no session yet.
+  // Privacy and Terms live in exactly one place: the static pages
+  // /privacy.html and /terms.html (public, no account needed). Old
+  // #/privacy and #/terms links that were shared earlier forward there.
   const [publicHead] = segments();
-  if (publicHead === "privacy") return <Privacy />;
-  if (publicHead === "terms") return <Terms />;
+  if (publicHead === "privacy" || publicHead === "terms") {
+    location.replace(`/${publicHead}.html`);
+    return <Splash />;
+  }
 
   const user = authUser.value;
   if (user === undefined) return <Splash />;
