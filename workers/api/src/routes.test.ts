@@ -31,7 +31,6 @@ const EXPECTED = [
   "POST /api/admin/payments/review",
   "GET /api/admin/users/search",
   "GET /api/admin/users/:uid",
-  "POST /api/admin/users/:uid/reset-device",
   "POST /api/admin/users/:uid/status",
   "POST /api/admin/users/:uid/role",
   "POST /api/admin/users/:uid/enroll",

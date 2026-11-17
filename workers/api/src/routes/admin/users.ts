@@ -78,8 +78,8 @@ app.get("/users/search", async (c) => {
   const rows = await c.env.DB
     .prepare(
       `SELECT u.uid, u.name, u.phone, u.role, u.status, u.is_teacher,
-              (d.device_id IS NOT NULL) AS device_bound, d.bound_at
-       FROM users u LEFT JOIN devices d ON d.uid = u.uid
+              u.created_at
+       FROM users u
        WHERE u.uid = ? OR u.name LIKE ? ESCAPE '\\' OR u.phone LIKE ? ESCAPE '\\'
        ORDER BY u.name LIMIT 20`,
     )
@@ -95,8 +95,8 @@ app.get("/users/:uid", async (c) => {
     c.env.DB
       .prepare(
         `SELECT u.uid, u.role, u.name, u.phone, u.student_class, u.board, u.school, u.status, u.is_teacher,
-                u.created_at, (d.device_id IS NOT NULL) AS device_bound, d.bound_at
-         FROM users u LEFT JOIN devices d ON d.uid = u.uid WHERE u.uid = ?`,
+                u.created_at
+         FROM users u WHERE u.uid = ?`,
       )
       .bind(uid)
       .first(),
@@ -135,16 +135,6 @@ app.get("/users/:uid", async (c) => {
       averageScore: attemptStats?.avg_score ?? null,
     },
   });
-});
-
-app.post("/users/:uid/reset-device", async (c) => {
-  const uid = c.req.param("uid");
-  if (!(await userExists(c.env.DB, uid))) return c.json({ error: "not_found" }, 404);
-
-  const stub = c.env.SESSIONS.get(c.env.SESSIONS.idFromName(uid));
-  await stub.fetch("https://do/reset-device", { method: "POST" });
-  await audit(c.env.DB, c.get("uid"), "user.reset_device", uid).run();
-  return c.json({ ok: true });
 });
 
 app.post("/users/:uid/status", requireRole("super_admin"), async (c) => {

@@ -34,7 +34,7 @@ app.use(
   "*",
   cors({
     origin: (origin, c) => (c.env.ALLOWED_ORIGIN.split(",").includes(origin) ? origin : null),
-    allowHeaders: ["authorization", "content-type", "x-device-id", "cf-turnstile-token"],
+    allowHeaders: ["authorization", "content-type", "cf-turnstile-token"],
     exposeHeaders: ["x-edge-age"],
     maxAge: 86400,
   }),

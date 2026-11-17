@@ -54,6 +54,14 @@ function Screen({ pendingTeacher }: { pendingTeacher: boolean }) {
 }
 
 export function App() {
+  // Privacy and Terms live only in the static pages /privacy.html and
+  // /terms.html. Old #/privacy and #/terms links forward there.
+  const legal = segments()[0];
+  if (legal === "privacy" || legal === "terms") {
+    location.replace(`/${legal}.html`);
+    return <Splash />;
+  }
+
   if (fatal.value) return <Fatal />;
 
   const user = authUser.value;

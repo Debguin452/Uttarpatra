@@ -22,7 +22,7 @@ A support or super admin account can also hold teacher access as an add-on, set 
 ## What is built
 
 **Student app (`apps/web`)**
-- Welcome and first-time guidance, Google and email sign-in, password reset, one-device lock
+- Welcome and first-time guidance, Google and email sign-in, password reset
 - Sign-up shows a three-step progress indicator (role, account, profile) and greets the student by first name once they type it
 - Registration with class 5 to 12 or dropper, language switch (English and Bengali), light and dark theme
 - Batch catalogue filtered by class and exam, defaulting to the student's own class
@@ -33,7 +33,7 @@ A support or super admin account can also hold teacher access as an add-on, set 
 
 **Admin console (staff only, loaded on demand)**
 - Payments: review queue, screenshot view, approve or reject
-- Users: search, reset device, block or unblock, grant or revoke teacher access for support and super admin accounts
+- Users: search, block or unblock, grant or revoke teacher access for support and super admin accounts
 - Batches: create, edit, publish, archive, assign teachers by subject
 - Teachers: approve or reject applications, remove access
 - Notices: global or per batch, pinned
@@ -64,7 +64,7 @@ infra/scripts     Usage check used by the alert workflow
 
 ## Architecture
 
-Every request to `/api/*` passes, in order: Firebase token check, then one Durable Object call that enforces the one-device lock and a per-user rate limit, then a registration check, then the route. Roles are read from D1 on each request, so a change applies immediately. Public batch and banner lists are cached at the edge for five minutes.
+Every request to `/api/*` passes, in order: Firebase token check, then one Durable Object call that enforces a per-user rate limit, then a registration check, then the route. Roles are read from D1 on each request, so a change applies immediately. Public batch and banner lists are cached at the edge for five minutes.
 
 Quota habits that shape the code:
 - A test's questions are one JSON blob, and an attempt's answers are one JSON blob, so a 300-student exam costs hundreds of D1 writes, not tens of thousands.
@@ -88,7 +88,7 @@ Quota habits that shape the code:
 | `/api/batches`, `/api/notices`, `/api/subjects`, `/api/tests`, `/api/attempts`, `/api/payments`, `/api/doubts` | Registered users | Learning, tests, payments |
 | `/api/teacher-application` | Registered users | Apply and check status |
 | `/api/teacher` | Teachers, and support/super admin accounts with `is_teacher` set | Roster and doubts for assigned batches |
-| `/api/admin` | Support and super admin | Console. Payment review, user search, device reset and notices are open to support. Analytics, audit log, batch edits, roles, enrollments, blocking, subjects and granting/revoking teacher access are super admin only |
+| `/api/admin` | Support and super admin | Console. Payment review, user search and notices are open to support. Analytics, audit log, batch edits, roles, enrollments, blocking, subjects and granting/revoking teacher access are super admin only |
 
 ## Local setup
 

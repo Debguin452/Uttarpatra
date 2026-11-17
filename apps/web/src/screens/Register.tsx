@@ -23,7 +23,7 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
   const [failure, setFailure] = useState<string | null>(null);
   // Client-side gate only, pending the real guardian-consent capture
   // (a DB column + verification flow) that DPDP Rule 10 will require
-  // once it's in force — see Privacy.tsx. This at least stops signup
+  // once it's in force — see public/privacy.html. This at least stops signup
   // without the acknowledgment, rather than shipping no check at all.
   const [guardianAware, setGuardianAware] = useState(false);
 

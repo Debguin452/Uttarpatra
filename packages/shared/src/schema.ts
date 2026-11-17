@@ -225,11 +225,6 @@ export const DoubtAnswer = z.object({
 });
 export type DoubtAnswer = z.infer<typeof DoubtAnswer>;
 
-export const DeviceBind = z.object({
-  deviceId: z.string().min(16),
-  deviceLabel: z.string().max(80).optional(),
-});
-
 export const QUOTA = {
   maxScreenshotBytes: 150_000,
   videoProgressWriteIntervalSec: 120,

@@ -44,8 +44,8 @@ export function Welcome() {
           {t("have_account")}
         </button>
         <p class="hint legal-links">
-          {t("legal_preamble")} <a href="#/terms">{t("terms_title")}</a> {t("and")}{" "}
-          <a href="#/privacy">{t("privacy_title")}</a>.
+          {t("legal_preamble")} <a href="/terms.html" target="_blank" rel="noopener noreferrer">{t("terms_title")}</a> {t("and")}{" "}
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer">{t("privacy_title")}</a>.
         </p>
       </div>
     </main>
