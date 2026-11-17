@@ -154,7 +154,6 @@ export function Login() {
 
       <div class="stack">
         <p class="hint">{t("same_method")}</p>
-        {view === "up" && <p class="hint">{t("device_lock_note")}</p>}
         <button class="btn small quiet" style="justify-self:start" onClick={showWelcome}>
           {t("how_it_works")}
         </button>

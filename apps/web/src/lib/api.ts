@@ -1,10 +1,9 @@
 import { signal } from "@preact/signals";
 import { auth } from "./firebase";
-import { getDeviceId } from "./device";
 
 const BASE: string = import.meta.env.VITE_API_URL ?? "";
 
-export type Fatal = "device_mismatch" | "account_blocked" | null;
+export type Fatal = "account_blocked" | null;
 export const fatal = signal<Fatal>(null);
 
 export class ApiError extends Error {
@@ -25,7 +24,7 @@ type Options = {
 };
 
 export async function api<T>(path: string, options: Options = {}): Promise<T> {
-  const headers: Record<string, string> = { "x-device-id": getDeviceId(), ...options.headers };
+  const headers: Record<string, string> = { ...options.headers };
   const hasBody = options.body !== undefined;
   if (hasBody) headers["content-type"] = "application/json";
 
@@ -48,7 +47,7 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok) {
     const code = typeof data.error === "string" ? data.error : "unknown";
-    if (code === "device_mismatch" || code === "account_blocked") fatal.value = code;
+    if (code === "account_blocked") fatal.value = code;
     throw new ApiError(response.status, code, data);
   }
   return data as T;

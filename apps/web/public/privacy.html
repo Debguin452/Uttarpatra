@@ -44,6 +44,7 @@
   .doc-head h1 { font-size: 2rem; }
   .doc-head p { margin: 8px 0 0; color: var(--muted); }
 
+
   section.clause { padding: 26px 0; border-top: 1px solid var(--line); }
   section.clause:first-of-type { border-top: 1.5px solid var(--ink); }
   section.clause h2 { font-size: 1.25rem; margin-bottom: 10px; }
@@ -93,7 +94,6 @@
       <tr><th>Category</th><th>What it includes</th><th>Why</th></tr>
       <tr><td>Account credentials</td><td>Email address, or Google account identifier, handled by Firebase Authentication — we never see or store your password.</td><td>Signing you in</td></tr>
       <tr><td>Profile</td><td>Name, phone number, class/grade, board, school, role (student or teacher)</td><td>Showing the right batches and content, and contacting you about your account</td></tr>
-      <tr><td>Device information</td><td>A device identifier bound to your account</td><td>Enforcing one active device per account, so a login can't be shared</td></tr>
       <tr><td>Payment information</td><td>UPI transaction reference (UTR) and a screenshot of your payment</td><td>Manually verifying a batch payment before enrolling you</td></tr>
       <tr><td>Teacher application</td><td>Subjects, qualification, years of experience, a short bio, and a demo video link</td><td>Reviewing applications to teach</td></tr>
       <tr><td>Learning activity</td><td>Batch enrollments, test attempts and scores, doubts you ask or answer, notices you're sent</td><td>Running tests, tracking progress, and support</td></tr>

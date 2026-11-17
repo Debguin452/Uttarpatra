@@ -98,8 +98,6 @@ export type AdminUser = {
   role: string;
   status: "active" | "blocked";
   is_teacher: 0 | 1;
-  device_bound: 0 | 1;
-  bound_at: number | null;
 };
 
 export type TeacherApplicationView = {
@@ -222,35 +220,6 @@ export type SubmitResult = {
   onTime: boolean;
 };
 
-export type Banner = {
-  id: string;
-  image_url: string;
-  title_bn: string;
-  title_en: string;
-  batch_id: string | null;
-  link_url: string | null;
-};
-
-export type TestResult = {
-  titleBn: string;
-  titleEn: string;
-  totalMarks: number;
-  score: number;
-  correct: number;
-  wrong: number;
-  skipped: number;
-  timeTakenSec: number;
-  rank: number | null;
-  totalParticipants: number;
-};
-
-export type LeaderboardRow = {
-  rank: number;
-  uid: string;
-  name: string;
-  score: number;
-};
-
 export type BatchNote = {
   id: string;
   lecture_id: string | null;
@@ -265,3 +234,12 @@ export type BatchContent = { lectures: Lecture[]; notes: BatchNote[] };
 export type MyBatch = Batch & { status: "published" | "archived"; expires_at: number | null };
 
 export type SubjectRow = { id: string; name_bn: string; name_en: string; active: number; sort_order: number };
+
+export type PublicBanner = {
+  id: string;
+  image_url: string;
+  title_bn: string;
+  title_en: string;
+  batch_id: string | null;
+  link_url: string | null;
+};
