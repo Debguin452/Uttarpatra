@@ -134,3 +134,24 @@ export function IconClock({ size, strokeWidth = 1.5, className }: IconProps): JS
     </svg>
   );
 }
+
+export function IconTrophy({ size, strokeWidth = 1.5, className }: IconProps): JSX.Element {
+  // A mark-sheet ribbon, not a shiny cup — two uprights holding a band.
+  return (
+    <svg {...base(size)} strokeWidth={strokeWidth} className={className}>
+      <path d="M7 4.5h10v5a5 5 0 0 1-10 0v-5Z" />
+      <path d="M7 6H4.5a2 2 0 0 0 0 4H7M17 6h2.5a2 2 0 0 1 0 4H17" />
+      <path d="M12 14.5V18M9 20.5h6" />
+    </svg>
+  );
+}
+
+export function IconTray({ size, strokeWidth = 1.5, className }: IconProps): JSX.Element {
+  // Empty-state mark — an empty in-tray, reads calm rather than sad.
+  return (
+    <svg {...base(size)} strokeWidth={strokeWidth} className={className}>
+      <path d="M4.5 13 7 5.5h10l2.5 7.5" />
+      <path d="M4.5 13v5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-5h-4.5l-1 2h-4l-1-2H4.5Z" />
+    </svg>
+  );
+}

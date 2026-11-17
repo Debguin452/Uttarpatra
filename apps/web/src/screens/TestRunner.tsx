@@ -21,7 +21,7 @@ function loadSaved(key: string): Saved {
   return { answers: {}, flags: [], seen: [] };
 }
 
-function Result({ result, title }: { result: SubmitResult; title: string }) {
+function Result({ result, title, testId }: { result: SubmitResult; title: string; testId: string }) {
   return (
     <div class="screen">
       <header class="stack">
@@ -49,7 +49,10 @@ function Result({ result, title }: { result: SubmitResult; title: string }) {
       <p class="muted small">
         {t("time_taken")}: {clock(result.timeTakenSec)}
       </p>
-      <button class="btn primary block" onClick={() => go("tests")}>
+      <button class="btn primary block" onClick={() => go(`tests/${testId}/result`)}>
+        {t("leaderboard")}
+      </button>
+      <button class="btn quiet block" onClick={() => go("tests")}>
         {t("back_to_tests")}
       </button>
     </div>
@@ -228,7 +231,7 @@ function Running({ started, onDone }: { started: StartedTest; onDone: (result: S
           <h2 class="subtitle">{t("submit_confirm_title")}</h2>
           <p class="muted">{t("submit_confirm_body", { answered, total: questions.length })}</p>
           {submitError && <p class="error-text">{submitError}</p>}
-          <button class="btn primary stamp block" onClick={submit} disabled={busy}>
+          <button class="btn primary block" onClick={submit} disabled={busy}>
             {t("confirm_submit")}
           </button>
           {!timeUp && (
@@ -273,7 +276,13 @@ export function TestRunner({ testId }: { testId: string }) {
   }
   if (!started) return <Splash />;
   if (result) {
-    return <Result result={result} title={pick({ title_bn: started.titleBn, title_en: started.titleEn }, "title")} />;
+    return (
+      <Result
+        result={result}
+        title={pick({ title_bn: started.titleBn, title_en: started.titleEn }, "title")}
+        testId={testId}
+      />
+    );
   }
   return <Running started={started} onDone={setResult} />;
 }

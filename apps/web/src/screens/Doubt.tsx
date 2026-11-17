@@ -1,7 +1,8 @@
 import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { DoubtCreate } from "@coaching-app/shared/schema";
-import { Loading } from "../components/ui";
+import { IconTray } from "@coaching-app/ui/icons";
+import { AnimatedCheck, EmptyState, SkeletonList } from "../components/ui";
 import { Select } from "../components/Select";
 import { api, ApiError } from "../lib/api";
 import { errorText, pick, when } from "../lib/format";
@@ -105,7 +106,12 @@ export function Doubt() {
           <span class="hint">{t("doubt_drive_hint")}</span>
         </div>
         {failure && <p class="error-text">{failure}</p>}
-        {sent && <p class="notice small">{t("doubt_sent")}</p>}
+        {sent && (
+          <div class="row-between" style="justify-content:flex-start;gap:var(--space-2)">
+            <AnimatedCheck size={22} />
+            <span class="small">{t("doubt_sent")}</span>
+          </div>
+        )}
         <button class="btn primary block" type="submit" disabled={busy || question.trim().length < 5}>
           {t("doubt_submit")}
         </button>
@@ -114,8 +120,8 @@ export function Doubt() {
       <section class="stack">
         <h2 class="subtitle">{t("doubt_mine")}</h2>
         {mine.error && <p class="error-text">{mine.error}</p>}
-        {mine.loading && !mine.data && <Loading />}
-        {mine.data && mine.data.length === 0 && <p class="muted small">{t("doubt_none")}</p>}
+        {mine.loading && !mine.data && <SkeletonList rows={2} />}
+        {mine.data && mine.data.length === 0 && <EmptyState icon={<IconTray size={36} />} text={t("doubt_none")} />}
         <div class="stack">
           {(mine.data ?? []).map((d) => (
             <div class="panel" key={d.id}>

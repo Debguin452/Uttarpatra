@@ -1,5 +1,6 @@
 import { t } from "@coaching-app/shared/i18n";
-import { Async, SyncNote } from "../components/ui";
+import { IconTray } from "@coaching-app/ui/icons";
+import { Async, EmptyState, SyncNote } from "../components/ui";
 import { pick } from "../lib/format";
 import { useTests } from "../lib/queries";
 import { go } from "../lib/router";
@@ -13,7 +14,7 @@ export function Tests() {
       <Async q={tests}>
         {(rows) =>
           rows.length === 0 ? (
-            <p class="muted small">{t("no_tests")}</p>
+            <EmptyState icon={<IconTray size={40} />} text={t("no_tests")} />
           ) : (
             <div class="stack">
               <div class="list">
@@ -27,9 +28,9 @@ export function Tests() {
                     </span>
                     <span class="side">
                       {row.submitted_at ? (
-                        <span class="badge mark">
+                        <button class="btn small quiet" onClick={() => go(`tests/${row.id}/result`)}>
                           {t("view_result")} {row.score}/{row.total_marks}
-                        </span>
+                        </button>
                       ) : row.status === "closed" ? (
                         <span class="badge">{t("test_closed")}</span>
                       ) : (

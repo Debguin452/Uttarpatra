@@ -17,6 +17,7 @@ import { awaitingRoleChoice, signupIntent, welcomeSeen } from "./lib/onboarding"
 import { Profile } from "./screens/Profile";
 import { Register } from "./screens/Register";
 import { TestRunner } from "./screens/TestRunner";
+import { TestResult } from "./screens/TestResult";
 import { Tests } from "./screens/Tests";
 import { TeacherApply } from "./screens/TeacherApply";
 import { t } from "@coaching-app/shared/i18n";
@@ -39,7 +40,8 @@ function Screen({ pendingTeacher }: { pendingTeacher: boolean }) {
     case "enroll":
       return arg ? <Enroll batchId={arg} /> : <Batches />;
     case "tests":
-      return arg ? <TestRunner testId={arg} /> : <Tests />;
+      if (!arg) return <Tests />;
+      return segments()[2] === "result" ? <TestResult testId={arg} /> : <TestRunner testId={arg} />;
     case "teach":
       return <TeacherApply />;
     case "doubt":
@@ -53,15 +55,6 @@ function Screen({ pendingTeacher }: { pendingTeacher: boolean }) {
 
 export function App() {
   if (fatal.value) return <Fatal />;
-
-  // Privacy and Terms live in exactly one place: the static pages
-  // /privacy.html and /terms.html (public, no account needed). Old
-  // #/privacy and #/terms links that were shared earlier forward there.
-  const [publicHead] = segments();
-  if (publicHead === "privacy" || publicHead === "terms") {
-    location.replace(`/${publicHead}.html`);
-    return <Splash />;
-  }
 
   const user = authUser.value;
   if (user === undefined) return <Splash />;
@@ -88,7 +81,7 @@ export function App() {
   if (profile.user.role === "teacher") return <TeacherShell />;
 
   const pendingTeacher = profile.user.role === "student" && signupIntent.value === "teacher";
-  const running = segments()[0] === "tests" && Boolean(segments()[1]);
+  const running = segments()[0] === "tests" && Boolean(segments()[1]) && segments()[2] !== "result";
   return (
     <div class={running ? "app bare" : "app"}>
       <Screen pendingTeacher={pendingTeacher} />

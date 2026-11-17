@@ -1,13 +1,13 @@
 import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
-import { IconChevronRight } from "@coaching-app/ui/icons";
-import { Banners } from "../components/Banners";
+import { IconChevronRight, IconTray } from "@coaching-app/ui/icons";
+import { BannerCarousel } from "../components/BannerCarousel";
 import { GettingStarted } from "../components/GettingStarted";
 import { Logo } from "../components/Logo";
-import { Async, SectionHead, SyncNote } from "../components/ui";
+import { Async, EmptyState, SectionHead, SyncNote } from "../components/ui";
 import { getContinueLearning } from "../lib/continueLearning";
 import { greeting, pick, when } from "../lib/format";
-import { useLiveToday, useMyBatches, useNotices, useTests } from "../lib/queries";
+import { useBanners, useLiveToday, useMyBatches, useNotices, useTests } from "../lib/queries";
 import { go } from "../lib/router";
 import { me } from "../lib/session";
 
@@ -75,6 +75,7 @@ export function Home() {
   const notices = useNotices();
   const tests = useTests();
   const live = useLiveToday();
+  const banners = useBanners();
   const [query, setQuery] = useState("");
   const name = me.value && me.value.registered ? me.value.user.name.split(" ")[0] : "";
   const continuing = getContinueLearning();
@@ -104,7 +105,8 @@ export function Home() {
         <SearchResults query={query} batches={batches} tests={tests} notices={notices} />
       ) : (
         <>
-          <Banners />
+          {(banners.data?.length ?? 0) > 0 && <BannerCarousel banners={banners.data!} />}
+
           {continuing && (
             <section class="stack">
               <SectionHead title={t("continue_learning")} />
@@ -157,7 +159,7 @@ export function Home() {
             <Async q={batches}>
               {(rows) => {
                 const mine = rows;
-                if (mine.length === 0) return <p class="muted small">{t("no_batches")}</p>;
+                if (mine.length === 0) return <EmptyState icon={<IconTray size={36} />} text={t("no_batches")} />;
                 return (
                   <div class="list">
                     {mine.map((b) => (
