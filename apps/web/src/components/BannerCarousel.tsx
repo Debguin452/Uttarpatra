@@ -6,25 +6,40 @@ import { pick } from "../lib/format";
 const AUTO_ADVANCE_MS = 5000;
 const SWIPE_THRESHOLD = 0.22; // fraction of track width to commit a swipe
 
-function openBanner(b: Banner) {
-  if (b.link_url) {
-    if (b.link_url.startsWith("http")) window.open(b.link_url, "_blank", "noopener");
-    else go(b.link_url.replace(/^#\/?/, ""));
-  } else if (b.batch_id) {
-    go(`batches/${b.batch_id}`);
+// Admin-entered URLs are untrusted input — only a well-formed https
+// link leaves the app; anything else (javascript:, a typo, a bare
+// http:) is treated as no link at all rather than risking an open
+// redirect or a blocked-mixed-content dead click.
+function externalHref(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" ? parsed.href : null;
+  } catch {
+    return null;
   }
+}
+
+function openBanner(b: Banner) {
+  if (b.batch_id) return go(`batches/${b.batch_id}`);
+  const href = externalHref(b.link_url);
+  if (href) window.open(href, "_blank", "noopener,noreferrer");
 }
 
 export function BannerCarousel({ banners }: { banners: Banner[] }) {
   const [index, setIndex] = useState(0);
   const [dragPx, setDragPx] = useState(0);
+  const [broken, setBroken] = useState<ReadonlySet<string>>(new Set());
   const dragging = useRef(false);
   const startX = useRef(0);
   const moved = useRef(false); // true once a drag has moved past a tap-vs-swipe threshold
   const trackRef = useRef<HTMLDivElement>(null);
 
+  // A banner whose image 404s (stale Drive link, deleted file) drops
+  // out rather than sitting there as a broken-image icon.
+  banners = banners.filter((b) => !broken.has(b.id));
   const count = banners.length;
-  const clamp = (i: number) => (i + count) % count;
+  const clamp = (i: number) => (count === 0 ? 0 : (i + count) % count);
 
   // Auto-advance — paused while the user is actively dragging.
   useEffect(() => {
@@ -37,6 +52,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
   }, [count]);
 
   if (count === 0) return null;
+  const shownIndex = index % count;
 
   function onPointerDown(e: PointerEvent) {
     dragging.current = true;
@@ -71,13 +87,18 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         style={{
-          transform: `translateX(calc(${-index * 100}% + ${dragPx}px))`,
+          transform: `translateX(calc(${-shownIndex * 100}% + ${dragPx}px))`,
           transition: dragging.current ? "none" : undefined,
         }}
       >
         {banners.map((b) => (
           <button class="banner-slide" key={b.id} onClick={() => !moved.current && openBanner(b)}>
-            <img src={b.image_url} alt={pick(b, "title")} draggable={false} />
+            <img
+              src={b.image_url}
+              alt={pick(b, "title")}
+              draggable={false}
+              onError={() => setBroken((prev) => new Set(prev).add(b.id))}
+            />
           </button>
         ))}
       </div>
@@ -86,7 +107,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
           {banners.map((b, i) => (
             <button
               key={b.id}
-              class={i === index ? "dot active" : "dot"}
+              class={i === shownIndex ? "dot active" : "dot"}
               aria-label={`${i + 1}/${count}`}
               onClick={() => setIndex(i)}
             />

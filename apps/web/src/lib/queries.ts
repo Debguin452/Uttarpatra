@@ -26,8 +26,10 @@ export const useBatchContent = (batchId: string) =>
     ttlMs: 2 * 60_000,
   });
 
+export const paymentsKey = (forUid: string) => `${forUid}:payments`;
+
 export const usePayments = () =>
-  useCachedQuery<Payment[]>(`${uid()}:payments`, () => api<Payment[]>("/api/payments/mine"), { ttlMs: 60_000 });
+  useCachedQuery<Payment[]>(paymentsKey(uid()), () => api<Payment[]>("/api/payments/mine"), { ttlMs: 60_000 });
 
 export const useTestResult = (testId: string) =>
   useCachedQuery<TestResult>(`${uid()}:test-result:${testId}`, () => api<TestResult>(`/api/tests/${testId}/result`), {
