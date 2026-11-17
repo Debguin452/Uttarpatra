@@ -26,6 +26,8 @@ jobs:
           VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_VAPID_KEY: ${{ vars.VITE_FIREBASE_VAPID_KEY }}
           VITE_TURNSTILE_SITEKEY: ${{ vars.VITE_TURNSTILE_SITEKEY }}
           VITE_UPI_ID: ${{ vars.VITE_UPI_ID }}
           VITE_UPI_PAYEE: ${{ vars.VITE_UPI_PAYEE }}
@@ -71,6 +73,24 @@ jobs:
         if: steps.signing.outputs.has_keystore == 'true'
         working-directory: apps/web/android
         run: ./gradlew assembleRelease --no-daemon
+
+      - name: Print signing certificate fingerprints
+        working-directory: apps/web/android
+        run: |
+          echo "# Debug keystore (used to sign app-debug.apk — add this SHA-1 to"
+          echo "# Firebase console > Project settings > Your apps > com.uttarpatra.app"
+          echo "# > Add fingerprint, so Google Sign-In works in debug builds):"
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey \
+            | grep -E "SHA1:|SHA256:"
+          if [ "${{ steps.signing.outputs.has_keystore }}" = "true" ]; then
+            echo ""
+            echo "# Release keystore (used to sign app-release.apk — add this SHA-1"
+            echo "# too once you're testing/shipping release builds):"
+            keytool -list -v -keystore app/release.keystore \
+              -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+              -alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+              | grep -E "SHA1:|SHA256:"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:

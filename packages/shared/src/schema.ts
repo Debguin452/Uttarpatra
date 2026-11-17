@@ -251,3 +251,14 @@ export const QUOTA = {
   videoProgressWriteIntervalSec: 120,
   sessionTokenTtlSec: 15 * 60,
 } as const;
+
+export const PushTokenRegister = z.object({
+  token: z.string().trim().min(10).max(4096),
+  platform: z.enum(["web", "android"]).default("web"),
+});
+export type PushTokenRegister = z.infer<typeof PushTokenRegister>;
+
+export const PushTokenUnregister = z.object({
+  token: z.string().trim().min(1).max(4096),
+});
+export type PushTokenUnregister = z.infer<typeof PushTokenUnregister>;

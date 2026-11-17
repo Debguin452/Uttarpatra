@@ -10,6 +10,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "7.5.0",
     "@capacitor/android": "^8.6.2",
     "@capacitor/core": "^8.6.2",
     "@coaching-app/shared": "workspace:*",

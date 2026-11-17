@@ -19,3 +19,12 @@ new_sqlite_classes = ["SessionGuard"]
 [vars]
 FIREBASE_PROJECT_ID = "prism0001"
 ALLOWED_ORIGIN = "http://localhost:5173,https://uttarpatro.pages.dev,https://uttarpatra.pages.dev,https://localhost"
+
+[triggers]
+crons = ["* * * * *"]
+
+# Push notifications also need a secret (not set in this file):
+#   wrangler secret put FCM_SERVICE_ACCOUNT_JSON
+# — paste the full contents of a Firebase service-account JSON key
+# (Firebase console -> Project settings -> Service accounts -> Generate new
+# private key). Without it, sendPushToUids() no-ops silently.

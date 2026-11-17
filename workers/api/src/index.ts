@@ -15,6 +15,8 @@ import teacherApplication from "./routes/teacherApplication";
 import teacher from "./routes/teacher";
 import doubts from "./routes/doubts";
 import banners from "./routes/banners";
+import push from "./routes/push";
+import { sendClassReminders } from "./lib/classReminders";
 
 export { SessionGuard } from "./do/SessionGuard";
 
@@ -24,6 +26,7 @@ export type Env = {
   FIREBASE_PROJECT_ID: string;
   TURNSTILE_SECRET: string;
   ALLOWED_ORIGIN: string;
+  FCM_SERVICE_ACCOUNT_JSON?: string;
 };
 
 export type AppEnv = { Bindings: Env; Variables: { uid: string; role: string; isTeacher: boolean } };
@@ -62,5 +65,10 @@ app.route("/api/doubts", doubts);
 app.route("/api/teacher", teacher);
 app.route("/api/teacher-application", teacherApplication);
 app.route("/api/admin", admin);
+app.route("/api/push", push);
 
-export default app;
+export default Object.assign(app, {
+  scheduled: async (_event: ScheduledEvent, env: Env, ctx: ExecutionContext) => {
+    ctx.waitUntil(sendClassReminders(env));
+  },
+});

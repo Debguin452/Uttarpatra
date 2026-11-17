@@ -527,5 +527,10 @@
   "avatar_remove": "Remove",
   "avatar_choose": "Or pick an avatar",
   "admin_batch_banner": "Batch banner",
-  "admin_batch_banner_hint": "A 16:9 image link that starts with https://. Students see it on this batch."
+  "admin_batch_banner_hint": "A 16:9 image link that starts with https://. Students see it on this batch.",
+  "notifications": "Notifications",
+  "push_unsupported": "Notifications aren't supported on this device.",
+  "push_denied": "Notifications are blocked. Enable them in your browser/app settings.",
+  "push_enabled": "Notifications are on.",
+  "push_enable": "Enable notifications"
 }

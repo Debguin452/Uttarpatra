@@ -13,10 +13,10 @@ if (hasSigningConfig) {
 }
 
 android {
-    namespace = "com.uttarpatro.app"
+    namespace = "com.uttarpatra.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.uttarpatro.app"
+        applicationId "com.uttarpatra.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

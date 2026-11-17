@@ -1,0 +1,27 @@
+{
+  "project_info": {
+    "project_number": "69576681235",
+    "project_id": "prism0001",
+    "storage_bucket": "prism0001.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69576681235:android:3aa827d3772d08aaba1ce6",
+        "android_client_info": { "package_name": "com.uttarpatra.app" }
+      },
+      "oauth_client": [
+        { "client_id": "69576681235-tbor7btg7e75pp121fdmo5cs2nr5qnvg.apps.googleusercontent.com", "client_type": 3 }
+      ],
+      "api_key": [ { "current_key": "AIzaSyA97EjoEY53a8MHF5i-u4DUhmYN2cZ1ktc" } ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            { "client_id": "69576681235-tbor7btg7e75pp121fdmo5cs2nr5qnvg.apps.googleusercontent.com", "client_type": 3 }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

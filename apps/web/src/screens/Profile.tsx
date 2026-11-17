@@ -4,6 +4,7 @@ import { AvatarPicker } from "../components/AvatarPicker";
 import { LangToggle } from "../components/LangToggle";
 import { Async, SectionHead } from "../components/ui";
 import { money, pick } from "../lib/format";
+import { enablePush, pushStatus } from "../lib/push";
 import { useBatches, usePayments } from "../lib/queries";
 import { go } from "../lib/router";
 import { logOut, me } from "../lib/session";
@@ -56,6 +57,21 @@ export function Profile() {
           ))}
         </div>
       </section>
+
+      {pushStatus.value !== "unsupported" && (
+        <section class="stack">
+          <SectionHead title={t("notifications")} />
+          {pushStatus.value === "granted" ? (
+            <p class="muted small">{t("push_enabled")}</p>
+          ) : pushStatus.value === "denied" ? (
+            <p class="muted small">{t("push_denied")}</p>
+          ) : (
+            <button class="btn block" disabled={pushStatus.value === "busy"} onClick={enablePush}>
+              {t("push_enable")}
+            </button>
+          )}
+        </section>
+      )}
 
       <section class="stack">
         <SectionHead title={t("payment_history")} />

@@ -10,6 +10,7 @@ import { t } from "@coaching-app/shared/i18n";
 import { auth } from "../lib/firebase";
 import { authErrorKey } from "../lib/authErrors";
 import { loginMode, showWelcome, type LoginMode } from "../lib/onboarding";
+import { isNativeApp } from "../lib/platform";
 import { LangToggle } from "../components/LangToggle";
 import { Logo } from "../components/Logo";
 import { OnboardingProgress } from "../components/OnboardingProgress";
@@ -36,7 +37,18 @@ export function Login() {
     setBusy(false);
   }
 
-  const google = () => run(() => signInWithPopup(auth, new GoogleAuthProvider()));
+  const google = () =>
+    run(async () => {
+      if (isNativeApp()) {
+        // signInWithPopup doesn't work inside the Android app's WebView —
+        // use the native Google Sign-In flow instead (capacitor.config.ts
+        // keeps it synced into this same Firebase JS SDK auth state).
+        const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
+        await FirebaseAuthentication.signInWithGoogle();
+        return;
+      }
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    });
 
   const submit = (event: Event) => {
     event.preventDefault();
