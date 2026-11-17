@@ -79,6 +79,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
 
   return (
     <div class="banner-carousel">
+      <div class="banner-viewport">
       <div
         class="banner-track"
         ref={trackRef}
@@ -101,6 +102,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
             />
           </button>
         ))}
+      </div>
       </div>
       {count > 1 && (
         <div class="banner-dots" role="tablist">

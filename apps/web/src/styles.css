@@ -128,11 +128,12 @@ a { color: inherit; }
   .skeleton-block, .skeleton-line, .skeleton-side { animation: none; background: var(--line); }
 }
 
-.banner-carousel { display: grid; gap: var(--space-2); }
+.banner-carousel { display: grid; gap: var(--space-2); min-width: 0; max-width: 100%; }
+.banner-viewport { overflow: hidden; border-radius: var(--radius-control); border: 1px solid var(--line); }
 .banner-track { display: flex; touch-action: pan-y; cursor: grab; transition: transform var(--duration) var(--ease); will-change: transform; }
 .banner-track:active { cursor: grabbing; }
-.banner-slide { flex: 0 0 100%; padding: 0; border: none; background: none; border-radius: var(--radius-control); overflow: hidden; line-height: 0; }
-.banner-slide img { width: 100%; aspect-ratio: 16/7; object-fit: cover; pointer-events: none; border-radius: var(--radius-control); }
+.banner-slide { flex: 0 0 100%; min-width: 0; padding: 0; border: none; background: none; border-radius: var(--radius-control); overflow: hidden; line-height: 0; }
+.banner-slide img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; pointer-events: none; user-select: none; }
 .banner-dots { display: flex; justify-content: center; gap: var(--space-1); }
 .banner-dots .dot { width: 6px; height: 6px; padding: 0; border: none; border-radius: 50%; background: var(--line); transition: all var(--duration) var(--ease); }
 .banner-dots .dot.active { width: 16px; border-radius: 3px; background: var(--mark); }

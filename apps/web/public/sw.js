@@ -1,4 +1,4 @@
-const SHELL_CACHE = "shell-v4";
+const SHELL_CACHE = "shell-v5";
 const SHELL_ASSETS = ["/", "/offline.html", "/manifest.json", "/logo.webp", "/favicon.ico", "/privacy.html", "/terms.html"];
 
 self.addEventListener("install", (event) => {
