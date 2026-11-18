@@ -1,7 +1,9 @@
+import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { Avatar } from "../components/Avatar";
-import { AvatarPicker } from "../components/AvatarPicker";
 import { LangToggle } from "../components/LangToggle";
+import { ProfileMenu } from "../components/ProfileMenu";
+import { TeachingProfile } from "../components/TeachingProfile";
 import { Async, SectionHead } from "../components/ui";
 import { money, pick } from "../lib/format";
 import { enablePush, pushStatus } from "../lib/push";
@@ -17,6 +19,7 @@ const THEMES: { id: Theme; label: string }[] = [
 ];
 
 export function Profile() {
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const payments = usePayments();
   const batches = useBatches();
   const user = me.value && me.value.registered ? me.value.user : null;
@@ -26,21 +29,18 @@ export function Profile() {
     <div class="screen">
       <header class="row-between">
         <div class="avatar-head">
-          <Avatar photo={user?.photo_url} name={user?.name} size={56} />
+          <button class="avatar-tap" aria-label={t("avatar_change")} onClick={() => setAvatarOpen(true)}>
+            <Avatar photo={user?.photo_url} name={user?.name} size={56} />
+          </button>
           <div class="stack">
             <h1 class="title">{user?.name}</h1>
-            <p class="muted small">{[user?.phone, user?.board, user?.school].filter(Boolean).join(" · ")}</p>
+            <p class="muted small">{[user?.phone, user?.board, user?.school, user?.district].filter(Boolean).join(" · ")}</p>
           </div>
         </div>
-        <button class="btn small quiet" onClick={() => go("profile/edit")}>
-          {t("edit")}
-        </button>
+        <ProfileMenu avatarOpen={avatarOpen} onAvatarClose={() => setAvatarOpen(false)} />
       </header>
 
-      <section class="stack">
-        <SectionHead title={t("avatar_title")} />
-        <AvatarPicker />
-      </section>
+      {user && user.role !== "student" && <TeachingProfile />}
 
       <section class="stack">
         <SectionHead title={t("language")} />

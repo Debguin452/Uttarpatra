@@ -1,7 +1,9 @@
 import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
-import { BannerUpsert } from "@coaching-app/shared/schema";
+import { BANNER_TARGETS, BannerUpsert, type BannerTarget } from "@coaching-app/shared/schema";
+import { AdminImagePreview } from "../../components/AdminImagePreview";
 import { ConfirmSheet, Field, Segmented } from "../../components/adminUi";
+import { imageSrc } from "../../lib/image";
 import { Select } from "../../components/Select";
 import { Loading, Sheet } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
@@ -14,24 +16,49 @@ type Draft = {
   imageUrl: string;
   titleBn: string;
   titleEn: string;
-  batchId: string;
+  targetType: BannerTarget | "";
+  targetId: string;
   linkUrl: string;
   orderIndex: string;
   status: "active" | "inactive";
 };
 
-const EMPTY: Draft = { id: null, imageUrl: "", titleBn: "", titleEn: "", batchId: "", linkUrl: "", orderIndex: "0", status: "active" };
+const EMPTY: Draft = { id: null, imageUrl: "", titleBn: "", titleEn: "", targetType: "", targetId: "", linkUrl: "", orderIndex: "0", status: "active" };
 
 const toDraft = (b: AdminBanner): Draft => ({
   id: b.id,
   imageUrl: b.image_url,
   titleBn: b.title_bn,
   titleEn: b.title_en,
-  batchId: b.batch_id ?? "",
+  targetType: b.target_type ?? (b.batch_id ? "batch" : b.link_url ? "link" : ""),
+  targetId: b.target_id ?? b.batch_id ?? "",
   linkUrl: b.link_url ?? "",
   orderIndex: String(b.order_index),
   status: b.status,
 });
+
+type PickRow = { id: string; title_bn: string; title_en: string; batch_title_en?: string | null; chapter?: string };
+
+// The list to choose from loads only when its type is picked.
+function TargetSelect({ type, value, onChange }: { type: "test" | "lecture" | "material"; value: string; onChange: (id: string) => void }) {
+  const path = type === "test" ? "tests" : type === "lecture" ? "lectures" : "materials";
+  const rows = useLoad(() => api<PickRow[]>(`/api/admin/${path}`));
+  if (rows.loading && !rows.data) return <Loading />;
+  if (rows.error) return <p class="error-text small">{rows.error}</p>;
+  return (
+    <Select
+      id="b-target"
+      value={value}
+      placeholder={t("admin_target_pick")}
+      searchable
+      onChange={onChange}
+      options={(rows.data ?? []).map((r) => ({
+        value: r.id,
+        label: [pick(r, "title"), r.batch_title_en].filter(Boolean).join(" · "),
+      }))}
+    />
+  );
+}
 
 export function AdminBanners() {
   const list = useLoad(() => api<AdminBanner[]>("/api/admin/banners"));
@@ -52,11 +79,13 @@ export function AdminBanners() {
   async function save() {
     if (!draft) return;
     const parsed = BannerUpsert.safeParse({
-      imageUrl: draft.imageUrl.trim(),
+      imageUrl: imageSrc(draft.imageUrl),
       titleBn: draft.titleBn,
       titleEn: draft.titleEn,
-      batchId: draft.batchId || null,
-      linkUrl: draft.linkUrl.trim() || undefined,
+      targetType: draft.targetType || null,
+      targetId: draft.targetType && draft.targetType !== "link" ? draft.targetId || null : null,
+      batchId: draft.targetType === "batch" ? draft.targetId || null : null,
+      linkUrl: draft.targetType === "link" ? draft.linkUrl.trim() || undefined : undefined,
       orderIndex: Number.parseInt(draft.orderIndex, 10) || 0,
       status: draft.status,
     });
@@ -113,7 +142,7 @@ export function AdminBanners() {
             <span class="name">{pick(banner, "title")}</span>
             <span class="meta">
               {t("admin_order", { n: banner.order_index })}
-              {banner.batch_id ? ` · ${banner.batch_id}` : ""}
+              {banner.target_type ? ` · ${t(`admin_target_${banner.target_type}`)}` : ""}
             </span>
             <span class="side">
               <span class={banner.status === "active" ? "badge mark" : "badge"}>
@@ -131,27 +160,46 @@ export function AdminBanners() {
             <Field id="b-image" label={t("admin_banner_image_url")} error={problem("imageUrl")}>
               <input id="b-image" class="input" type="url" value={draft.imageUrl} onInput={(e) => patch({ imageUrl: e.currentTarget.value })} />
             </Field>
-            {draft.imageUrl && <img src={draft.imageUrl} alt="" style="width:100%;border:1px solid var(--line)" />}
+            <AdminImagePreview url={draft.imageUrl} />
             <Field id="b-title-en" label={t("admin_title_en")} error={problem("titleEn")}>
               <input id="b-title-en" class="input" value={draft.titleEn} onInput={(e) => patch({ titleEn: e.currentTarget.value })} />
             </Field>
             <Field id="b-title-bn" label={t("admin_title_bn")} error={problem("titleBn")}>
               <input id="b-title-bn" class="input" value={draft.titleBn} onInput={(e) => patch({ titleBn: e.currentTarget.value })} />
             </Field>
-            <Field id="b-link" label={t("admin_banner_link")} error={problem("linkUrl")}>
-              <input id="b-link" class="input" type="url" value={draft.linkUrl} onInput={(e) => patch({ linkUrl: e.currentTarget.value })} />
-            </Field>
-            <Field id="b-batch" label={t("admin_audience")}>
+            <Field id="b-target-type" label={t("admin_banner_opens")}>
               <Select
-                id="b-batch"
-                value={draft.batchId}
-                onChange={(batchId) => patch({ batchId })}
+                id="b-target-type"
+                value={draft.targetType}
+                onChange={(targetType) => patch({ targetType: targetType as BannerTarget | "", targetId: "" })}
                 options={[
-                  { value: "", label: t("select_none") },
-                  ...(batches.data ?? []).map((b) => ({ value: b.id, label: pick(b, "title") })),
+                  { value: "", label: t("admin_target_none") },
+                  ...BANNER_TARGETS.map((type) => ({ value: type, label: t(`admin_target_${type}`) })),
                 ]}
               />
             </Field>
+            {draft.targetType === "link" && (
+              <Field id="b-link" label={t("admin_banner_link")} error={problem("linkUrl")}>
+                <input id="b-link" class="input" type="url" placeholder="https://" value={draft.linkUrl} onInput={(e) => patch({ linkUrl: e.currentTarget.value })} />
+              </Field>
+            )}
+            {draft.targetType === "batch" && (
+              <Field id="b-target" label={t("admin_target_batch")} error={problem("targetId")}>
+                <Select
+                  id="b-target"
+                  value={draft.targetId}
+                  placeholder={t("admin_target_pick")}
+                  searchable
+                  onChange={(targetId) => patch({ targetId })}
+                  options={(batches.data ?? []).map((b) => ({ value: b.id, label: pick(b, "title") }))}
+                />
+              </Field>
+            )}
+            {(draft.targetType === "test" || draft.targetType === "lecture" || draft.targetType === "material") && (
+              <Field id="b-target" label={t(`admin_target_${draft.targetType}`)} error={problem("targetId")}>
+                <TargetSelect key={draft.targetType} type={draft.targetType} value={draft.targetId} onChange={(targetId) => patch({ targetId })} />
+              </Field>
+            )}
             <Field id="b-order" label={t("admin_order_index")} error={problem("orderIndex")}>
               <input
                 id="b-order"

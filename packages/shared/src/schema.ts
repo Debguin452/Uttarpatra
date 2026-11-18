@@ -8,6 +8,8 @@ export const ProfileUpsert = z.object({
   studentClass: z.enum(["5", "6", "7", "8", "9", "10", "11", "12", "dropper"]).optional(),
   board: z.string().max(40).optional(),
   school: z.string().max(120).optional(),
+  goal: z.enum(["neet", "jee", "cuet", "boards", "other"]).optional(),
+  district: z.string().trim().max(60).optional(),
 });
 export type ProfileUpsert = z.infer<typeof ProfileUpsert>;
 
@@ -41,6 +43,17 @@ export const TeacherApplication = z.object({
   demoUrl: z.string().trim().url().max(300).regex(/^https?:\/\//, "Use an http or https link").optional(),
 });
 export type TeacherApplication = z.infer<typeof TeacherApplication>;
+
+// What an approved teacher can change about their own public profile.
+// Subjects stay with the admin, who assigns teachers to batches.
+export const TeacherProfileUpdate = TeacherApplication.pick({
+  qualification: true,
+  experienceYears: true,
+  phone: true,
+  bio: true,
+  demoUrl: true,
+});
+export type TeacherProfileUpdate = z.infer<typeof TeacherProfileUpdate>;
 
 export const TeacherReview = z.object({
   uid: z.string().min(1),
@@ -153,15 +166,29 @@ export const BulkQuestionRow = z.object({
 });
 export type BulkQuestionRow = z.infer<typeof BulkQuestionRow>;
 
-export const BannerUpsert = z.object({
-  imageUrl: z.string().trim().url().max(500),
-  titleBn: z.string().trim().min(1).max(160),
-  titleEn: z.string().trim().min(1).max(160),
-  batchId: z.string().min(1).nullable().optional(),
-  linkUrl: z.string().trim().url().max(500).optional(),
-  orderIndex: z.number().int().default(0),
-  status: z.enum(["active", "inactive"]).default("active"),
-});
+export const BANNER_TARGETS = ["batch", "test", "lecture", "material", "link"] as const;
+export type BannerTarget = (typeof BANNER_TARGETS)[number];
+
+export const BannerUpsert = z
+  .object({
+    imageUrl: z.string().trim().url().max(500),
+    titleBn: z.string().trim().min(1).max(160),
+    titleEn: z.string().trim().min(1).max(160),
+    // What a tap opens. batchId / linkUrl are kept so older clients still work.
+    targetType: z.enum(BANNER_TARGETS).nullable().optional(),
+    targetId: z.string().min(1).max(80).nullable().optional(),
+    batchId: z.string().min(1).nullable().optional(),
+    linkUrl: z.string().trim().url().max(500).optional(),
+    orderIndex: z.number().int().default(0),
+    status: z.enum(["active", "inactive"]).default("active"),
+  })
+  .superRefine((value, ctx) => {
+    const type = value.targetType ?? (value.batchId ? "batch" : value.linkUrl ? "link" : null);
+    if (type === "link" && !value.linkUrl) ctx.addIssue({ code: "custom", path: ["linkUrl"], message: "Add the website link" });
+    if (type && type !== "link" && !(value.targetId ?? value.batchId)) {
+      ctx.addIssue({ code: "custom", path: ["targetId"], message: "Choose what the banner opens" });
+    }
+  });
 export type BannerUpsert = z.infer<typeof BannerUpsert>;
 
 export const LectureUpsert = z.object({

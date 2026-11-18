@@ -27,6 +27,7 @@ export function Enroll({ batchId }: { batchId: string }) {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [tokenRound, setTokenRound] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -77,8 +78,13 @@ export function Enroll({ batchId }: { batchId: string }) {
       await invalidateQuery(paymentsKey(uid()));
       setDone(true);
     } catch (e) {
-      setError(errorText(e instanceof ApiError ? e.code : "network"));
+      const code = e instanceof ApiError ? e.code : "network";
+      const reason = e instanceof ApiError && Array.isArray(e.body.reason) ? ` (${e.body.reason.join(", ")})` : "";
+      setError(errorText(code) + (code === "turnstile_failed" ? reason : ""));
       setBusy(false);
+      // The token was spent by this attempt, pass or fail: get a fresh one.
+      setToken(null);
+      setTokenRound((n) => n + 1);
     }
   }
 
@@ -146,7 +152,7 @@ export function Enroll({ batchId }: { batchId: string }) {
           <input id="shot" class="input" type="file" accept="image/*" onChange={pickFile} />
           {imageError && <span class="error-text">{t("image_too_large")}</span>}
         </div>
-        <Turnstile onToken={setToken} />
+        <Turnstile onToken={setToken} resetKey={tokenRound} />
         {error && <p class="error-text">{error}</p>}
         <button class="btn primary stamp block" type="submit" disabled={!ready}>
           {t("submit_payment")}

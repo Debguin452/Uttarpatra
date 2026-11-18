@@ -1,7 +1,9 @@
 import { useEffect, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { Async, Loading, SectionHead } from "../components/ui";
+import { BannerImage } from "../components/BannerImage";
 import { TeacherCards } from "../components/TeacherCards";
+import { focusTarget } from "../lib/focus";
 import { setContinueLearning } from "../lib/continueLearning";
 import { money, pick } from "../lib/format";
 import { useBatchContent, useBatches, useMyBatches } from "../lib/queries";
@@ -16,12 +18,31 @@ const driveLink = (id: string) => `https://drive.google.com/file/d/${encodeURICo
 function Content({ batch }: { batch: Batch }) {
   const content = useBatchContent(batch.id);
   const [active, setActive] = useState<Lecture | null>(null);
+  const [highlight, setHighlight] = useState<string | null>(null);
 
   const lectures = content.data?.lectures ?? [];
   const current = active ?? lectures[0] ?? null;
 
   useEffect(() => {
     if (content.data && content.data.lectures.length > 0) markOpenedLecture();
+  }, [content.data]);
+
+  // Coming from a banner: open that lecture, or bring that material into view.
+  useEffect(() => {
+    const focus = focusTarget.value;
+    if (!focus || !content.data) return;
+    focusTarget.value = null;
+    if (focus.type === "lecture") {
+      const lecture = content.data.lectures.find((l) => l.id === focus.id);
+      if (lecture) {
+        setActive(lecture);
+        scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } else if (focus.type === "material") {
+      setHighlight(focus.id);
+      setTimeout(() => document.getElementById(`note-${focus.id}`)?.scrollIntoView({ block: "center", behavior: "smooth" }), 150);
+      setTimeout(() => setHighlight(null), 3000);
+    }
   }, [content.data]);
 
   useEffect(() => {
@@ -92,7 +113,8 @@ function Content({ batch }: { batch: Batch }) {
               <div class="list">
                 {notes.map((note) => (
                   <a
-                    class="item"
+                    class={note.id === highlight ? "item focused" : "item"}
+                    id={`note-${note.id}`}
                     key={note.id}
                     href={driveLink(note.drive_file_id)}
                     target="_blank"
@@ -121,6 +143,11 @@ export function BatchDetail({ batchId }: { batchId: string }) {
   const batch = catalog.data?.find((b) => b.id === batchId) ?? mine.data?.find((b) => b.id === batchId);
   const waiting = !batch && (catalog.isLoading || mine.isLoading);
 
+  // A banner's lecture/material focus only applies once the content is open to this student.
+  useEffect(() => {
+    if (batch && !enrolled && batch.kind !== "free") focusTarget.value = null;
+  }, [batch?.id, enrolled]);
+
   return (
     <div class="screen">
       <button class="btn small quiet" style="justify-self:start" onClick={() => go("batches")}>
@@ -135,14 +162,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
           const open = enrolled || batch.kind === "free";
           return (
             <>
-              {batch.banner_url && (
-                <img
-                  class="batch-banner"
-                  src={batch.banner_url}
-                  alt=""
-                  onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")}
-                />
-              )}
+              {batch.banner_url && <BannerImage class="batch-banner" src={batch.banner_url} />}
               <header class="stack">
                 <p class="eyebrow">{t(`filter_${batch.track}`)}</p>
                 <h1 class="title">{pick(batch, "title")}</h1>

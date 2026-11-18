@@ -80,6 +80,8 @@ export type UserRow = {
   board: string | null;
   school: string | null;
   photo_url: string | null;
+  goal: string | null;
+  district: string | null;
 };
 
 export type AdminPayment = {
@@ -116,6 +118,7 @@ export type TeacherApplicationView = {
 
 export type TeacherPortal = {
   role: string;
+  isTeacher: boolean;
   application: TeacherApplicationView | null;
   batches: { id: string; title_bn: string; title_en: string; subject: string | null }[];
 };
@@ -229,6 +232,8 @@ export type Banner = {
   title_en: string;
   batch_id: string | null;
   link_url: string | null;
+  target_type: "batch" | "test" | "lecture" | "material" | "link" | null;
+  target_id: string | null;
 };
 
 export type TestResult = {

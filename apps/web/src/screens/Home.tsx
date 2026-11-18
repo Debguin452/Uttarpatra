@@ -105,7 +105,11 @@ export function Home() {
         <SearchResults query={query} batches={batches} tests={tests} notices={notices} />
       ) : (
         <>
-          {(banners.data?.length ?? 0) > 0 && <BannerCarousel banners={banners.data!} />}
+          {banners.isLoading && !banners.data ? (
+            <div class="skeleton-block banner-skeleton" aria-hidden="true" />
+          ) : (
+            (banners.data?.length ?? 0) > 0 && <BannerCarousel banners={banners.data!} />
+          )}
 
           {continuing && (
             <section class="stack">

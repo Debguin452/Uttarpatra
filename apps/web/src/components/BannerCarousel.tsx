@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Banner } from "../lib/types";
 import { go } from "../lib/router";
+import { focusTarget } from "../lib/focus";
 import { pick } from "../lib/format";
+import { BannerImage } from "./BannerImage";
 
 const AUTO_ADVANCE_MS = 5000;
 const SWIPE_THRESHOLD = 0.22; // fraction of track width to commit a swipe
@@ -21,6 +23,16 @@ function externalHref(url: string | null): string | null {
 }
 
 function openBanner(b: Banner) {
+  // A test starts a timed attempt the moment its page opens, so a banner
+  // never jumps into one: it opens the Test Zone with that test highlighted.
+  if (b.target_type === "test" && b.target_id) {
+    focusTarget.value = { type: "test", id: b.target_id };
+    return go("tests");
+  }
+  if ((b.target_type === "lecture" || b.target_type === "material") && b.target_id && b.batch_id) {
+    focusTarget.value = { type: b.target_type, id: b.target_id };
+    return go(`batches/${b.batch_id}`);
+  }
   if (b.batch_id) return go(`batches/${b.batch_id}`);
   const href = externalHref(b.link_url);
   if (href) window.open(href, "_blank", "noopener,noreferrer");
@@ -94,11 +106,10 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
       >
         {banners.map((b) => (
           <button class="banner-slide" key={b.id} onClick={() => !moved.current && openBanner(b)}>
-            <img
+            <BannerImage
               src={b.image_url}
               alt={pick(b, "title")}
-              draggable={false}
-              onError={() => setBroken((prev) => new Set(prev).add(b.id))}
+              onFail={() => setBroken((prev) => new Set(prev).add(b.id))}
             />
           </button>
         ))}

@@ -25,6 +25,7 @@ const EXPECTED = [
   "POST /api/doubts",
   "GET /api/teacher-application",
   "PUT /api/teacher-application",
+  "PUT /api/teacher-application/profile",
   "GET /api/teacher/students",
   "GET /api/teacher/students/:uid",
   "GET /api/teacher/doubts",

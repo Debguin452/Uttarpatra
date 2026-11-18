@@ -2,6 +2,7 @@ import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { IconChevronRight } from "@coaching-app/ui/icons";
 import { Async, SyncNote } from "../components/ui";
+import { BannerImage } from "../components/BannerImage";
 import { money, pick } from "../lib/format";
 import { useBatches } from "../lib/queries";
 import { go } from "../lib/router";
@@ -29,6 +30,8 @@ const CLASS_FILTER: Record<string, Filter> = {
 
 function defaultFilter(): Filter {
   const profile = me.value && me.value.registered ? me.value.user : null;
+  // A stated target exam beats the class: a Class 12 student aiming at NEET sees NEET batches first.
+  if (profile?.goal === "neet" || profile?.goal === "jee" || profile?.goal === "cuet") return profile.goal;
   return CLASS_FILTER[profile?.student_class ?? ""] ?? "all";
 }
 
@@ -58,15 +61,7 @@ export function Batches() {
               <div class="list">
                 {visible.map((b) => (
                   <div class="batch-row" key={b.id}>
-                    {b.banner_url && (
-                      <img
-                        class="batch-banner"
-                        src={b.banner_url}
-                        alt=""
-                        loading="lazy"
-                        onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")}
-                      />
-                    )}
+                    {b.banner_url && <BannerImage class="batch-banner" src={b.banner_url} />}
                   <button class="item" onClick={() => go(`batches/${b.id}`)}>
                     <span class="name">{pick(b, "title")}</span>
                     <span class="meta">

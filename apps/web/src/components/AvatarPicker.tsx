@@ -5,7 +5,7 @@ import { compressAvatar } from "../lib/compressAvatar";
 import { loadMe, me } from "../lib/session";
 import { AVATAR_PRESETS, Avatar } from "./Avatar";
 
-export function AvatarPicker() {
+export function AvatarPicker({ onSaved }: { onSaved?: () => void }) {
   const user = me.value && me.value.registered ? me.value.user : null;
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -17,6 +17,7 @@ export function AvatarPicker() {
     try {
       await api("/api/me/avatar", { method: "PUT", body: { photo } });
       await loadMe();
+      onSaved?.();
     } catch {
       setFailed(true);
     } finally {
@@ -58,7 +59,7 @@ export function AvatarPicker() {
           <button
             key={p.id}
             class="avatar-choice"
-            aria-label={p.id}
+            aria-label={t(`avatar_${p.id}`)}
             aria-pressed={user.photo_url === `preset:${p.id}`}
             disabled={busy}
             onClick={() => save(`preset:${p.id}`)}

@@ -26,7 +26,9 @@ function loadScript(): Promise<void> {
   return loader;
 }
 
-export function Turnstile({ onToken }: { onToken: (token: string | null) => void }) {
+// Bump resetKey to throw the current token away and get a fresh one: a token
+// works for exactly one check, so it must be renewed after every attempt.
+export function Turnstile({ onToken, resetKey = 0 }: { onToken: (token: string | null) => void; resetKey?: number }) {
   const host = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export function Turnstile({ onToken }: { onToken: (token: string | null) => void
       disposed = true;
       if (widgetId) window.turnstile?.remove(widgetId);
     };
-  }, []);
+  }, [resetKey]);
 
   return <div ref={host} />;
 }

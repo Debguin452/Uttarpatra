@@ -1,6 +1,7 @@
 import { Nav } from "./components/Nav";
 import { Splash } from "./components/ui";
 import { fatal } from "./lib/api";
+import { AvatarFirstRun } from "./components/AvatarSheet";
 import { segments } from "./lib/router";
 import { authUser, me, meError } from "./lib/session";
 import { loadMe } from "./lib/session";
@@ -85,8 +86,22 @@ export function App() {
   }
   if (!profile.registered) return <Register mode="create" intent={signupIntent.value} />;
 
-  if (profile.user.role === "support" || profile.user.role === "super_admin") return <AdminShell />;
-  if (profile.user.role === "teacher") return <TeacherShell />;
+  if (profile.user.role === "support" || profile.user.role === "super_admin") {
+    return (
+      <>
+        <AdminShell />
+        <AvatarFirstRun />
+      </>
+    );
+  }
+  if (profile.user.role === "teacher") {
+    return (
+      <>
+        <TeacherShell />
+        <AvatarFirstRun />
+      </>
+    );
+  }
 
   const pendingTeacher = profile.user.role === "student" && signupIntent.value === "teacher";
   const running = segments()[0] === "tests" && Boolean(segments()[1]) && segments()[2] !== "result";
@@ -94,6 +109,7 @@ export function App() {
     <div class={running ? "app bare" : "app"}>
       <Screen pendingTeacher={pendingTeacher} />
       {!running && <Nav restricted={pendingTeacher} />}
+      <AvatarFirstRun />
     </div>
   );
 }

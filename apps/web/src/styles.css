@@ -133,7 +133,6 @@ a { color: inherit; }
 .banner-track { display: flex; touch-action: pan-y; cursor: grab; transition: transform var(--duration) var(--ease); will-change: transform; }
 .banner-track:active { cursor: grabbing; }
 .banner-slide { flex: 0 0 100%; min-width: 0; padding: 0; border: none; background: none; border-radius: var(--radius-control); overflow: hidden; line-height: 0; }
-.banner-slide img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; pointer-events: none; user-select: none; }
 .banner-dots { display: flex; justify-content: center; gap: var(--space-1); }
 .banner-dots .dot { width: 6px; height: 6px; padding: 0; border: none; border-radius: 50%; background: var(--line); transition: all var(--duration) var(--ease); }
 .banner-dots .dot.active { width: 16px; border-radius: 3px; background: var(--mark); }
@@ -231,7 +230,13 @@ select.input { padding-right: var(--space-3); }
 .brand-row { display: flex; align-items: center; gap: var(--space-2); }
 
 /* Batch banner: flat frame with a hairline, same 16:9 shape as the home carousel */
-.batch-banner { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--line); }
+.banner-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: var(--line); }
+.banner-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; user-select: none; pointer-events: none; transition: opacity var(--duration) var(--ease); }
+.banner-frame[data-state="ready"] img { opacity: 1; }
+.banner-frame .skeleton-block { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 0; }
+.batch-banner { border: 1px solid var(--line); border-radius: var(--radius-control); }
+.banner-skeleton { height: auto; aspect-ratio: 16 / 9; }
+@media (prefers-reduced-motion: reduce) { .banner-frame img { transition: none; } }
 .batch-row { display: grid; gap: var(--space-1); }
 
 /* Avatars and teacher cards */
@@ -249,3 +254,8 @@ select.input { padding-right: var(--space-3); }
 .teacher-body { display: grid; gap: var(--space-1); min-width: 0; }
 .teacher-name { margin: 0; font-size: var(--text-base, 1rem); font-weight: 600; }
 .teacher-bio { margin: 0; font-size: var(--text-sm); color: var(--muted); }
+
+.avatar-tap { padding: 0; border: 0; background: none; border-radius: 50%; line-height: 0; }
+.avatar-tap:focus-visible, .icon-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.icon-btn { min-width: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; }
+.item.focused { outline: 2px solid var(--mark); outline-offset: -2px; }

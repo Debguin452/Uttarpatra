@@ -144,6 +144,8 @@ export type AdminBanner = {
   title_en: string;
   batch_id: string | null;
   link_url: string | null;
+  target_type: "batch" | "test" | "lecture" | "material" | "link" | null;
+  target_id: string | null;
   order_index: number;
   status: "active" | "inactive";
   created_at: number;

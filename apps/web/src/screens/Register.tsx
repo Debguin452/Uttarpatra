@@ -18,6 +18,10 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
   const [studentClass, setStudentClass] = useState(current?.student_class ?? "");
   const [board, setBoard] = useState(current?.board ?? "");
   const [school, setSchool] = useState(current?.school ?? "");
+  const [goal, setGoal] = useState(current?.goal ?? "");
+  const [district, setDistrict] = useState(current?.district ?? "");
+  // Staff editing their profile only have name and phone; class, board and school are student details.
+  const showStudentFields = !isTeacherSignup && (!current || current.role === "student");
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const [failure, setFailure] = useState<string | null>(null);
@@ -39,6 +43,8 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
       studentClass: studentClass || undefined,
       board: board || undefined,
       school: school || undefined,
+      goal: goal || undefined,
+      district: district.trim() || undefined,
     });
     if (!parsed.success) {
       setErrors(parsed.error.flatten().fieldErrors);
@@ -87,7 +93,7 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
           />
           {field("phone") && <span class="error-text">{field("phone")}</span>}
         </div>
-        {!isTeacherSignup && (
+        {showStudentFields && (
           <>
             <div class="field">
               <label for="class">{t("student_class")}</label>
@@ -114,6 +120,23 @@ export function Register({ mode, intent }: { mode: "create" | "edit"; intent?: S
             <div class="field">
               <label for="school">{t("school")}</label>
               <input id="school" class="input" value={school} onInput={(e) => setSchool(e.currentTarget.value)} />
+            </div>
+            <div class="field">
+              <label for="goal">{t("goal_label")}</label>
+              <Select
+                id="goal"
+                value={goal}
+                onChange={setGoal}
+                options={[
+                  { value: "", label: t("select_none") },
+                  ...["neet", "jee", "cuet", "boards", "other"].map((g) => ({ value: g, label: t(`goal_${g}`) })),
+                ]}
+              />
+              <span class="hint">{t("goal_hint")}</span>
+            </div>
+            <div class="field">
+              <label for="district">{t("district_label")}</label>
+              <input id="district" class="input" value={district} onInput={(e) => setDistrict(e.currentTarget.value)} />
             </div>
           </>
         )}

@@ -36,8 +36,8 @@ app.get("/quote", async (c) => {
 });
 
 app.post("/manual-upi", async (c) => {
-  const turnstileOk = await verifyTurnstile(c.req.header("cf-turnstile-token"), c.env.TURNSTILE_SECRET);
-  if (!turnstileOk) return c.json({ error: "turnstile_failed" }, 400);
+  const check = await verifyTurnstile(c.req.header("cf-turnstile-token"), c.env.TURNSTILE_SECRET);
+  if (!check.ok) return c.json({ error: "turnstile_failed", reason: check.codes }, 400);
 
   const parsed = ManualPaymentSubmit.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);

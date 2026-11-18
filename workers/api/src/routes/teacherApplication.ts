@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { TeacherApplication } from "@coaching-app/shared/schema";
+import { TeacherApplication, TeacherProfileUpdate } from "@coaching-app/shared/schema";
 import type { AppEnv } from "../index";
 
 type ApplicationRow = {
@@ -76,6 +76,31 @@ app.put("/", async (c) => {
          reviewed_by = NULL, reviewed_at = NULL, updated_at = unixepoch()`,
     )
     .bind(c.get("uid"), JSON.stringify(unique), qualification, experienceYears, phone, bio, demoUrl ?? null)
+    .run();
+
+  return c.json({ ok: true });
+});
+
+// Approved teachers keep their public profile (what students see on a batch
+// page) up to date. Unlike the application form this does not send the
+// teacher back to "pending": subjects and batch assignment stay with the admin.
+app.put("/profile", async (c) => {
+  if (c.get("role") !== "teacher" && !c.get("isTeacher")) return c.json({ error: "not_a_teacher" }, 403);
+
+  const parsed = TeacherProfileUpdate.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
+  const { qualification, experienceYears, phone, bio, demoUrl } = parsed.data;
+
+  await c.env.DB
+    .prepare(
+      `INSERT INTO teacher_applications (uid, subjects, qualification, experience_years, phone, bio, demo_url, status)
+       VALUES (?, '[]', ?, ?, ?, ?, ?, 'approved')
+       ON CONFLICT(uid) DO UPDATE SET
+         qualification = excluded.qualification, experience_years = excluded.experience_years,
+         phone = excluded.phone, bio = excluded.bio, demo_url = excluded.demo_url,
+         updated_at = unixepoch()`,
+    )
+    .bind(c.get("uid"), qualification, experienceYears, phone, bio, demoUrl ?? null)
     .run();
 
   return c.json({ ok: true });

@@ -35,3 +35,43 @@ describe("BatchUpsert banner", () => {
     expect(BatchUpsert.safeParse({ ...base, bannerUrl: "not a link" }).success).toBe(false);
   });
 });
+
+import { BannerUpsert, TeacherProfileUpdate } from "./schema";
+
+describe("BannerUpsert targets", () => {
+  const base = { imageUrl: "https://example.com/b.jpg", titleBn: "ক", titleEn: "A" };
+
+  it("accepts each kind of target", () => {
+    for (const body of [
+      base,
+      { ...base, targetType: "batch", targetId: "neet-2027" },
+      { ...base, targetType: "test", targetId: "t1" },
+      { ...base, targetType: "lecture", targetId: "l1" },
+      { ...base, targetType: "material", targetId: "n1" },
+      { ...base, targetType: "link", linkUrl: "https://example.com" },
+      { ...base, batchId: "neet-2027" },
+    ]) {
+      expect(BannerUpsert.safeParse(body).success).toBe(true);
+    }
+  });
+
+  it("rejects a target with nothing chosen", () => {
+    expect(BannerUpsert.safeParse({ ...base, targetType: "test" }).success).toBe(false);
+    expect(BannerUpsert.safeParse({ ...base, targetType: "link" }).success).toBe(false);
+    expect(BannerUpsert.safeParse({ ...base, targetType: "course", targetId: "x" }).success).toBe(false);
+  });
+});
+
+describe("TeacherProfileUpdate", () => {
+  it("only takes the public profile fields", () => {
+    const parsed = TeacherProfileUpdate.safeParse({
+      qualification: "M.Sc. Chemistry",
+      experienceYears: 6,
+      phone: "9876543210",
+      bio: "I teach organic chemistry for NEET and boards, with a lot of practice.",
+      subjects: ["chemistry"],
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect("subjects" in parsed.data).toBe(false);
+  });
+});

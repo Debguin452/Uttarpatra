@@ -155,3 +155,13 @@ export function IconTray({ size, strokeWidth = 1.5, className }: IconProps): JSX
     </svg>
   );
 }
+
+export function IconMore({ size, className }: IconProps): JSX.Element {
+  return (
+    <svg {...base(size)} fill="currentColor" stroke="none" className={className}>
+      <circle cx="12" cy="5.5" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="12" cy="18.5" r="1.6" />
+    </svg>
+  );
+}

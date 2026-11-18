@@ -1,12 +1,23 @@
+import { useEffect } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { IconTray } from "@coaching-app/ui/icons";
 import { Async, EmptyState, SyncNote } from "../components/ui";
+import { focusTarget } from "../lib/focus";
 import { pick } from "../lib/format";
 import { useTests } from "../lib/queries";
 import { go } from "../lib/router";
 
 export function Tests() {
   const tests = useTests();
+  const focusId = focusTarget.value?.type === "test" ? focusTarget.value.id : null;
+
+  // Coming from a banner: bring that test into view, mark it briefly, then let go.
+  useEffect(() => {
+    if (!focusId || !tests.data) return;
+    document.getElementById(`test-${focusId}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    const timer = setTimeout(() => (focusTarget.value = null), 3000);
+    return () => clearTimeout(timer);
+  }, [focusId, tests.data]);
 
   return (
     <div class="screen">
@@ -19,7 +30,7 @@ export function Tests() {
             <div class="stack">
               <div class="list">
                 {rows.map((row) => (
-                  <div class="item">
+                  <div class={row.id === focusId ? "item focused" : "item"} id={`test-${row.id}`} key={row.id}>
                     <span class="name">{pick(row, "title")}</span>
                     <span class="meta">
                       {t("duration_min", { minutes: Math.round(row.duration_sec / 60) })} ·{" "}

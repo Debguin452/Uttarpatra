@@ -1,12 +1,14 @@
 import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { BatchUpsert, TRACKS, type Track } from "@coaching-app/shared/schema";
+import { AdminImagePreview } from "../../components/AdminImagePreview";
 import { Field, Segmented } from "../../components/adminUi";
 import { Select } from "../../components/Select";
 import { Loading, SectionHead } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
 import type { AdminBatchDetail, AdminBatchRow, BatchStatus } from "../../lib/adminTypes";
 import { errorText, money, pick } from "../../lib/format";
+import { imageSrc } from "../../lib/image";
 import { useSubjects } from "../../lib/queries";
 import { go } from "../../lib/router";
 import { currentRole } from "../../lib/session";
@@ -296,7 +298,7 @@ function BatchForm({
       summaryBn: form.summaryBn.trim() || undefined,
       summaryEn: form.summaryEn.trim() || undefined,
       previewVideoId: videoId ?? undefined,
-      bannerUrl: form.banner.trim() || undefined,
+      bannerUrl: form.banner.trim() ? imageSrc(form.banner) : undefined,
       status: form.status,
     });
     if (!parsed.success) {
@@ -436,6 +438,7 @@ function BatchForm({
             <Field id="banner" label={t("admin_batch_banner")} hint={t("admin_batch_banner_hint")} error={problem("bannerUrl")} span>
               <input id="banner" class="input" inputMode="url" placeholder="https://" value={form.banner} onInput={(e) => patch({ banner: e.currentTarget.value })} />
             </Field>
+            <div class="span"><AdminImagePreview url={form.banner} /></div>
             <Field id="video" label={t("admin_preview_video")} hint={t("admin_preview_video_hint")} error={problem("previewVideoId")} span>
               <input id="video" class="input" value={form.video} onInput={(e) => patch({ video: e.currentTarget.value })} />
             </Field>
