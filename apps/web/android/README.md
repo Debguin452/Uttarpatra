@@ -59,12 +59,27 @@ own fingerprint added in Firebase.
 
 ## Push notifications in this app
 
-The web push system (`apps/web/src/lib/push.ts`, registering an FCM web
-token via a service worker) **will not reliably reach this app** — Android
-WebViews don't support the Push API the way full Chrome does, which is why
-it was built as a web feature in the first place. The backend (hand-rolled
-FCM v1 client in `workers/api/src/lib/push.ts`) can still send to this app,
-but only once it registers a token the *native* way — that means adding
-`@capacitor/push-notifications` (not done yet) and a small native-token
-branch next to the Google Sign-In one above. Flagging this as a known gap
-rather than something already working.
+Android WebViews don't support the Push API the way full Chrome does, so
+the web push system (`apps/web/src/lib/push.ts`, an FCM *web* token via a
+service worker) doesn't reach this app. Instead, `apps/web/src/lib/push.ts`
+now branches on `isNativeApp()` and, inside the Android app, registers a
+**native** FCM token via `@capacitor/push-notifications` — same "Enable
+notifications" button on Profile, same `/api/push/register` endpoint on the
+backend (it already accepted `platform: "android"`), same hand-rolled FCM
+v1 sender (`workers/api/src/lib/push.ts`) that sends to it. No extra native
+code was needed beyond installing the plugin and running `cap sync` — it
+registers its own Firebase messaging service via the already-committed
+`google-services.json`.
+
+What this gives you, and one caveat:
+
+- **App backgrounded or closed**: a class-reminder push shows as a normal
+  Android system notification automatically (standard FCM "notification"
+  payload behavior) — this is the main case, since reminders fire while
+  students probably aren't staring at the app.
+- **App open in the foreground**: Android does *not* auto-show a system
+  notification in this case (true for any app, not just this one). The
+  push still arrives — `PushNotifications.addListener("pushNotificationReceived", ...)`
+  can be wired up to show an in-app toast/banner, but that listener isn't
+  added yet. Low priority, since reminders are most useful when the app
+  isn't already open to the live class.

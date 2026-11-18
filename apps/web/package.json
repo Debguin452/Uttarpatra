@@ -13,6 +13,7 @@
     "@capacitor-firebase/authentication": "7.5.0",
     "@capacitor/android": "^8.6.2",
     "@capacitor/core": "^8.6.2",
+    "@capacitor/push-notifications": "8.1.3",
     "@coaching-app/shared": "workspace:*",
     "@coaching-app/ui": "workspace:*",
     "@fontsource/hind-siliguri": "^5.3.0",

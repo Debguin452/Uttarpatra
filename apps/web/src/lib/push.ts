@@ -1,23 +1,38 @@
 import { signal } from "@preact/signals";
 import { api } from "./api";
 import { firebaseApp } from "./firebase";
+import { isNativeApp } from "./platform";
 
 export type PushStatus = "unsupported" | "default" | "denied" | "granted" | "busy";
 
 function currentStatus(): PushStatus {
+  if (isNativeApp()) return "default"; // resolved async in enablePush(); see checkNativeStatus()
   if (!("Notification" in window) || !("serviceWorker" in navigator)) return "unsupported";
   return Notification.permission as PushStatus;
 }
 
 export const pushStatus = signal<PushStatus>(currentStatus());
 
+if (isNativeApp()) void checkNativeStatus();
+
+async function checkNativeStatus(): Promise<void> {
+  const { PushNotifications } = await import("@capacitor/push-notifications");
+  const { receive } = await PushNotifications.checkPermissions();
+  pushStatus.value = receive === "granted" ? "granted" : receive === "denied" ? "denied" : "default";
+}
+
 /**
  * Asks for notification permission (if needed) and registers this
- * browser/device's FCM web token with the backend. No-ops quietly if the
- * browser doesn't support push, the user denies the prompt, or the app's
- * VITE_FIREBASE_VAPID_KEY / messaging config isn't set up yet.
+ * device's FCM token with the backend — the native Android token on the
+ * packaged app (via @capacitor/push-notifications, using the same
+ * google-services.json/Firebase project), or a Web Push token in the
+ * browser (via the service worker + VAPID key). No-ops quietly if the
+ * platform doesn't support push, the user denies the prompt, or (web
+ * only) VITE_FIREBASE_VAPID_KEY isn't set up yet.
  */
 export async function enablePush(): Promise<void> {
+  if (isNativeApp()) return enableNativePush();
+
   if (!("Notification" in window) || !("serviceWorker" in navigator)) {
     pushStatus.value = "unsupported";
     return;
@@ -49,5 +64,35 @@ export async function enablePush(): Promise<void> {
     pushStatus.value = "granted";
   } catch {
     pushStatus.value = currentStatus();
+  }
+}
+
+async function enableNativePush(): Promise<void> {
+  pushStatus.value = "busy";
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+
+    let { receive } = await PushNotifications.checkPermissions();
+    if (receive !== "granted") {
+      ({ receive } = await PushNotifications.requestPermissions());
+    }
+    if (receive !== "granted") {
+      pushStatus.value = "denied";
+      return;
+    }
+
+    const registered = new Promise<string>((resolve, reject) => {
+      PushNotifications.addListener("registration", (token) => resolve(token.value));
+      PushNotifications.addListener("registrationError", (err) =>
+        reject(new Error(err.error ?? "registration failed")),
+      );
+    });
+    await PushNotifications.register();
+    const token = await registered;
+
+    await api("/api/push/register", { body: { token, platform: "android" } });
+    pushStatus.value = "granted";
+  } catch {
+    pushStatus.value = "default";
   }
 }

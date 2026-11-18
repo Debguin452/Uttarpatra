@@ -76,20 +76,39 @@ jobs:
 
       - name: Print signing certificate fingerprints
         working-directory: apps/web/android
+        # Diagnostic only — never fails the job (APK upload below is what
+        # actually matters), and doesn't assume a particular keytool output
+        # format or keystore path.
+        continue-on-error: true
         run: |
-          echo "# Debug keystore (used to sign app-debug.apk — add this SHA-1 to"
-          echo "# Firebase console > Project settings > Your apps > com.uttarpatra.app"
-          echo "# > Add fingerprint, so Google Sign-In works in debug builds):"
-          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey \
-            | grep -E "SHA1:|SHA256:"
+          set +e
+          print_fingerprints() {
+            local label="$1" keystore="$2" storepass="$3" alias="$4"
+            echo "# $label:"
+            if [ ! -f "$keystore" ]; then
+              echo "  (no keystore found at $keystore — skipping)"
+              return
+            fi
+            local out
+            out=$(keytool -list -v -keystore "$keystore" -storepass "$storepass" -alias "$alias" 2>&1)
+            local hits
+            hits=$(echo "$out" | grep -iE "SHA-?1:|SHA-?256:")
+            if [ -n "$hits" ]; then
+              echo "$hits"
+            else
+              echo "  Couldn't find a SHA1/SHA256 line automatically — full keytool output below:"
+              echo "$out"
+            fi
+          }
+
+          echo "# Add the SHA-1 below to: Firebase console > Project settings >"
+          echo "# Your apps > com.uttarpatra.app > Add fingerprint."
+          echo ""
+          print_fingerprints "Debug keystore (signs app-debug.apk)" "$HOME/.android/debug.keystore" android androiddebugkey
           if [ "${{ steps.signing.outputs.has_keystore }}" = "true" ]; then
             echo ""
-            echo "# Release keystore (used to sign app-release.apk — add this SHA-1"
-            echo "# too once you're testing/shipping release builds):"
-            keytool -list -v -keystore app/release.keystore \
-              -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
-              -alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
-              | grep -E "SHA1:|SHA256:"
+            print_fingerprints "Release keystore (signs app-release.apk)" app/release.keystore \
+              "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" "${{ secrets.ANDROID_KEY_ALIAS }}"
           fi
 
       - uses: actions/upload-artifact@v4
