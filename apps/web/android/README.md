@@ -33,29 +33,38 @@ for native Google Sign-In on Android instead:
 
 **This is the part that genuinely needs the SHA fingerprint.** Native
 Google Sign-In verifies the app by its signing certificate, so Firebase has
-to know it:
+to know it.
 
-1. Get the SHA-1 (and SHA-256) of whichever keystore signs your build:
-   - Easiest: run the `android-apk` GitHub Action once (Actions tab → "Run
-     workflow"). A "Print signing certificate fingerprints" step prints the
-     debug keystore's SHA-1/SHA-256 in the log (and the release keystore's
-     too, if you've set up `ANDROID_KEYSTORE_BASE64` and friends as repo
-     secrets — see `app/build.gradle`'s comment for the exact secret names).
-   - Or locally, if you ever have Android Studio / a JDK + the project
-     checked out: `cd apps/web/android && ./gradlew signingReport`.
-2. Firebase console → Project settings → scroll to "Your apps" → the
+`apps/web/android/app/debug.keystore` is now **committed to the repo** with
+a fixed password (`android`/`android`, alias `androiddebugkey` — the
+standard, non-secret Android debug-key defaults) and wired as the `debug`
+build type's explicit signing config in `app/build.gradle`. That means
+every build — yours locally, or any fresh/ephemeral GitHub Actions runner —
+signs with the exact same key, so its fingerprint never changes and you
+only need to add it to Firebase **once**:
+
+- **SHA-1**: `46:46:27:F0:66:E0:6A:B6:EF:08:98:B5:4B:5B:65:76:D8:7E:59:F9`
+- **SHA-256**: `AE:89:AF:8E:87:91:2A:7D:E6:62:BE:8F:3D:1B:09:39:72:AA:F3:31:E6:D8:B5:1B:B8:FB:2B:9A:B3:3B:61:BF`
+
+Steps:
+
+1. Firebase console → Project settings → scroll to "Your apps" → the
    Android app (`com.uttarpatra.app`) → **Add fingerprint** → paste the
-   SHA-1 (add SHA-256 too if you have it).
-3. **Download the updated `google-services.json`** from that same screen
+   SHA-1 above (add the SHA-256 too).
+2. **Download the updated `google-services.json`** from that same screen
    (it changes once a fingerprint is added — it gets a new OAuth client tied
    to that certificate) and replace `apps/web/android/app/google-services.json`
    in the repo with it.
-4. Re-run the `android-apk` workflow. Google Sign-In should now work in
-   that build.
+3. Re-run the `android-apk` workflow (or build locally). Google Sign-In
+   should now work in that debug build — this is a one-time setup, not
+   something to repeat per build.
 
-Repeat steps 1–4 for the release keystore once you set one up — a debug
-build and a release build have different certificates, so each needs its
-own fingerprint added in Firebase.
+(The `android-apk` workflow's "Print signing certificate fingerprints" step
+still prints this same value in the log too, as a convenience/sanity check.)
+
+Do the same for a **release** keystore once you set one up (`ANDROID_KEYSTORE_BASE64`
+and friends as repo secrets) — a release build signs with a different
+certificate, so it needs its own fingerprint added in Firebase.
 
 ## Push notifications in this app
 

@@ -28,8 +28,20 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    if (hasSigningConfig) {
-        signingConfigs {
+    signingConfigs {
+        // Committed debug.keystore (not secret — the whole point of a debug
+        // key is that it's a fixed, known, shared value) so every build —
+        // local or CI, on any machine or any fresh GitHub Actions runner —
+        // produces the SAME SHA-1/SHA-256, and the fingerprint you add in
+        // Firebase console stays valid forever instead of needing to be
+        // re-added every time a CI runner regenerates a random one.
+        debug {
+            storeFile rootProject.file('app/debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        if (hasSigningConfig) {
             release {
                 storeFile rootProject.file(keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
@@ -39,6 +51,9 @@ android {
         }
     }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

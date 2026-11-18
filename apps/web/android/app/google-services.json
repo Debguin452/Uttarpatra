@@ -8,16 +8,36 @@
     {
       "client_info": {
         "mobilesdk_app_id": "1:69576681235:android:3aa827d3772d08aaba1ce6",
-        "android_client_info": { "package_name": "com.uttarpatra.app" }
+        "android_client_info": {
+          "package_name": "com.uttarpatra.app"
+        }
       },
       "oauth_client": [
-        { "client_id": "69576681235-tbor7btg7e75pp121fdmo5cs2nr5qnvg.apps.googleusercontent.com", "client_type": 3 }
+        {
+          "client_id": "69576681235-j32oq7nv4sg7gaev1v8pb6tn8r2qdv9a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.uttarpatra.app",
+            "certificate_hash": "464627f066e06ab6ef0898b54b5b6576d87e59f9"
+          }
+        },
+        {
+          "client_id": "69576681235-tbor7btg7e75pp121fdmo5cs2nr5qnvg.apps.googleusercontent.com",
+          "client_type": 3
+        }
       ],
-      "api_key": [ { "current_key": "AIzaSyA97EjoEY53a8MHF5i-u4DUhmYN2cZ1ktc" } ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA97EjoEY53a8MHF5i-u4DUhmYN2cZ1ktc"
+        }
+      ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
-            { "client_id": "69576681235-tbor7btg7e75pp121fdmo5cs2nr5qnvg.apps.googleusercontent.com", "client_type": 3 }
+            {
+              "client_id": "69576681235-tbor7btg7e75pp121fdmo5cs2nr5qnvg.apps.googleusercontent.com",
+              "client_type": 3
+            }
           ]
         }
       }

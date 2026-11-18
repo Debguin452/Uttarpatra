@@ -103,8 +103,10 @@ jobs:
 
           echo "# Add the SHA-1 below to: Firebase console > Project settings >"
           echo "# Your apps > com.uttarpatra.app > Add fingerprint."
+          echo "# (This is the committed, fixed debug.keystore, so this value never"
+          echo "# changes between runs — you only need to add it once.)"
           echo ""
-          print_fingerprints "Debug keystore (signs app-debug.apk)" "$HOME/.android/debug.keystore" android androiddebugkey
+          print_fingerprints "Debug keystore (signs app-debug.apk)" app/debug.keystore android androiddebugkey
           if [ "${{ steps.signing.outputs.has_keystore }}" = "true" ]; then
             echo ""
             print_fingerprints "Release keystore (signs app-release.apk)" app/release.keystore \
