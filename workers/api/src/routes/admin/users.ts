@@ -72,6 +72,19 @@ app.post("/payments/review", async (c) => {
 
 app.get("/users/search", async (c) => {
   const q = (c.req.query("q") ?? "").trim();
+
+  // No query at all (admin just opened the tab) -> the default view
+  // is "everyone", newest first, not an empty screen that only
+  // reacts once you type something.
+  if (q.length === 0) {
+    const rows = await c.env.DB
+      .prepare(
+        `SELECT u.uid, u.name, u.phone, u.role, u.status, u.is_teacher, u.created_at
+         FROM users u ORDER BY u.created_at DESC LIMIT 50`,
+      )
+      .all();
+    return c.json(rows.results);
+  }
   if (q.length < 2) return c.json([]);
   const escaped = q.replace(/[%_\\]/g, (m) => `\\${m}`);
   const like = `%${escaped}%`;

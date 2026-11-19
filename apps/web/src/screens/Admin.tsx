@@ -135,7 +135,7 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   async function search(event?: Event) {
     event?.preventDefault();
     const q = query.trim();
-    if (q.length < 2) return;
+    if (q.length === 1) return; // one character isn't a useful search yet; empty is fine (-> full list)
     setError(null);
     setRows(null);
     try {
@@ -145,6 +145,12 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       setRows([]);
     }
   }
+
+  // The tab's default state is "everyone", not a blank search box.
+  useEffect(() => {
+    void search();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function act() {
     if (!confirm) return;
@@ -181,7 +187,7 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
               onInput={(e) => setQuery(e.currentTarget.value)}
               placeholder={t("admin_search_placeholder")}
             />
-            <button class="btn" type="submit" disabled={query.trim().length < 2}>
+            <button class="btn" type="submit" disabled={query.trim().length === 1}>
               {t("admin_search_go")}
             </button>
           </div>

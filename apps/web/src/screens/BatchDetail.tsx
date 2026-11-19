@@ -1,15 +1,16 @@
 import { useEffect, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { Async, Loading, SectionHead } from "../components/ui";
-import { BannerImage } from "../components/BannerImage";
 import { TeacherCards } from "../components/TeacherCards";
-import { focusTarget } from "../lib/focus";
 import { setContinueLearning } from "../lib/continueLearning";
 import { money, pick } from "../lib/format";
-import { useBatchContent, useBatches, useMyBatches } from "../lib/queries";
+import { invalidateQuery } from "@coaching-app/shared/cache/useCachedQuery";
+import { api, ApiError } from "../lib/api";
+import { errorText } from "../lib/format";
+import { myBatchesKey, useBatchContent, useBatches, useMyBatches } from "../lib/queries";
 import { go } from "../lib/router";
 import { markOpenedLecture } from "../lib/onboarding";
-import { enrolledIds } from "../lib/session";
+import { enrolledIds, loadMe, uid } from "../lib/session";
 import type { Batch, Lecture } from "../lib/types";
 
 const embed = (id: string) => `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
@@ -18,31 +19,12 @@ const driveLink = (id: string) => `https://drive.google.com/file/d/${encodeURICo
 function Content({ batch }: { batch: Batch }) {
   const content = useBatchContent(batch.id);
   const [active, setActive] = useState<Lecture | null>(null);
-  const [highlight, setHighlight] = useState<string | null>(null);
 
   const lectures = content.data?.lectures ?? [];
   const current = active ?? lectures[0] ?? null;
 
   useEffect(() => {
     if (content.data && content.data.lectures.length > 0) markOpenedLecture();
-  }, [content.data]);
-
-  // Coming from a banner: open that lecture, or bring that material into view.
-  useEffect(() => {
-    const focus = focusTarget.value;
-    if (!focus || !content.data) return;
-    focusTarget.value = null;
-    if (focus.type === "lecture") {
-      const lecture = content.data.lectures.find((l) => l.id === focus.id);
-      if (lecture) {
-        setActive(lecture);
-        scrollTo({ top: 0, behavior: "smooth" });
-      }
-    } else if (focus.type === "material") {
-      setHighlight(focus.id);
-      setTimeout(() => document.getElementById(`note-${focus.id}`)?.scrollIntoView({ block: "center", behavior: "smooth" }), 150);
-      setTimeout(() => setHighlight(null), 3000);
-    }
   }, [content.data]);
 
   useEffect(() => {
@@ -113,8 +95,7 @@ function Content({ batch }: { batch: Batch }) {
               <div class="list">
                 {notes.map((note) => (
                   <a
-                    class={note.id === highlight ? "item focused" : "item"}
-                    id={`note-${note.id}`}
+                    class="item"
                     key={note.id}
                     href={driveLink(note.drive_file_id)}
                     target="_blank"
@@ -142,11 +123,21 @@ export function BatchDetail({ batchId }: { batchId: string }) {
   const enrolled = enrolledIds().has(batchId);
   const batch = catalog.data?.find((b) => b.id === batchId) ?? mine.data?.find((b) => b.id === batchId);
   const waiting = !batch && (catalog.isLoading || mine.isLoading);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
-  // A banner's lecture/material focus only applies once the content is open to this student.
-  useEffect(() => {
-    if (batch && !enrolled && batch.kind !== "free") focusTarget.value = null;
-  }, [batch?.id, enrolled]);
+  async function joinFree() {
+    setJoining(true);
+    setJoinError(null);
+    try {
+      await api(`/api/batches/${batchId}/enroll-free`, { method: "POST" });
+      await Promise.all([loadMe(), invalidateQuery(myBatchesKey(uid()))]);
+    } catch (e) {
+      setJoinError(errorText(e instanceof ApiError ? e.code : "network"));
+    } finally {
+      setJoining(false);
+    }
+  }
 
   return (
     <div class="screen">
@@ -162,13 +153,29 @@ export function BatchDetail({ batchId }: { batchId: string }) {
           const open = enrolled || batch.kind === "free";
           return (
             <>
-              {batch.banner_url && <BannerImage class="batch-banner" src={batch.banner_url} />}
+              {batch.banner_url && (
+                <img
+                  class="batch-banner"
+                  src={batch.banner_url}
+                  alt=""
+                  onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")}
+                />
+              )}
               <header class="stack">
                 <p class="eyebrow">{t(`filter_${batch.track}`)}</p>
                 <h1 class="title">{pick(batch, "title")}</h1>
                 {pick(batch, "summary") && <p class="muted">{pick(batch, "summary")}</p>}
               </header>
               <TeacherCards batchId={batch.id} />
+              {batch.kind === "free" && !enrolled && (
+                <div class="panel row-between">
+                  <span class="muted small">{t("join_free_hint")}</span>
+                  <button class="btn primary small" disabled={joining} onClick={joinFree}>
+                    {t("join")}
+                  </button>
+                </div>
+              )}
+              {joinError && <p class="error-text">{joinError}</p>}
               {open ? (
                 <Content batch={batch} />
               ) : (

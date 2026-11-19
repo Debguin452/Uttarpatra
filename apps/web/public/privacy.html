@@ -3,10 +3,23 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>
+  // This page is static (no app bundle), but it shares localStorage
+  // with the app on the same origin — so the theme the user picked in
+  // Profile (not just their OS's light/dark setting) can still apply
+  // here. Runs before first paint to avoid a flash of the wrong theme.
+  (function () {
+    try {
+      var saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") document.documentElement.setAttribute("data-theme", saved);
+    } catch (e) {}
+  })();
+</script>
 <meta name="theme-color" content="#03297E" />
 <title>Privacy Policy — উত্তরপত্র Coaching Institute</title>
 <meta name="description" content="How উত্তরপত্র Coaching Institute collects, uses and protects your data." />
 <meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://uttarpatro.pages.dev/privacy.html" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,8 +35,11 @@
     --font-headline: "Source Serif 4", Georgia, serif;
     --font-ui: "Hind Siliguri", "Inter", system-ui, sans-serif;
   }
+  :root[data-theme="dark"] {
+    color-scheme: dark; --ink: #EDEEEA; --paper: #14171B; --surface: #1B1F24; --line: #30343A; --muted: #9A9FA6; --mark: #8FB0F5;
+  }
   @media (prefers-color-scheme: dark) {
-    :root { color-scheme: dark; --ink: #EDEEEA; --paper: #14171B; --surface: #1B1F24; --line: #30343A; --muted: #9A9FA6; --mark: #8FB0F5; }
+    :root:not([data-theme="light"]) { color-scheme: dark; --ink: #EDEEEA; --paper: #14171B; --surface: #1B1F24; --line: #30343A; --muted: #9A9FA6; --mark: #8FB0F5; }
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }

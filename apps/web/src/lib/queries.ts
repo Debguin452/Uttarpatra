@@ -10,8 +10,10 @@ export const useBatches = () =>
 export const useBanners = () =>
   useCachedQuery<Banner[]>("public:banners", () => api<Banner[]>("/public/banners", { auth: false }));
 
+export const myBatchesKey = (forUid: string) => `${forUid}:my-batches`;
+
 export const useMyBatches = () =>
-  useCachedQuery<MyBatch[]>(`${uid()}:my-batches`, () => api<MyBatch[]>("/api/batches/mine"), { ttlMs: 60_000 });
+  useCachedQuery<MyBatch[]>(myBatchesKey(uid()), () => api<MyBatch[]>("/api/batches/mine"), { ttlMs: 60_000 });
 
 export const useNotices = () => useCachedQuery<Notice[]>(`${uid()}:notices`, () => api<Notice[]>("/api/notices"));
 

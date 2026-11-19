@@ -81,6 +81,30 @@ authedRoutes.get("/:id/teachers", async (c) => {
   return c.json(rows.results);
 });
 
+// A free batch's content is viewable without this (see /:id/content
+// below), but viewing isn't enrolling: without an actual enrollments
+// row, the batch never shows up in /mine, so Home's "My Batches" and
+// the student's own batch list stay empty for something they're
+// already using. This is what the "Join" action on a free batch
+// calls to actually create that row.
+authedRoutes.post("/:id/enroll-free", async (c) => {
+  const batchId = c.req.param("id");
+  const uid = c.get("uid");
+
+  const batch = await c.env.DB
+    .prepare("SELECT kind FROM batches WHERE id = ? AND status = 'published'")
+    .bind(batchId)
+    .first<{ kind: string }>();
+  if (!batch) return c.json({ error: "not_found" }, 404);
+  if (batch.kind !== "free") return c.json({ error: "batch_not_free" }, 400);
+
+  await c.env.DB
+    .prepare("INSERT INTO enrollments (uid, batch_id, granted_by) VALUES (?, ?, 'free') ON CONFLICT(uid, batch_id) DO NOTHING")
+    .bind(uid, batchId)
+    .run();
+  return c.json({ ok: true });
+});
+
 authedRoutes.get("/:id/content", async (c) => {
   const batchId = c.req.param("id");
   const uid = c.get("uid");
