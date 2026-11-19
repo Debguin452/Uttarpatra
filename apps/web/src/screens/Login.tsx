@@ -58,7 +58,18 @@ export function Login() {
         // use the native Google Sign-In flow instead (capacitor.config.ts
         // keeps it synced into this same Firebase JS SDK auth state).
         const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
-        await FirebaseAuthentication.signInWithGoogle();
+        // Known Android bug: on some devices/OEM skins the system's
+        // CredentialManager picker never appears and the call hangs
+        // forever — no error, no account picker (seen elsewhere, e.g.
+        // ChatGPT's Android app). There's no built-in timeout, so impose
+        // one here and fail with a clear, actionable message instead of
+        // leaving the user stuck on a frozen screen.
+        await Promise.race([
+          FirebaseAuthentication.signInWithGoogle(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject({ code: "native/sign-in-timeout" }), 10_000),
+          ),
+        ]);
         return;
       }
       await signInWithPopup(auth, new GoogleAuthProvider());

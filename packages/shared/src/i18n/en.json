@@ -165,6 +165,7 @@
   "err_network": "No connection. Check your internet and try again.",
   "err_other_method": "This email is registered with another sign-in method. Try Continue with Google.",
   "err_popup_blocked": "Your browser blocked the Google window. Allow pop-ups, or sign in with email.",
+  "err_native_timeout": "Google sign-in didn't respond. This is a known issue on some phones — try again, or sign in with email instead.",
   "guide_title": "Getting started",
   "guide_profile": "Profile saved",
   "guide_lecture": "Watch a free lecture",

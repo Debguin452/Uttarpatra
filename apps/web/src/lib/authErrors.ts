@@ -9,6 +9,7 @@ const KEYS: Record<string, string> = {
   "auth/network-request-failed": "err_network",
   "auth/account-exists-with-different-credential": "err_other_method",
   "auth/popup-blocked": "err_popup_blocked",
+  "native/sign-in-timeout": "err_native_timeout",
 };
 
 const SILENT = new Set(["auth/popup-closed-by-user", "auth/cancelled-popup-request"]);
