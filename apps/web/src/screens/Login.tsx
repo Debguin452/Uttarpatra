@@ -23,16 +23,30 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
 
   async function run(action: () => Promise<unknown>, onDone?: () => void) {
     setBusy(true);
     setErrorKey(null);
+    setErrorDetail(null);
     try {
       await action();
       onDone?.();
     } catch (e) {
-      setErrorKey(authErrorKey((e as { code?: string }).code ?? ""));
+      // eslint-disable-next-line no-console
+      console.error("auth action failed", e);
+      const code = (e as { code?: string }).code ?? "";
+      const key = authErrorKey(code);
+      setErrorKey(key);
+      // Temporary: surface the raw error alongside the generic message so
+      // we can see what's actually failing (e.g. native Google sign-in on
+      // Android) without needing device logs. Codes mapped to null (like
+      // "user closed the popup") stay fully silent, as intended.
+      if (key === "something_wrong") {
+        const message = e instanceof Error ? e.message : String(e);
+        setErrorDetail(code ? `${code}: ${message}` : message);
+      }
     }
     setBusy(false);
   }
@@ -154,6 +168,7 @@ export function Login() {
           {view === "up" && <span class="hint">{t("password_hint")}</span>}
         </div>
         {errorKey && <p class="error-text">{t(errorKey)}</p>}
+        {errorDetail && <p class="hint small">{errorDetail}</p>}
         <button class="btn block" type="submit" disabled={busy}>
           {view === "in" ? t("sign_in_email") : t("create_account")}
         </button>
