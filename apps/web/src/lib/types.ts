@@ -20,10 +20,15 @@ export type Lecture = {
   chapter: string;
   title_bn: string;
   title_en: string;
-  youtube_id: string;
+  // null while a scheduled lecture is still locked: the server withholds it
+  youtube_id: string | null;
   duration_sec: number | null;
   is_live: number;
   live_at: number | null;
+  subject_id: string | null;
+  release_at: number | null;
+  locked: number;
+  order_index: number;
 };
 
 export type LiveLecture = {
@@ -265,7 +270,28 @@ export type BatchNote = {
   kind: string;
 };
 
-export type BatchContent = { lectures: Lecture[]; notes: BatchNote[] };
+export type ContentSubject = { id: string; name_bn: string; name_en: string; sort_order: number };
+export type BatchContent = { lectures: Lecture[]; subjects: ContentSubject[]; notes: BatchNote[] };
+
+export type LectureProgress = {
+  lecture_id: string;
+  position_sec: number;
+  duration_sec: number | null;
+  completed: number;
+  updated_at: number;
+};
+
+export type LearningSummary = {
+  batch_id: string;
+  title_bn: string;
+  title_en: string;
+  track: string;
+  kind: string;
+  banner_url: string | null;
+  total: number;
+  done: number;
+  last_at: number | null;
+};
 
 export type MyBatch = Batch & { status: "published" | "archived"; expires_at: number | null };
 

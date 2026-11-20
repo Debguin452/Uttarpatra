@@ -165,3 +165,22 @@ export function IconMore({ size, className }: IconProps): JSX.Element {
     </svg>
   );
 }
+
+export function IconCheck({ size, strokeWidth = 1.5, className }: IconProps): JSX.Element {
+  return (
+    <svg {...base(size)} strokeWidth={strokeWidth} className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8.3 12.4l2.5 2.5 4.9-5.2" />
+    </svg>
+  );
+}
+
+export function IconLearning({ size, strokeWidth = 1.5, className }: IconProps): JSX.Element {
+  return (
+    <svg {...base(size)} strokeWidth={strokeWidth} className={className}>
+      <path d="M3.5 6.5L12 3l8.5 3.5L12 10z" />
+      <path d="M7 9v4.2c0 1.3 2.2 2.8 5 2.8s5-1.5 5-2.8V9" />
+      <path d="M20.5 6.5V12" />
+    </svg>
+  );
+}

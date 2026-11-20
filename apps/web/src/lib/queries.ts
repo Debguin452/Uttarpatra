@@ -1,16 +1,15 @@
 import { useCachedQuery } from "@coaching-app/shared/cache/useCachedQuery";
 import { api } from "./api";
+import { learningSummaryKey, myBatchesKey, paymentsKey, progressKey } from "./cacheKeys";
 import { uid } from "./session";
 import { testsKey } from "./testCache";
-import type { Banner, Batch, BatchContent, BatchTeacher, LeaderboardRow, LiveLecture, MyBatch, Notice, Payment, SubjectRow, TestResult, TestRow } from "./types";
+import type { LearningSummary, LectureProgress, Banner, Batch, BatchContent, BatchTeacher, LeaderboardRow, LiveLecture, MyBatch, Notice, Payment, SubjectRow, TestResult, TestRow } from "./types";
 
 export const useBatches = () =>
   useCachedQuery<Batch[]>("public:batches", () => api<Batch[]>("/public/batches", { auth: false }));
 
 export const useBanners = () =>
   useCachedQuery<Banner[]>("public:banners", () => api<Banner[]>("/public/banners", { auth: false }));
-
-export const myBatchesKey = (forUid: string) => `${forUid}:my-batches`;
 
 export const useMyBatches = () =>
   useCachedQuery<MyBatch[]>(myBatchesKey(uid()), () => api<MyBatch[]>("/api/batches/mine"), { ttlMs: 60_000 });
@@ -35,7 +34,7 @@ export const useBatchTeachers = (batchId: string) =>
     { ttlMs: 10 * 60_000 },
   );
 
-export const paymentsKey = (forUid: string) => `${forUid}:payments`;
+export { myBatchesKey, paymentsKey } from "./cacheKeys";
 
 export const usePayments = () =>
   useCachedQuery<Payment[]>(paymentsKey(uid()), () => api<Payment[]>("/api/payments/mine"), { ttlMs: 60_000 });
@@ -52,3 +51,11 @@ export const useLeaderboard = (testId: string) =>
 
 export const useSubjects = () =>
   useCachedQuery<SubjectRow[]>(`${uid()}:subjects`, () => api<SubjectRow[]>("/api/subjects"), { ttlMs: 30 * 60_000 });
+
+export const useLectureProgress = (batchId: string) =>
+  useCachedQuery<LectureProgress[]>(progressKey(uid(), batchId), () => api<LectureProgress[]>(`/api/learning/${encodeURIComponent(batchId)}/progress`), {
+    ttlMs: 30_000,
+  });
+
+export const useLearningSummary = () =>
+  useCachedQuery<LearningSummary[]>(learningSummaryKey(uid()), () => api<LearningSummary[]>("/api/learning/summary"), { ttlMs: 30_000 });

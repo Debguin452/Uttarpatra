@@ -8,6 +8,7 @@ import { api, ApiError } from "../../lib/api";
 import type { AdminLecture } from "../../lib/adminTypes";
 import { errorText, pick, when } from "../../lib/format";
 import type { TeacherPortal } from "../../lib/types";
+import { useSubjects } from "../../lib/queries";
 import { useLoad } from "../../lib/useLoad";
 
 type Draft = {
@@ -21,6 +22,9 @@ type Draft = {
   orderIndex: string;
   isLive: boolean;
   liveAt: string;
+  subjectId: string;
+  status: "draft" | "published";
+  releaseAt: string;
 };
 
 const toLocalInput = (unixSec: number | null): string => {
@@ -43,6 +47,9 @@ const EMPTY: Draft = {
   orderIndex: "0",
   isLive: false,
   liveAt: "",
+  subjectId: "",
+  status: "published",
+  releaseAt: "",
 };
 
 const toDraft = (l: AdminLecture): Draft => ({
@@ -56,6 +63,9 @@ const toDraft = (l: AdminLecture): Draft => ({
   orderIndex: String(l.order_index),
   isLive: Boolean(l.is_live),
   liveAt: toLocalInput(l.live_at),
+  subjectId: l.subject_id ?? "",
+  status: l.status ?? "published",
+  releaseAt: toLocalInput(l.release_at),
 });
 
 export function TeacherLectures() {
@@ -67,6 +77,7 @@ export function TeacherLectures() {
     () => api<AdminLecture[]>(`/api/teacher/lectures${batchFilter ? `?batchId=${encodeURIComponent(batchFilter)}` : ""}`),
     [batchFilter],
   );
+  const subjects = useSubjects();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [deleting, setDeleting] = useState<AdminLecture | null>(null);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
@@ -92,6 +103,9 @@ export function TeacherLectures() {
       orderIndex: Number.parseInt(draft.orderIndex, 10) || 0,
       isLive: draft.isLive,
       liveAt: toUnixSec(draft.liveAt),
+      subjectId: draft.subjectId || null,
+      status: draft.status,
+      releaseAt: toUnixSec(draft.releaseAt),
     });
     if (!parsed.success) {
       setErrors(parsed.error.flatten().fieldErrors);
@@ -202,6 +216,33 @@ export function TeacherLectures() {
                 onInput={(e) => patch({ orderIndex: e.currentTarget.value.replace(/[^0-9]/g, "") })}
               />
             </Field>
+            <Field id="tl-subject" label={t("admin_lecture_subject")}>
+              <Select
+                id="tl-subject"
+                value={draft.subjectId}
+                onChange={(subjectId) => patch({ subjectId })}
+                options={[
+                  { value: "", label: t("admin_lecture_subject_none") },
+                  ...(subjects.data ?? []).map((s) => ({ value: s.id, label: pick(s, "name") })),
+                ]}
+              />
+            </Field>
+            <Field id="tl-status" label={t("admin_lecture_status")}>
+              <Select
+                id="tl-status"
+                value={draft.status}
+                onChange={(status) => patch({ status: status as "draft" | "published" })}
+                options={[
+                  { value: "published", label: t("admin_status_published") },
+                  { value: "draft", label: t("admin_status_draft") },
+                ]}
+              />
+            </Field>
+            {draft.status === "published" && (
+              <Field id="tl-release" label={t("admin_release_at")} hint={t("admin_release_hint")}>
+                <input id="tl-release" class="input" type="datetime-local" value={draft.releaseAt} onInput={(e) => patch({ releaseAt: e.currentTarget.value })} />
+              </Field>
+            )}
             <label class="check">
               <input type="checkbox" checked={draft.isLive} onChange={(e) => patch({ isLive: e.currentTarget.checked })} />
               <span>{t("admin_is_live")}</span>

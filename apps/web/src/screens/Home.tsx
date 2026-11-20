@@ -114,7 +114,7 @@ export function Home() {
           {continuing && (
             <section class="stack">
               <SectionHead title={t("continue_learning")} />
-              <button class="item" onClick={() => go(`batches/${continuing.batchId}`)}>
+              <button class="item" onClick={() => go(`learning/${continuing.batchId}/${continuing.lectureId}`)}>
                 <span class="name">{pick({ title_bn: continuing.titleBn, title_en: continuing.titleEn }, "title")}</span>
                 <span class="meta">
                   {continuing.chapter} · {pick({ title_bn: continuing.batchTitleBn, title_en: continuing.batchTitleEn }, "title")}

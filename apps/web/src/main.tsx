@@ -2,13 +2,18 @@ import { render } from "preact";
 import { locale, setLocale } from "@coaching-app/shared/i18n";
 import { App } from "./app";
 import { applyTheme } from "./lib/theme";
-import { startSession } from "./lib/session";
+import { refreshMe, startSession } from "./lib/session";
 import "./fonts.css";
 import "./styles.css";
 
 applyTheme();
 setLocale(locale.value);
 startSession();
+
+// Coming back to the app is when a payment approved meanwhile should show up.
+addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") void refreshMe();
+});
 
 render(<App />, document.getElementById("app")!);
 

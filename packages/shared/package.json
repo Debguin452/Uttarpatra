@@ -9,6 +9,8 @@
     "./leaderboard": "./src/leaderboard.ts",
     "./scoring": "./src/scoring.ts",
     "./pricing": "./src/pricing.ts",
+    "./enrollState": "./src/enrollState.ts",
+    "./learning": "./src/learning.ts",
     "./i18n": "./src/i18n/index.ts",
     "./cache/idbStore": "./src/cache/idbStore.ts",
     "./cache/useCachedQuery": "./src/cache/useCachedQuery.ts"

@@ -69,6 +69,9 @@ export type AdminNote = {
 };
 
 export type AdminLecture = {
+  subject_id: string | null;
+  status: "draft" | "published";
+  release_at: number | null;
   id: string;
   batch_id: string;
   batch_title_en: string;

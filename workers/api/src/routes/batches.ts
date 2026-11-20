@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { AppEnv, Env } from "../index";
+import { canOpenBatch } from "../lib/batchAccess";
 
 const publicRoutes = new Hono<{ Bindings: Env }>();
 
@@ -81,61 +82,37 @@ authedRoutes.get("/:id/teachers", async (c) => {
   return c.json(rows.results);
 });
 
-// A free batch's content is viewable without this (see /:id/content
-// below), but viewing isn't enrolling: without an actual enrollments
-// row, the batch never shows up in /mine, so Home's "My Batches" and
-// the student's own batch list stay empty for something they're
-// already using. This is what the "Join" action on a free batch
-// calls to actually create that row.
-authedRoutes.post("/:id/enroll-free", async (c) => {
-  const batchId = c.req.param("id");
-  const uid = c.get("uid");
-
-  const batch = await c.env.DB
-    .prepare("SELECT kind FROM batches WHERE id = ? AND status = 'published'")
-    .bind(batchId)
-    .first<{ kind: string }>();
-  if (!batch) return c.json({ error: "not_found" }, 404);
-  if (batch.kind !== "free") return c.json({ error: "batch_not_free" }, 400);
-
-  await c.env.DB
-    .prepare("INSERT INTO enrollments (uid, batch_id, granted_by) VALUES (?, ?, 'free') ON CONFLICT(uid, batch_id) DO NOTHING")
-    .bind(uid, batchId)
-    .run();
-  return c.json({ ok: true });
-});
-
 authedRoutes.get("/:id/content", async (c) => {
   const batchId = c.req.param("id");
   const uid = c.get("uid");
 
-  const batch = await c.env.DB
-    .prepare("SELECT kind, status FROM batches WHERE id = ? AND status IN ('published', 'archived')")
-    .bind(batchId)
-    .first<{ kind: string; status: string }>();
-  if (!batch) return c.json({ error: "not_found" }, 404);
-
-  if (batch.kind === "paid" || batch.status === "archived") {
-    const enrolled = await c.env.DB
-      .prepare(
-        "SELECT 1 FROM enrollments WHERE uid = ? AND batch_id = ? AND (expires_at IS NULL OR expires_at > unixepoch())",
-      )
-      .bind(uid, batchId)
-      .first();
-    if (!enrolled) {
-      return batch.status === "archived" ? c.json({ error: "not_found" }, 404) : c.json({ error: "not_enrolled" }, 403);
-    }
-  }
+  const access = await canOpenBatch(c.env.DB, uid, batchId);
+  if (access === "not_found") return c.json({ error: "not_found" }, 404);
+  if (access === "not_enrolled") return c.json({ error: "not_enrolled" }, 403);
 
   const cache = caches.default;
   const cacheKey = new Request(`https://cache.internal/batch-content/${batchId}`);
   const hit = await cache.match(cacheKey);
   if (hit) return c.json(await hit.json());
 
-  const [lectures, notes] = await Promise.all([
+  // Drafts never leave the server. A lecture scheduled for later is listed (so
+  // students can see what is coming) but its video id is withheld until then.
+  const [lectures, subjects, notes] = await Promise.all([
     c.env.DB
       .prepare(
-        "SELECT id, chapter, title_bn, title_en, youtube_id, duration_sec, is_live, live_at FROM lectures WHERE batch_id = ? ORDER BY order_index",
+        `SELECT id, subject_id, chapter, title_bn, title_en,
+                CASE WHEN release_at IS NOT NULL AND release_at > unixepoch() THEN NULL ELSE youtube_id END AS youtube_id,
+                duration_sec, order_index, is_live, live_at, release_at,
+                (release_at IS NOT NULL AND release_at > unixepoch()) AS locked
+         FROM lectures WHERE batch_id = ? AND status = 'published' ORDER BY order_index, created_at`,
+      )
+      .bind(batchId)
+      .all(),
+    c.env.DB
+      .prepare(
+        `SELECT id, name_bn, name_en, sort_order FROM subjects
+         WHERE id IN (SELECT subject_id FROM lectures WHERE batch_id = ? AND status = 'published' AND subject_id IS NOT NULL)
+         ORDER BY sort_order, name_en`,
       )
       .bind(batchId)
       .all(),
@@ -147,13 +124,13 @@ authedRoutes.get("/:id/content", async (c) => {
       .all(),
   ]);
 
-  const body = { lectures: lectures.results, notes: notes.results };
+  const body = { lectures: lectures.results, subjects: subjects.results, notes: notes.results };
 
   c.executionCtx.waitUntil(
     cache.put(
       cacheKey,
       new Response(JSON.stringify(body), {
-        headers: { "content-type": "application/json", "cache-control": "public, max-age=120" },
+        headers: { "content-type": "application/json", "cache-control": "public, max-age=60" },
       }),
     ),
   );

@@ -6,6 +6,7 @@ import { segments } from "./lib/router";
 import { authUser, me, meError } from "./lib/session";
 import { loadMe } from "./lib/session";
 import { Batches } from "./screens/Batches";
+import { LearningScreen, MyLearning } from "./screens/MyLearning";
 import { BatchDetail } from "./screens/BatchDetail";
 import { Doubt } from "./screens/Doubt";
 import { Enroll } from "./screens/Enroll";
@@ -38,6 +39,8 @@ function Screen({ pendingTeacher }: { pendingTeacher: boolean }) {
   switch (head) {
     case "batches":
       return arg ? <BatchDetail batchId={arg} /> : <Batches />;
+    case "learning":
+      return arg ? <LearningScreen batchId={arg} lectureId={segments()[2]} /> : <MyLearning />;
     case "enroll":
       return arg ? <Enroll batchId={arg} /> : <Batches />;
     case "tests":

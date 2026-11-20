@@ -1,121 +1,17 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
-import { Async, Loading, SectionHead } from "../components/ui";
+import { Loading } from "../components/ui";
+import { BannerImage } from "../components/BannerImage";
+import { LearningBatch } from "../components/LearningBatch";
 import { TeacherCards } from "../components/TeacherCards";
-import { setContinueLearning } from "../lib/continueLearning";
+import { focusTarget } from "../lib/focus";
 import { money, pick } from "../lib/format";
-import { invalidateQuery } from "@coaching-app/shared/cache/useCachedQuery";
-import { api, ApiError } from "../lib/api";
-import { errorText } from "../lib/format";
-import { myBatchesKey, useBatchContent, useBatches, useMyBatches } from "../lib/queries";
+import { useBatches, useMyBatches, usePayments } from "../lib/queries";
+import { dateOnly, enrollState } from "../lib/enrollment";
 import { go } from "../lib/router";
-import { markOpenedLecture } from "../lib/onboarding";
-import { enrolledIds, loadMe, uid } from "../lib/session";
-import type { Batch, Lecture } from "../lib/types";
+import { enrolledIds, refreshMe } from "../lib/session";
 
 const embed = (id: string) => `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
-const driveLink = (id: string) => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
-
-function Content({ batch }: { batch: Batch }) {
-  const content = useBatchContent(batch.id);
-  const [active, setActive] = useState<Lecture | null>(null);
-
-  const lectures = content.data?.lectures ?? [];
-  const current = active ?? lectures[0] ?? null;
-
-  useEffect(() => {
-    if (content.data && content.data.lectures.length > 0) markOpenedLecture();
-  }, [content.data]);
-
-  useEffect(() => {
-    if (!current) return;
-    setContinueLearning({
-      batchId: batch.id,
-      batchTitleBn: batch.title_bn,
-      batchTitleEn: batch.title_en,
-      lectureId: current.id,
-      titleBn: current.title_bn,
-      titleEn: current.title_en,
-      chapter: current.chapter,
-      at: Date.now(),
-    });
-  }, [current?.id]);
-
-  return (
-    <Async q={content}>
-      {({ lectures, notes }) => {
-        const current = active ?? lectures[0] ?? null;
-        const chapters = [...new Set(lectures.map((r) => r.chapter))];
-        return (
-          <div class="stack">
-            {current && (
-              <div class="player">
-                <iframe
-                  title={pick(current, "title")}
-                  src={embed(current.youtube_id)}
-                  allow="accelerometer; encrypted-media; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            )}
-
-            <SectionHead title={t("lectures")} />
-            {lectures.length === 0 && <p class="muted small">{t("no_lectures")}</p>}
-            {chapters.map((chapter) => (
-              <div class="stack" key={chapter}>
-                <p class="eyebrow">{chapter}</p>
-                <div class="list">
-                  {lectures
-                    .filter((r) => r.chapter === chapter)
-                    .map((lecture) => (
-                      <button
-                        class="item"
-                        key={lecture.id}
-                        aria-current={current?.id === lecture.id ? "true" : undefined}
-                        onClick={() => {
-                          setActive(lecture);
-                          scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                      >
-                        <span class="name">{pick(lecture, "title")}</span>
-                        <span class="meta">
-                          {lecture.duration_sec ? t("duration_min", { minutes: Math.round(lecture.duration_sec / 60) }) : ""}
-                        </span>
-                        <span class="side">{lecture.is_live ? <span class="badge live">{t("live")}</span> : null}</span>
-                      </button>
-                    ))}
-                </div>
-              </div>
-            ))}
-
-            <SectionHead title={t("study_materials")} />
-            {notes.length === 0 ? (
-              <p class="muted small">{t("no_materials")}</p>
-            ) : (
-              <div class="list">
-                {notes.map((note) => (
-                  <a
-                    class="item"
-                    key={note.id}
-                    href={driveLink(note.drive_file_id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style="text-decoration:none"
-                  >
-                    <span class="name">{pick(note, "title")}</span>
-                    <span class="side">
-                      <span class="badge">{note.kind === "dpp" ? t("material_dpp") : t("material_note")}</span>
-                    </span>
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      }}
-    </Async>
-  );
-}
 
 export function BatchDetail({ batchId }: { batchId: string }) {
   const catalog = useBatches();
@@ -123,21 +19,16 @@ export function BatchDetail({ batchId }: { batchId: string }) {
   const enrolled = enrolledIds().has(batchId);
   const batch = catalog.data?.find((b) => b.id === batchId) ?? mine.data?.find((b) => b.id === batchId);
   const waiting = !batch && (catalog.isLoading || mine.isLoading);
-  const [joining, setJoining] = useState(false);
-  const [joinError, setJoinError] = useState<string | null>(null);
+  const payments = usePayments();
+  const state = batch ? enrollState(batch, payments.data) : null;
 
-  async function joinFree() {
-    setJoining(true);
-    setJoinError(null);
-    try {
-      await api(`/api/batches/${batchId}/enroll-free`, { method: "POST" });
-      await Promise.all([loadMe(), invalidateQuery(myBatchesKey(uid()))]);
-    } catch (e) {
-      setJoinError(errorText(e instanceof ApiError ? e.code : "network"));
-    } finally {
-      setJoining(false);
-    }
-  }
+  // A payment may have been approved since sign-in: look again when the page opens.
+  useEffect(() => void refreshMe(), [batchId]);
+
+  // A banner's lecture/material focus only applies once the content is open to this student.
+  useEffect(() => {
+    if (batch && !enrolled && batch.kind !== "free") focusTarget.value = null;
+  }, [batch?.id, enrolled]);
 
   return (
     <div class="screen">
@@ -150,34 +41,24 @@ export function BatchDetail({ batchId }: { batchId: string }) {
         <p class="muted">{t("no_batches")}</p>
       ) : (
         (() => {
-          const open = enrolled || batch.kind === "free";
+          const open = state?.kind === "enrolled" || state?.kind === "free";
           return (
             <>
-              {batch.banner_url && (
-                <img
-                  class="batch-banner"
-                  src={batch.banner_url}
-                  alt=""
-                  onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")}
-                />
-              )}
+              {batch.banner_url && <BannerImage class="batch-banner" src={batch.banner_url} />}
               <header class="stack">
                 <p class="eyebrow">{t(`filter_${batch.track}`)}</p>
                 <h1 class="title">{pick(batch, "title")}</h1>
                 {pick(batch, "summary") && <p class="muted">{pick(batch, "summary")}</p>}
+                {state?.kind === "enrolled" && (
+                  <p class="row-inline">
+                    <span class="badge mark">{t("enrolled")}</span>
+                    {state.expiresAt && <span class="muted small">{t("enrolled_until", { date: dateOnly(state.expiresAt) })}</span>}
+                  </p>
+                )}
               </header>
               <TeacherCards batchId={batch.id} />
-              {batch.kind === "free" && !enrolled && (
-                <div class="panel row-between">
-                  <span class="muted small">{t("join_free_hint")}</span>
-                  <button class="btn primary small" disabled={joining} onClick={joinFree}>
-                    {t("join")}
-                  </button>
-                </div>
-              )}
-              {joinError && <p class="error-text">{joinError}</p>}
               {open ? (
-                <Content batch={batch} />
+                <LearningBatch batch={batch} />
               ) : (
                 <div class="stack">
                   {batch.preview_video_id && (
@@ -185,16 +66,24 @@ export function BatchDetail({ batchId }: { batchId: string }) {
                       <iframe title="Preview" src={embed(batch.preview_video_id)} allowFullScreen />
                     </div>
                   )}
-                  <div class="panel">
-                    <div class="row-between">
-                      <span class="muted">{t("price")}</span>
-                      <strong class="subtitle">{money(batch.price_paise)}</strong>
+                  {state?.kind === "pending" ? (
+                    <div class="panel stack">
+                      <strong>{t("under_review_title")}</strong>
+                      <p class="muted small">{t("under_review_hint")}</p>
                     </div>
-                    <button class="btn primary block" onClick={() => go(`enroll/${batch.id}`)}>
-                      {t("enroll")}
-                    </button>
-                    <p class="hint">{t("not_enrolled")}</p>
-                  </div>
+                  ) : (
+                    <div class="panel">
+                      {state?.kind === "rejected" && <p class="error-text small">{t("payment_rejected_hint")}</p>}
+                      <div class="row-between">
+                        <span class="muted">{t("price")}</span>
+                        <strong class="subtitle">{money(batch.price_paise)}</strong>
+                      </div>
+                      <button class="btn primary block" onClick={() => go(`enroll/${batch.id}`)}>
+                        {state?.kind === "rejected" ? t("try_again") : t("enroll")}
+                      </button>
+                      <p class="hint">{t("not_enrolled")}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </>

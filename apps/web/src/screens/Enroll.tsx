@@ -7,8 +7,9 @@ import { api, ApiError } from "../lib/api";
 import { compressImage } from "../lib/compressImage";
 import { errorText, money, pick } from "../lib/format";
 import { invalidateQuery } from "@coaching-app/shared/cache/useCachedQuery";
-import { paymentsKey, useBatches } from "../lib/queries";
-import { uid } from "../lib/session";
+import { paymentsKey, useBatches, usePayments } from "../lib/queries";
+import { enrollState } from "../lib/enrollment";
+import { refreshMe, uid } from "../lib/session";
 import { go } from "../lib/router";
 
 const UPI_ID: string = import.meta.env.VITE_UPI_ID ?? "";
@@ -18,6 +19,11 @@ const UTR_PATTERN = /^[A-Za-z0-9]{10,22}$/;
 export function Enroll({ batchId }: { batchId: string }) {
   const batches = useBatches();
   const batch = batches.data?.find((b) => b.id === batchId);
+  const payments = usePayments();
+  const state = batch ? enrollState(batch, payments.data) : null;
+
+  // Look again before asking for money: the payment may already have been approved.
+  useEffect(() => void refreshMe(true), [batchId]);
 
   const [coupon, setCoupon] = useState("");
   const [applied, setApplied] = useState<string | null>(null);
@@ -79,6 +85,13 @@ export function Enroll({ batchId }: { batchId: string }) {
       setDone(true);
     } catch (e) {
       const code = e instanceof ApiError ? e.code : "network";
+      if (code === "already_enrolled") {
+        // The server knows better than this device: sync, then open the batch.
+        await refreshMe(true);
+        go(`batches/${batchId}`);
+        return;
+      }
+      if (code === "payment_pending") await invalidateQuery(paymentsKey(uid()));
       const reason = e instanceof ApiError && Array.isArray(e.body.reason) ? ` (${e.body.reason.join(", ")})` : "";
       setError(errorText(code) + (code === "turnstile_failed" ? reason : ""));
       setBusy(false);
@@ -90,6 +103,25 @@ export function Enroll({ batchId }: { batchId: string }) {
 
   if (!batches.data) return <div class="screen"><Loading /></div>;
   if (!batch) return <div class="screen"><p class="muted">{t("no_batches")}</p></div>;
+
+  // Nothing to pay for: say so, and take the student where they want to go.
+  if (state && (state.kind === "enrolled" || state.kind === "free" || state.kind === "pending")) {
+    return (
+      <div class="screen">
+        <div class="panel stack">
+          <h1 class="subtitle">
+            {state.kind === "pending" ? t("under_review_title") : state.kind === "free" ? t("batch_is_free") : t("already_enrolled_title")}
+          </h1>
+          <p class="muted small">
+            {state.kind === "pending" ? t("under_review_hint") : state.kind === "free" ? t("batch_free_hint") : t("already_enrolled_hint")}
+          </p>
+          <button class="btn primary block" onClick={() => go(`batches/${batchId}`)}>
+            {state.kind === "pending" ? t("back") : t("open_batch")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (done) {
     return (

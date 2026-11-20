@@ -1,12 +1,13 @@
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { IconChevronRight } from "@coaching-app/ui/icons";
 import { Async, SyncNote } from "../components/ui";
+import { dateOnly, enrollState } from "../lib/enrollment";
 import { BannerImage } from "../components/BannerImage";
 import { money, pick } from "../lib/format";
-import { useBatches } from "../lib/queries";
+import { useBatches, usePayments } from "../lib/queries";
 import { go } from "../lib/router";
-import { enrolledIds, me } from "../lib/session";
+import { me, refreshMe } from "../lib/session";
 import type { Batch } from "../lib/types";
 
 const GRADES = ["class5", "class6", "class7", "class8", "class9", "class10", "class11", "class12"] as const;
@@ -38,7 +39,8 @@ function defaultFilter(): Filter {
 export function Batches() {
   const [filter, setFilter] = useState<Filter>(defaultFilter);
   const batches = useBatches();
-  const enrolled = enrolledIds();
+  const payments = usePayments();
+  useEffect(() => void refreshMe(), []);
   const own = defaultFilter();
   const ordered = own === "all" ? FILTERS : (["all", own, ...FILTERS.filter((f) => f !== "all" && f !== own)] as readonly Filter[]);
 
@@ -59,21 +61,32 @@ export function Batches() {
           return (
             <div class="stack">
               <div class="list">
-                {visible.map((b) => (
+                {visible.map((b) => {
+                  const state = enrollState(b, payments.data);
+                  return (
                   <div class="batch-row" key={b.id}>
                     {b.banner_url && <BannerImage class="batch-banner" src={b.banner_url} />}
                   <button class="item" onClick={() => go(`batches/${b.id}`)}>
                     <span class="name">{pick(b, "title")}</span>
                     <span class="meta">
-                      {t(`filter_${b.track}`)} · {b.kind === "free" ? t("free") : money(b.price_paise)}
+                      {t(`filter_${b.track}`)}
+                      {state.kind === "enrolled"
+                        ? state.expiresAt
+                          ? ` · ${t("enrolled_until", { date: dateOnly(state.expiresAt) })}`
+                          : ""
+                        : state.kind === "free"
+                          ? ` · ${t("free")}`
+                          : ` · ${money(b.price_paise)}`}
                     </span>
                     <span class="side">
-                      {enrolled.has(b.id) ? <span class="badge mark">{t("enrolled")}</span> : null}
+                      {state.kind === "enrolled" && <span class="badge mark">{t("enrolled")}</span>}
+                      {state.kind === "pending" && <span class="badge">{t("under_review")}</span>}
                       <IconChevronRight size={18} />
                     </span>
                   </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <SyncNote syncedAt={batches.syncedAt} isStale={batches.isStale} />
             </div>
