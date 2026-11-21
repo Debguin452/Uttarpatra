@@ -8,6 +8,7 @@ import { api, ApiError } from "../../lib/api";
 import type { AdminBatchRow, AdminTestDetail, AdminTestQuestion, AdminTestRow } from "../../lib/adminTypes";
 import { errorText, pick, when } from "../../lib/format";
 import { useLoad } from "../../lib/useLoad";
+import { AiQuestionGenerator } from "../../components/AiQuestionGenerator";
 import { useSubjects } from "../../lib/queries";
 import { subjectNames } from "../../lib/subjects";
 
@@ -305,6 +306,11 @@ function TestEditor({ testId, batches, onDone, onCancel }: { testId: string | nu
         <button class="btn" onClick={addBlankQuestion}>
           {t("admin_question_add")}
         </button>
+
+        <AiQuestionGenerator
+          subjects={subjects.data ?? []}
+          onAdd={(rows) => setQuestions((current) => [...current, ...rows])}
+        />
 
         <div class="panel stack">
           <strong class="small">{t("admin_bulk_title")}</strong>

@@ -25,7 +25,7 @@ existing repository" rule is followed by extending these, not adding apps.
 | 8 | Live classes + recordings | Partial | a lecture can be flagged live with a time. Missing: real-time live room (`workers/live`) |
 | 9 | Razorpay + subscriptions | Missing | payments are manual UPI with admin approval. D1 payments table already has Razorpay columns |
 | 10 | Admin analytics + banner manager | Partial | analytics and banner manager exist; banners link to batch/test/lecture/material. Missing: scheduling, desktop/mobile images, community banners |
-| 11 | AI doubt solver + question generator | Missing | decision pending (see below) |
+| 11 | AI doubt solver + question generator | **Done in this update (core)** | Cloudflare Workers AI; see `docs/AI.md`. Missing: image doubts, AI performance analysis, quiz battle |
 | 12 | Certificates, referrals | Missing | |
 | 13 | Streaks, goals | Partial | streak shown; goals and rings missing |
 | 14 | 1v1 AI quiz battle | Missing | needs Durable Objects and the AI layer first |

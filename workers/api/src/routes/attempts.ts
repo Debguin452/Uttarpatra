@@ -143,4 +143,36 @@ app.post("/submit", async (c) => {
   });
 });
 
+// The student's own answers beside the right ones, once the test is submitted.
+app.get("/:testId/review", async (c) => {
+  const uid = c.get("uid");
+  const attempt = await c.env.DB
+    .prepare("SELECT answers_json FROM attempts WHERE test_id = ? AND uid = ? AND submitted_at IS NOT NULL")
+    .bind(c.req.param("testId"), uid)
+    .first<{ answers_json: string | null }>();
+  if (!attempt) return c.json({ error: "not_found" }, 404);
+
+  const test = await c.env.DB
+    .prepare("SELECT questions_json FROM tests WHERE id = ?")
+    .bind(c.req.param("testId"))
+    .first<{ questions_json: string }>();
+  if (!test) return c.json({ error: "not_found" }, 404);
+
+  const answers = JSON.parse(attempt.answers_json ?? "{}") as Record<string, string | null>;
+  const questions = (JSON.parse(test.questions_json) as StoredQuestion[]).map((q) => {
+    const yours = answers[q.id] ?? null;
+    return {
+      id: q.id,
+      subject: q.subject,
+      prompt: q.prompt,
+      options: q.options,
+      answer: q.answer,
+      marks: q.marks,
+      yourAnswer: yours,
+      correct: yours === null ? null : yours === q.answer,
+    };
+  });
+  return c.json({ questions });
+});
+
 export default app;

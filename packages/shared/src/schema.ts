@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EXAM_PROFILE_KEYS } from "./examProfiles";
 
 export const Role = z.enum(["student", "teacher", "support", "super_admin"]);
 
@@ -171,6 +172,29 @@ export const BulkQuestionRow = z.object({
   marks: z.number().positive().default(4),
 });
 export type BulkQuestionRow = z.infer<typeof BulkQuestionRow>;
+
+export const AiExplain = z.object({
+  testId: z.string().min(1).max(80),
+  questionId: z.string().min(1).max(80),
+  lang: z.enum(["bn", "en"]).default("en"),
+});
+export type AiExplain = z.infer<typeof AiExplain>;
+
+export const AiChat = z.object({
+  message: z.string().min(1).max(4000),
+  profile: z.enum(EXAM_PROFILE_KEYS).optional(),
+});
+export type AiChat = z.infer<typeof AiChat>;
+
+export const AiQuestions = z.object({
+  profile: z.enum(EXAM_PROFILE_KEYS).default("board_general"),
+  subject: z.string().min(1).max(80),
+  topic: z.string().trim().min(3).max(120),
+  count: z.number().int().min(1).max(10).default(5),
+  difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
+  lang: z.enum(["bn", "en"]).default("en"),
+});
+export type AiQuestions = z.infer<typeof AiQuestions>;
 
 export const BANNER_TARGETS = ["batch", "test", "lecture", "material", "link"] as const;
 export type BannerTarget = (typeof BANNER_TARGETS)[number];

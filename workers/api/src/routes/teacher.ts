@@ -71,7 +71,7 @@ app.get("/doubts", async (c) => {
   const rows = await c.env.DB
     .prepare(
       `SELECT d.id, d.uid, u.name, d.batch_id, b.title_en AS batch_title_en, d.subject, d.question_text,
-              d.image_drive_id, d.status, d.answer_text, d.created_at
+              d.image_drive_id, d.status, d.answer_text, d.ai_answer, d.created_at
        FROM doubts d JOIN users u ON u.uid = d.uid LEFT JOIN batches b ON b.id = d.batch_id
        WHERE d.batch_id IN (${MY_BATCHES})
        ORDER BY (d.status = 'open') DESC, d.created_at DESC LIMIT 100`,

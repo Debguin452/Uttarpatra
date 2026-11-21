@@ -7,7 +7,7 @@ const app = new Hono<AppEnv>();
 app.get("/mine", async (c) => {
   const rows = await c.env.DB
     .prepare(
-      `SELECT id, batch_id, subject, question_text, image_drive_id, status, answer_text, created_at
+      `SELECT id, batch_id, subject, question_text, image_drive_id, status, answer_text, ai_answer, created_at
        FROM doubts WHERE uid = ? ORDER BY created_at DESC LIMIT 100`,
     )
     .bind(c.get("uid"))

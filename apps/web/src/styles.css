@@ -272,3 +272,13 @@ select.input { padding-right: var(--space-3); }
 .done-icon { color: var(--mark); }
 .item:disabled { opacity: 0.6; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .progress > span { transition: none; } }
+
+/* AI */
+.tabs { display: flex; gap: var(--space-2); }
+.tabs .btn[aria-pressed="true"] { background: var(--ink, currentColor); color: var(--paper, #fff); }
+.ai-thread { display: grid; gap: var(--space-2); max-height: 55vh; overflow-y: auto; padding: var(--space-2) 0; }
+.ai-msg { display: grid; gap: 2px; padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); }
+.ai-msg.mine { border-style: dashed; }
+.ai-who { font-size: var(--text-sm); color: var(--muted); font-weight: 600; }
+.ai-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ai-answer { display: grid; gap: var(--space-1); }

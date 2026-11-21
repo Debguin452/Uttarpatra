@@ -4,6 +4,7 @@ import { firebaseAuth, requireRegistered } from "./middleware/firebaseAuth";
 import { guard } from "./middleware/guard";
 import { edgeCache } from "./middleware/edgeCache";
 import batches from "./routes/batches";
+import ai from "./routes/ai";
 import me from "./routes/me";
 import notices from "./routes/notices";
 import subjects from "./routes/subjects";
@@ -24,6 +25,11 @@ export { SessionGuard } from "./do/SessionGuard";
 export type Env = {
   DB: D1Database;
   SESSIONS: DurableObjectNamespace;
+  AI: Ai;
+  AI_MODEL?: string;
+  AI_USER_DAILY_LIMIT?: string;
+  AI_TEACHER_DAILY_LIMIT?: string;
+  AI_GLOBAL_DAILY_LIMIT?: string;
   FIREBASE_PROJECT_ID: string;
   TURNSTILE_SECRET: string;
   ALLOWED_ORIGIN: string;
@@ -57,6 +63,7 @@ app.route("/api/me", me);
 
 app.use("/api/*", requireRegistered());
 app.route("/api/batches", batches.authed);
+app.route("/api/ai", ai);
 app.route("/api/notices", notices);
 app.route("/api/subjects", subjects);
 app.route("/api/payments", payments);

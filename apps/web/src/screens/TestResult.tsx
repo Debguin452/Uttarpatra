@@ -1,5 +1,6 @@
 import { t } from "@coaching-app/shared/i18n";
 import { IconTrophy } from "@coaching-app/ui/icons";
+import { TestReview } from "../components/TestReview";
 import { Async, CountUp, EmptyState, SyncNote } from "../components/ui";
 import { clock, pick } from "../lib/format";
 import { useLeaderboard, useTestResult } from "../lib/queries";
@@ -54,6 +55,8 @@ export function TestResult({ testId }: { testId: string }) {
             <p class="muted small">
               {t("time_taken")}: {clock(r.timeTakenSec)}
             </p>
+
+            <TestReview testId={testId} />
 
             <section class="stack">
               <h2 class="subtitle">{t("leaderboard")}</h2>

@@ -2,6 +2,8 @@ import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { DoubtCreate } from "@coaching-app/shared/schema";
 import { IconTray } from "@coaching-app/ui/icons";
+import { AiChat } from "../components/AiChat";
+import { AiDoubtHelper } from "../components/AiDoubtHelper";
 import { AnimatedCheck, EmptyState, SkeletonList } from "../components/ui";
 import { Select } from "../components/Select";
 import { api, ApiError } from "../lib/api";
@@ -24,6 +26,7 @@ export function Doubt() {
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [tab, setTab] = useState<"ai" | "teacher">("ai");
 
   async function submit(event: Event) {
     event.preventDefault();
@@ -63,6 +66,19 @@ export function Doubt() {
         <p class="muted small">{t("doubt_intro")}</p>
       </header>
 
+      <div class="tabs" role="tablist">
+        <button class="btn small" role="tab" aria-selected={tab === "ai"} aria-pressed={tab === "ai"} onClick={() => setTab("ai")}>
+          {t("doubt_tab_ai")}
+        </button>
+        <button class="btn small" role="tab" aria-selected={tab === "teacher"} aria-pressed={tab === "teacher"} onClick={() => setTab("teacher")}>
+          {t("doubt_tab_teacher")}
+        </button>
+      </div>
+
+      {tab === "ai" && <AiChat />}
+
+      {tab === "teacher" && (
+      <>
       <form class="stack" onSubmit={submit}>
         <div class="field">
           <label for="d-batch">{t("doubt_batch")}</label>
@@ -143,10 +159,13 @@ export function Doubt() {
                   </span>
                 </div>
               )}
+              {(d.status === "open" || d.ai_answer) && <AiDoubtHelper doubtId={d.id} initial={d.ai_answer} />}
             </div>
           ))}
         </div>
       </section>
+      </>
+      )}
     </div>
   );
 }
