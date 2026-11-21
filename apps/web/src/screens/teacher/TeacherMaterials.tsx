@@ -6,7 +6,9 @@ import { Select } from "../../components/Select";
 import { Loading, Sheet } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
 import type { AdminNote } from "../../lib/adminTypes";
+import { extractDriveFileId, isDrivePickerConfigured, openDrivePicker } from "../../lib/drive";
 import { errorText, pick, when } from "../../lib/format";
+import { isNativeApp } from "../../lib/platform";
 import type { TeacherPortal } from "../../lib/types";
 import { useLoad } from "../../lib/useLoad";
 
@@ -48,6 +50,8 @@ export function TeacherMaterials() {
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const showPicker = isDrivePickerConfigured() && !isNativeApp();
 
   const close = () => {
     setDraft(null);
@@ -55,6 +59,31 @@ export function TeacherMaterials() {
     setErrors({});
     setFailure(null);
   };
+
+  async function pickFromDrive() {
+    setPicking(true);
+    setFailure(null);
+    try {
+      const picked = await openDrivePicker();
+      if (picked) {
+        setDraft((current) =>
+          current
+            ? {
+                ...current,
+                driveFileId: picked.id,
+                titleEn: current.titleEn || picked.name,
+                titleBn: current.titleBn || picked.name,
+              }
+            : current,
+        );
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("drive picker failed", e);
+      setFailure(t("drive_picker_failed"));
+    }
+    setPicking(false);
+  }
 
   async function save() {
     if (!draft) return;
@@ -155,7 +184,18 @@ export function TeacherMaterials() {
               <input id="tm-lecture" class="input" value={draft.lectureId} onInput={(e) => patch({ lectureId: e.currentTarget.value })} />
             </Field>
             <Field id="tm-drive" label={t("admin_drive_file_id")} error={problem("driveFileId")} hint={t("admin_drive_file_id_hint")}>
-              <input id="tm-drive" class="input" value={draft.driveFileId} onInput={(e) => patch({ driveFileId: e.currentTarget.value })} />
+              <input
+                id="tm-drive"
+                class="input"
+                value={draft.driveFileId}
+                onInput={(e) => patch({ driveFileId: e.currentTarget.value })}
+                onBlur={(e) => patch({ driveFileId: extractDriveFileId(e.currentTarget.value) })}
+              />
+              {showPicker && (
+                <button type="button" class="btn quiet" onClick={pickFromDrive} disabled={picking}>
+                  {picking ? t("drive_picker_opening") : t("drive_picker_choose")}
+                </button>
+              )}
             </Field>
             <Field label={t("admin_material_kind")}>
               <Segmented

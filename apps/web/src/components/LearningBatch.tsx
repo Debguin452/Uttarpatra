@@ -19,13 +19,12 @@ import { mergedProgress, saveProgress } from "../lib/progress";
 import { useBatchContent, useLectureProgress } from "../lib/queries";
 import { go } from "../lib/router";
 import type { BatchContent, BatchNote, Lecture } from "../lib/types";
+import { MaterialViewer } from "./MaterialViewer";
 import { YouTubePlayer } from "./YouTubePlayer";
 import { Async, SectionHead } from "./ui";
 
 type Batch = { id: string; title_bn: string; title_en: string };
 type Numbered = NumberedLecture<Lecture>;
-
-const driveLink = (id: string) => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
 
 function Bar({ percent, thin = false }: { percent: number; thin?: boolean }) {
   return (
@@ -35,21 +34,14 @@ function Bar({ percent, thin = false }: { percent: number; thin?: boolean }) {
   );
 }
 
-function Material({ note, highlight }: { note: BatchNote; highlight: string | null }) {
+function Material({ note, highlight, onOpen }: { note: BatchNote; highlight: string | null; onOpen: (note: BatchNote) => void }) {
   return (
-    <a
-      class={note.id === highlight ? "item focused" : "item"}
-      id={`note-${note.id}`}
-      href={driveLink(note.drive_file_id)}
-      target="_blank"
-      rel="noopener noreferrer"
-      style="text-decoration:none"
-    >
+    <button class={note.id === highlight ? "item focused" : "item"} id={`note-${note.id}`} onClick={() => onOpen(note)}>
       <span class="name">{pick(note, "title")}</span>
       <span class="side">
         <span class="badge">{note.kind === "dpp" ? t("material_dpp") : t("material_note")}</span>
       </span>
-    </a>
+    </button>
   );
 }
 
@@ -61,6 +53,7 @@ function LectureView({
   progress,
   onSelect,
   onBack,
+  onOpenMaterial,
 }: {
   batch: Batch;
   lecture: Numbered;
@@ -69,6 +62,7 @@ function LectureView({
   progress: ReturnType<typeof mergedProgress>;
   onSelect: (id: string) => void;
   onBack: () => void;
+  onOpenMaterial: (note: BatchNote) => void;
 }) {
   const { prev, next } = neighbours(groups, lecture.id);
   const mine = progress.get(lecture.id);
@@ -146,7 +140,7 @@ function LectureView({
           <SectionHead title={t("learn_this_lecture")} />
           <div class="list">
             {attached.map((n) => (
-              <Material key={n.id} note={n} highlight={null} />
+              <Material key={n.id} note={n} highlight={null} onOpen={onOpenMaterial} />
             ))}
           </div>
         </>
@@ -165,6 +159,7 @@ function Body({ batch, data, initialLectureId }: { batch: Batch; data: BatchCont
 
   const [selectedId, setSelectedId] = useState<string | null>(initialLectureId);
   const [highlight, setHighlight] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<BatchNote | null>(null);
   const selected = all.find((l) => l.id === selectedId) ?? null;
 
   useEffect(() => {
@@ -186,16 +181,20 @@ function Body({ batch, data, initialLectureId }: { batch: Batch; data: BatchCont
 
   if (selected) {
     return (
-      <LectureView
-        key={selected.id}
-        batch={batch}
-        lecture={selected}
-        groups={groups}
-        notes={data.notes}
-        progress={progress}
-        onSelect={setSelectedId}
-        onBack={() => setSelectedId(null)}
-      />
+      <>
+        <LectureView
+          key={selected.id}
+          batch={batch}
+          lecture={selected}
+          groups={groups}
+          notes={data.notes}
+          progress={progress}
+          onSelect={setSelectedId}
+          onBack={() => setSelectedId(null)}
+          onOpenMaterial={setViewing}
+        />
+        {viewing && <MaterialViewer note={viewing} onClose={() => setViewing(null)} />}
+      </>
     );
   }
 
@@ -207,6 +206,7 @@ function Body({ batch, data, initialLectureId }: { batch: Batch; data: BatchCont
   };
 
   return (
+    <>
     <div class="stack">
       <section class="panel stack">
         <div class="row-between">
@@ -263,7 +263,7 @@ function Body({ batch, data, initialLectureId }: { batch: Batch; data: BatchCont
                     );
                   })}
                   {chapterNotes.map((n) => (
-                    <Material key={n.id} note={n} highlight={highlight} />
+                    <Material key={n.id} note={n} highlight={highlight} onOpen={setViewing} />
                   ))}
                 </div>
               </div>
@@ -278,7 +278,7 @@ function Body({ batch, data, initialLectureId }: { batch: Batch; data: BatchCont
       ) : (
         <div class="list">
           {looseNotes.map((n) => (
-            <Material key={n.id} note={n} highlight={highlight} />
+            <Material key={n.id} note={n} highlight={highlight} onOpen={setViewing} />
           ))}
         </div>
       )}
@@ -288,6 +288,8 @@ function Body({ batch, data, initialLectureId }: { batch: Batch; data: BatchCont
         <span class="meta">{t("learn_tests_hint")}</span>
       </button>
     </div>
+    {viewing && <MaterialViewer note={viewing} onClose={() => setViewing(null)} />}
+    </>
   );
 }
 

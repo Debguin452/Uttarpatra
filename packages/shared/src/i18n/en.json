@@ -686,5 +686,10 @@
   "ai_blocked": "AI help is paused for today.",
   "ai_paused_in_test": "AI help is switched off while a test is running. Finish your test first.",
   "ai_profile_not_mcq": "This exam style is written, so questions cannot be generated. Choose an MCQ style.",
-  "forbidden": "You do not have access to this."
+  "forbidden": "You do not have access to this.",
+
+  "drive_picker_choose": "Choose from Drive",
+  "drive_picker_opening": "Opening Drive…",
+  "drive_picker_failed": "Couldn't open the Drive picker. You can paste a Drive link or file ID instead.",
+  "material_open_drive": "Open in Google Drive"
 }
