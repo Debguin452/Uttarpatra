@@ -29,17 +29,37 @@ app.put("/", async (c) => {
   if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
   const { name, phone, studentClass, board, school, goal, district } = parsed.data;
 
+  const uid = c.get("uid");
+  const isNewAccount = c.get("role") === "guest";
+  const email = c.get("email");
+  // An admin can vet and invite a teacher by email before that person has
+  // ever signed in — if this is their first time registering and their
+  // email matches a pending invite, they become a teacher immediately
+  // instead of landing as a student.
+  const invite = isNewAccount && email
+    ? await c.env.DB.prepare("SELECT subjects_json FROM teacher_invites WHERE email = ?").bind(email).first<{ subjects_json: string }>()
+    : null;
+
   await c.env.DB
     .prepare(
-      `INSERT INTO users (uid, name, phone, student_class, board, school, goal, district)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO users (uid, name, phone, student_class, board, school, goal, district${invite ? ", role" : ""})
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?${invite ? ", 'teacher'" : ""})
        ON CONFLICT(uid) DO UPDATE SET
          name = excluded.name, phone = excluded.phone, student_class = excluded.student_class,
          board = excluded.board, school = excluded.school, goal = excluded.goal,
          district = excluded.district, updated_at = unixepoch()`,
     )
-    .bind(c.get("uid"), name, phone ?? null, studentClass ?? null, board ?? null, school ?? null, goal ?? null, district || null)
+    .bind(uid, name, phone ?? null, studentClass ?? null, board ?? null, school ?? null, goal ?? null, district || null)
     .run();
+
+  if (invite && email) {
+    await c.env.DB.batch([
+      c.env.DB.prepare("DELETE FROM teacher_invites WHERE email = ?").bind(email),
+      c.env.DB
+        .prepare("INSERT INTO audit_log (actor_uid, action, target, meta_json) VALUES (?, 'user.teacher_invite_claimed', ?, ?)")
+        .bind(uid, uid, JSON.stringify({ email, subjects: JSON.parse(invite.subjects_json) })),
+    ]);
+  }
 
   return c.json({ ok: true });
 });

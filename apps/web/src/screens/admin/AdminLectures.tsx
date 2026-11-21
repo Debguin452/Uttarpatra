@@ -1,11 +1,11 @@
 import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
-import { LectureUpsert } from "@coaching-app/shared/schema";
+import { extractYouTubeId, LectureUpsert } from "@coaching-app/shared/schema";
 import { ConfirmSheet, Field } from "../../components/adminUi";
 import { Select } from "../../components/Select";
 import { Loading, Sheet } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
-import type { AdminBatchRow, AdminLecture } from "../../lib/adminTypes";
+import type { AdminBatchRow, AdminChapter, AdminLecture } from "../../lib/adminTypes";
 import { errorText, pick, when } from "../../lib/format";
 import { useSubjects } from "../../lib/queries";
 import { useLoad } from "../../lib/useLoad";
@@ -14,6 +14,7 @@ type Draft = {
   id: string | null;
   batchId: string;
   chapter: string;
+  chapterId: string;
   titleBn: string;
   titleEn: string;
   youtubeId: string;
@@ -39,6 +40,7 @@ const EMPTY: Draft = {
   id: null,
   batchId: "",
   chapter: "",
+  chapterId: "",
   titleBn: "",
   titleEn: "",
   youtubeId: "",
@@ -55,6 +57,7 @@ const toDraft = (l: AdminLecture): Draft => ({
   id: l.id,
   batchId: l.batch_id,
   chapter: l.chapter,
+  chapterId: l.chapter_id ?? "",
   titleBn: l.title_bn,
   titleEn: l.title_en,
   youtubeId: l.youtube_id,
@@ -75,6 +78,7 @@ export function AdminLectures() {
   );
   const batches = useLoad(() => api<AdminBatchRow[]>("/api/admin/batches"));
   const subjects = useSubjects();
+  const chapters = useLoad(() => api<AdminChapter[]>("/api/admin/chapters"));
   const [draft, setDraft] = useState<Draft | null>(null);
   const [deleting, setDeleting] = useState<AdminLecture | null>(null);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
@@ -93,6 +97,7 @@ export function AdminLectures() {
     const parsed = LectureUpsert.safeParse({
       batchId: draft.batchId,
       chapter: draft.chapter,
+      chapterId: draft.chapterId || null,
       titleBn: draft.titleBn,
       titleEn: draft.titleEn,
       youtubeId: draft.youtubeId.trim(),
@@ -187,7 +192,34 @@ export function AdminLectures() {
               <input id="l-title-bn" class="input" value={draft.titleBn} onInput={(e) => patch({ titleBn: e.currentTarget.value })} />
             </Field>
             <Field id="l-yt" label={t("admin_youtube_id")} error={problem("youtubeId")} hint={t("admin_youtube_id_hint")}>
-              <input id="l-yt" class="input" value={draft.youtubeId} onInput={(e) => patch({ youtubeId: e.currentTarget.value })} />
+              <input
+                id="l-yt"
+                class="input"
+                placeholder={t("admin_youtube_id_placeholder")}
+                value={draft.youtubeId}
+                onInput={(e) => patch({ youtubeId: e.currentTarget.value })}
+              />
+              {(() => {
+                const previewId = extractYouTubeId(draft.youtubeId);
+                return previewId ? (
+                  <img class="youtube-preview" src={`https://i.ytimg.com/vi/${previewId}/mqdefault.jpg`} alt="" width={160} height={90} />
+                ) : (
+                  draft.youtubeId.trim() && <p class="hint error-text">{t("admin_youtube_id_invalid")}</p>
+                );
+              })()}
+            </Field>
+            <Field id="l-chapter-id" label={t("admin_chapter_link")}>
+              <Select
+                id="l-chapter-id"
+                value={draft.chapterId}
+                onChange={(chapterId) => patch({ chapterId })}
+                options={[
+                  { value: "", label: t("select_none") },
+                  ...(chapters.data ?? [])
+                    .filter((ch) => ch.batch_id === draft.batchId)
+                    .map((ch) => ({ value: ch.id, label: `${pick(ch, "title")} — ${ch.subject_name_en}` })),
+                ]}
+              />
             </Field>
             <Field id="l-duration" label={t("admin_duration_min")}>
               <input

@@ -1,9 +1,54 @@
 import { Hono } from "hono";
-import { TeacherReview } from "@coaching-app/shared/schema";
+import { TeacherReview, TeacherInvite } from "@coaching-app/shared/schema";
 import { requireRole } from "../../middleware/firebaseAuth";
 import type { AppEnv } from "../../index";
 
 const app = new Hono<AppEnv>();
+
+app.get("/teacher-invites", requireRole("super_admin"), async (c) => {
+  const rows = await c.env.DB
+    .prepare("SELECT email, subjects_json, invited_by, created_at FROM teacher_invites ORDER BY created_at DESC LIMIT 50")
+    .all<{ email: string; subjects_json: string; invited_by: string; created_at: number }>();
+  return c.json(rows.results.map((row) => ({ ...row, subjects: JSON.parse(row.subjects_json) as string[] })));
+});
+
+app.post("/teacher-invites", requireRole("super_admin"), async (c) => {
+  const parsed = TeacherInvite.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
+  const { email, subjects } = parsed.data;
+
+  const unique = [...new Set(subjects)];
+  const known = await c.env.DB
+    .prepare(`SELECT COUNT(*) AS n FROM subjects WHERE active = 1 AND id IN (${unique.map(() => "?").join(",")})`)
+    .bind(...unique)
+    .first<{ n: number }>();
+  if (known?.n !== unique.length) return c.json({ error: "invalid_subject" }, 400);
+
+  await c.env.DB.batch([
+    c.env.DB
+      .prepare(
+        `INSERT INTO teacher_invites (email, subjects_json, invited_by)
+         VALUES (?, ?, ?)
+         ON CONFLICT(email) DO UPDATE SET subjects_json = excluded.subjects_json, invited_by = excluded.invited_by, created_at = unixepoch()`,
+      )
+      .bind(email, JSON.stringify(unique), c.get("uid")),
+    c.env.DB
+      .prepare("INSERT INTO audit_log (actor_uid, action, target, meta_json) VALUES (?, 'teacher_invite.create', ?, ?)")
+      .bind(c.get("uid"), email, JSON.stringify({ subjects: unique })),
+  ]);
+  return c.json({ ok: true });
+});
+
+app.delete("/teacher-invites/:email", requireRole("super_admin"), async (c) => {
+  const email = decodeURIComponent(c.req.param("email")).toLowerCase();
+  const claim = await c.env.DB.prepare("DELETE FROM teacher_invites WHERE email = ?").bind(email).run();
+  if (claim.meta.changes === 0) return c.json({ error: "not_found" }, 404);
+  await c.env.DB
+    .prepare("INSERT INTO audit_log (actor_uid, action, target) VALUES (?, 'teacher_invite.revoke', ?)")
+    .bind(c.get("uid"), email)
+    .run();
+  return c.json({ ok: true });
+});
 
 app.get("/teacher-applications", requireRole("super_admin"), async (c) => {
   const rows = await c.env.DB

@@ -14,6 +14,7 @@ export function firebaseAuth(): MiddlewareHandler<AppEnv> {
     if (!token) return c.json({ error: "missing_token" }, 401);
 
     let uid: string;
+    let email: string | null;
     try {
       const { payload } = await jwtVerify(token, JWKS, {
         issuer: `https://securetoken.google.com/${c.env.FIREBASE_PROJECT_ID}`,
@@ -21,6 +22,7 @@ export function firebaseAuth(): MiddlewareHandler<AppEnv> {
       });
       if (!payload.sub) return c.json({ error: "invalid_token" }, 401);
       uid = payload.sub;
+      email = typeof payload.email === "string" ? payload.email.toLowerCase() : null;
     } catch {
       return c.json({ error: "invalid_token" }, 401);
     }
@@ -33,6 +35,7 @@ export function firebaseAuth(): MiddlewareHandler<AppEnv> {
     if (row?.status === "blocked") return c.json({ error: "account_blocked" }, 403);
 
     c.set("uid", uid);
+    c.set("email", email);
     c.set("role", row?.role ?? "guest");
     c.set("isTeacher", Boolean(row?.is_teacher));
     await next();

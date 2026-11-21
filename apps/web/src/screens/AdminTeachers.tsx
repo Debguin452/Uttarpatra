@@ -1,18 +1,125 @@
 import { useEffect, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
+import { TeacherInvite } from "@coaching-app/shared/schema";
 import { Loading, SectionHead, Sheet } from "../components/ui";
 import { api, ApiError } from "../lib/api";
-import { errorText, when } from "../lib/format";
+import { errorText, pick, when } from "../lib/format";
 import { useSubjects } from "../lib/queries";
 import { subjectNames } from "../lib/subjects";
 import type { AdminTeacher, AdminTeacherApplication } from "../lib/types";
+import type { AdminTeacherInvite } from "../lib/adminTypes";
 
+function InviteTeacher({ invites, onChanged }: { invites: AdminTeacherInvite[]; onChanged: () => void }) {
+  const subjectRows = useSubjects();
+  const options = subjectRows.data ?? [];
+  const subjectList = (ids: string[]) => subjectNames(subjectRows.data, ids);
+  const [email, setEmail] = useState("");
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
+  const [failure, setFailure] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [revoking, setRevoking] = useState<AdminTeacherInvite | null>(null);
+
+  const toggle = (id: string) => setSubjects((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  async function send() {
+    const parsed = TeacherInvite.safeParse({ email, subjects });
+    if (!parsed.success) {
+      setErrors(parsed.error.flatten().fieldErrors);
+      return;
+    }
+    setErrors({});
+    setFailure(null);
+    setBusy(true);
+    try {
+      await api("/api/admin/teacher-invites", { body: parsed.data });
+      setEmail("");
+      setSubjects([]);
+      onChanged();
+    } catch (e) {
+      setFailure(errorText(e instanceof ApiError ? e.code : "network"));
+    }
+    setBusy(false);
+  }
+
+  async function revoke() {
+    if (!revoking) return;
+    setBusy(true);
+    try {
+      await api(`/api/admin/teacher-invites/${encodeURIComponent(revoking.email)}`, { method: "DELETE" });
+      setRevoking(null);
+      onChanged();
+    } catch (e) {
+      setFailure(errorText(e instanceof ApiError ? e.code : "network"));
+    }
+    setBusy(false);
+  }
+
+  return (
+    <section class="stack">
+      <SectionHead title={t("admin_invite_teacher")} />
+      <div class="field">
+        <label for="inv-email">{t("admin_invite_email")}</label>
+        <input id="inv-email" class="input" type="email" value={email} onInput={(e) => setEmail(e.currentTarget.value)} />
+        {errors.email?.[0] && <span class="error-text">{errors.email[0]}</span>}
+      </div>
+      <div class="field">
+        <label>{t("admin_invite_subjects")}</label>
+        <div class="chips" role="group">
+          {options.map((subject) => (
+            <button type="button" class="chip" key={subject.id} aria-pressed={subjects.includes(subject.id)} onClick={() => toggle(subject.id)}>
+              {pick(subject, "name")}
+            </button>
+          ))}
+        </div>
+        {errors.subjects?.[0] && <span class="error-text">{errors.subjects[0]}</span>}
+      </div>
+      {failure && <p class="error-text">{failure}</p>}
+      <button class="btn primary block" onClick={send} disabled={busy}>
+        {t("admin_invite_send")}
+      </button>
+
+      <h2 class="subtitle">{t("admin_invite_pending")}</h2>
+      {invites.length === 0 ? (
+        <p class="muted small">{t("admin_invite_none")}</p>
+      ) : (
+        <div class="list">
+          {invites.map((invite) => (
+            <div class="item" key={invite.email}>
+              <span class="name">{invite.email}</span>
+              <span class="meta">{subjectList(invite.subjects)}</span>
+              <span class="side">
+                <button class="btn small danger" onClick={() => setRevoking(invite)} disabled={busy}>
+                  {t("admin_invite_revoke")}
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {revoking && (
+        <Sheet onClose={busy ? undefined : () => setRevoking(null)}>
+          <h2 class="subtitle">{t("admin_confirm_revoke_invite_title")}</h2>
+          <p class="muted">{t("admin_confirm_revoke_invite_body")}</p>
+          <button class="btn danger block" onClick={revoke} disabled={busy}>
+            {t("admin_invite_revoke")}
+          </button>
+          <button class="btn quiet block" onClick={() => setRevoking(null)} disabled={busy}>
+            {t("cancel")}
+          </button>
+        </Sheet>
+      )}
+    </section>
+  );
+}
 
 export function AdminTeachers() {
   const subjectRows = useSubjects();
   const subjectList = (ids: string[] | null) => subjectNames(subjectRows.data, ids);
   const [applications, setApplications] = useState<AdminTeacherApplication[] | null>(null);
   const [teachers, setTeachers] = useState<AdminTeacher[] | null>(null);
+  const [invites, setInvites] = useState<AdminTeacherInvite[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyUid, setBusyUid] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<AdminTeacherApplication | null>(null);
@@ -21,12 +128,14 @@ export function AdminTeachers() {
 
   async function load() {
     try {
-      const [pending, active] = await Promise.all([
+      const [pending, active, pendingInvites] = await Promise.all([
         api<AdminTeacherApplication[]>("/api/admin/teacher-applications"),
         api<AdminTeacher[]>("/api/admin/teachers"),
+        api<AdminTeacherInvite[]>("/api/admin/teacher-invites"),
       ]);
       setApplications(pending);
       setTeachers(active);
+      setInvites(pendingInvites);
     } catch (e) {
       setError(errorText(e instanceof ApiError ? e.code : "network"));
     }
@@ -61,7 +170,7 @@ export function AdminTeachers() {
   const suspend = (teacher: AdminTeacher) =>
     run(teacher.uid, () => api(`/api/admin/teachers/${teacher.uid}/suspend`, { method: "POST", body: {} }));
 
-  if (!applications || !teachers) {
+  if (!applications || !teachers || !invites) {
     return error ? <p class="error-text">{error}</p> : <Loading />;
   }
 
@@ -129,6 +238,8 @@ export function AdminTeachers() {
           </div>
         )}
       </section>
+
+      <InviteTeacher invites={invites} onChanged={load} />
 
       {rejecting && (
         <Sheet onClose={busyUid ? undefined : () => setRejecting(null)}>

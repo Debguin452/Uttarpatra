@@ -60,6 +60,7 @@ export type AdminNote = {
   batch_id: string | null;
   batch_title_en: string | null;
   lecture_id: string | null;
+  chapter_id: string | null;
   title_bn: string;
   title_en: string;
   drive_file_id: string;
@@ -70,6 +71,7 @@ export type AdminNote = {
 
 export type AdminLecture = {
   subject_id: string | null;
+  chapter_id: string | null;
   status: "draft" | "published";
   release_at: number | null;
   id: string;
@@ -83,6 +85,25 @@ export type AdminLecture = {
   order_index: number;
   is_live: number;
   live_at: number | null;
+  created_at: number;
+};
+
+export type AdminChapter = {
+  id: string;
+  batch_id: string;
+  batch_title_en: string;
+  subject_id: string;
+  subject_name_en: string;
+  title_bn: string;
+  title_en: string;
+  order_index: number;
+  created_at: number;
+};
+
+export type AdminTeacherInvite = {
+  email: string;
+  subjects: string[];
+  invited_by: string;
   created_at: number;
 };
 

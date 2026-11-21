@@ -91,16 +91,17 @@ authedRoutes.get("/:id/content", async (c) => {
   if (access === "not_enrolled") return c.json({ error: "not_enrolled" }, 403);
 
   const cache = caches.default;
-  const cacheKey = new Request(`https://cache.internal/batch-content/${batchId}`);
+  // v2: payload now also includes chapters and chapter_id on lectures/notes.
+  const cacheKey = new Request(`https://cache.internal/batch-content-v2/${batchId}`);
   const hit = await cache.match(cacheKey);
   if (hit) return c.json(await hit.json());
 
   // Drafts never leave the server. A lecture scheduled for later is listed (so
   // students can see what is coming) but its video id is withheld until then.
-  const [lectures, subjects, notes] = await Promise.all([
+  const [lectures, subjects, chapters, notes] = await Promise.all([
     c.env.DB
       .prepare(
-        `SELECT id, subject_id, chapter, title_bn, title_en,
+        `SELECT id, subject_id, chapter_id, chapter, title_bn, title_en,
                 CASE WHEN release_at IS NOT NULL AND release_at > unixepoch() THEN NULL ELSE youtube_id END AS youtube_id,
                 duration_sec, order_index, is_live, live_at, release_at,
                 (release_at IS NOT NULL AND release_at > unixepoch()) AS locked
@@ -118,13 +119,19 @@ authedRoutes.get("/:id/content", async (c) => {
       .all(),
     c.env.DB
       .prepare(
-        "SELECT id, lecture_id, title_bn, title_en, drive_file_id, kind FROM notes WHERE batch_id = ? ORDER BY created_at DESC",
+        `SELECT id, subject_id, title_bn, title_en, order_index FROM chapters WHERE batch_id = ? ORDER BY order_index`,
+      )
+      .bind(batchId)
+      .all(),
+    c.env.DB
+      .prepare(
+        "SELECT id, lecture_id, chapter_id, title_bn, title_en, drive_file_id, kind FROM notes WHERE batch_id = ? ORDER BY created_at DESC",
       )
       .bind(batchId)
       .all(),
   ]);
 
-  const body = { lectures: lectures.results, subjects: subjects.results, notes: notes.results };
+  const body = { lectures: lectures.results, subjects: subjects.results, chapters: chapters.results, notes: notes.results };
 
   c.executionCtx.waitUntil(
     cache.put(

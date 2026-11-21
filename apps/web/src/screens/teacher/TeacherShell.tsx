@@ -5,7 +5,6 @@ import { Logo } from "../../components/Logo";
 import { LangToggle } from "../../components/LangToggle";
 import { Loading, Sheet } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
-import { askDoubtAi } from "../../lib/ai";
 import { errorText, pick, when } from "../../lib/format";
 import { segments } from "../../lib/router";
 import { useSubjects } from "../../lib/queries";
@@ -15,6 +14,7 @@ import type { TeacherDoubt, TeacherPortal, TeacherStudentDetail, TeacherStudentR
 import { useLoad } from "../../lib/useLoad";
 import { Profile } from "../Profile";
 import { Register } from "../Register";
+import { TeacherChapters } from "./TeacherChapters";
 import { TeacherLectures } from "./TeacherLectures";
 import { TeacherMaterials } from "./TeacherMaterials";
 import { TeacherNotices } from "./TeacherNotices";
@@ -23,6 +23,7 @@ import { TeacherTests } from "./TeacherTests";
 const TABS = [
   { id: "batches", label: "teach_tab_batches" },
   { id: "lectures", label: "teach_tab_lectures" },
+  { id: "chapters", label: "admin_tab_chapters" },
   { id: "materials", label: "teach_tab_materials" },
   { id: "tests", label: "teach_tab_tests" },
   { id: "notices", label: "teach_tab_notices" },
@@ -152,8 +153,6 @@ function TeacherDoubts() {
   const subjects = useSubjects();
   const [answering, setAnswering] = useState<TeacherDoubt | null>(null);
   const [answer, setAnswer] = useState("");
-  const [drafting, setDrafting] = useState(false);
-  const [draftError, setDraftError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -235,26 +234,6 @@ function TeacherDoubts() {
           <p class="small muted" style="white-space:pre-wrap">
             {answering.question_text}
           </p>
-          <button
-            class="btn small"
-            disabled={drafting || busy}
-            onClick={async () => {
-              setDrafting(true);
-              setDraftError(null);
-              try {
-                const draft = (await askDoubtAi(answering.id)).answer.slice(0, 2000);
-                setAnswer((current) => (current.trim() ? current : draft));
-              } catch (e) {
-                setDraftError(errorText(e instanceof ApiError ? e.code : "network"));
-              } finally {
-                setDrafting(false);
-              }
-            }}
-          >
-            {drafting ? t("ai_thinking") : t("ai_draft")}
-          </button>
-          {draftError && <p class="error-text small">{draftError}</p>}
-          <p class="hint">{t("ai_draft_hint")}</p>
           <div class="field">
             <label for="ans">{t("teach_doubt_answer")}</label>
             <textarea
@@ -340,6 +319,8 @@ export function TeacherShell() {
           <TeacherBatches />
         ) : current === "lectures" ? (
           <TeacherLectures />
+        ) : current === "chapters" ? (
+          <TeacherChapters />
         ) : current === "materials" ? (
           <TeacherMaterials />
         ) : current === "tests" ? (

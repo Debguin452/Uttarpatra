@@ -17,17 +17,19 @@ export type Batch = {
 
 export type Lecture = {
   id: string;
-  subject_id: string | null;
   chapter: string;
   title_bn: string;
   title_en: string;
+  // null while a scheduled lecture is still locked: the server withholds it
   youtube_id: string | null;
   duration_sec: number | null;
-  order_index: number;
   is_live: number;
   live_at: number | null;
+  subject_id: string | null;
+  chapter_id: string | null;
   release_at: number | null;
   locked: number;
+  order_index: number;
 };
 
 export type LiveLecture = {
@@ -148,13 +150,6 @@ export type AdminTeacher = {
   batch_count: number;
 };
 
-export type AdminTeacherInvite = {
-  email: string;
-  subjects: Subject[];
-  invited_by: string;
-  created_at: number;
-};
-
 export type TeacherStudentRow = {
   uid: string;
   name: string;
@@ -194,7 +189,6 @@ export type TeacherDoubt = {
   image_drive_id: string | null;
   status: "open" | "answered";
   answer_text: string | null;
-  ai_answer: string | null;
   created_at: number;
 };
 
@@ -206,7 +200,6 @@ export type MyDoubt = {
   image_drive_id: string | null;
   status: "open" | "answered";
   answer_text: string | null;
-  ai_answer: string | null;
   created_at: number;
 };
 
@@ -272,15 +265,16 @@ export type LeaderboardRow = {
 export type BatchNote = {
   id: string;
   lecture_id: string | null;
+  chapter_id: string | null;
   title_bn: string;
   title_en: string;
   drive_file_id: string;
   kind: string;
 };
 
-export type BatchSubject = { id: string; name_bn: string; name_en: string; sort_order: number };
-
-export type BatchContent = { lectures: Lecture[]; notes: BatchNote[]; subjects: BatchSubject[] };
+export type ContentSubject = { id: string; name_bn: string; name_en: string; sort_order: number };
+export type Chapter = { id: string; subject_id: string; title_bn: string; title_en: string; order_index: number };
+export type BatchContent = { lectures: Lecture[]; subjects: ContentSubject[]; chapters: Chapter[]; notes: BatchNote[] };
 
 export type LectureProgress = {
   lecture_id: string;
@@ -294,8 +288,8 @@ export type LearningSummary = {
   batch_id: string;
   title_bn: string;
   title_en: string;
-  track: Track;
-  kind: "paid" | "free";
+  track: string;
+  kind: string;
   banner_url: string | null;
   total: number;
   done: number;
@@ -315,4 +309,3 @@ export type BatchTeacher = {
   experience_years: number | null;
   bio: string | null;
 };
-

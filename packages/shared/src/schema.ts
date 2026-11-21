@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { EXAM_PROFILE_KEYS } from "./examProfiles";
 
 export const Role = z.enum(["student", "teacher", "support", "super_admin"]);
 
@@ -127,12 +126,6 @@ export const TeacherAccessUpdate = z.object({
 });
 export type TeacherAccessUpdate = z.infer<typeof TeacherAccessUpdate>;
 
-export const TeacherInvite = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  subjects: z.array(Subject).min(1).max(8),
-});
-export type TeacherInvite = z.infer<typeof TeacherInvite>;
-
 export const EnrollGrant = z.object({
   batchId: z.string().min(1),
   expiresAt: z.number().int().positive().nullable().optional(),
@@ -173,29 +166,6 @@ export const BulkQuestionRow = z.object({
 });
 export type BulkQuestionRow = z.infer<typeof BulkQuestionRow>;
 
-export const AiExplain = z.object({
-  testId: z.string().min(1).max(80),
-  questionId: z.string().min(1).max(80),
-  lang: z.enum(["bn", "en"]).default("en"),
-});
-export type AiExplain = z.infer<typeof AiExplain>;
-
-export const AiChat = z.object({
-  message: z.string().min(1).max(4000),
-  profile: z.enum(EXAM_PROFILE_KEYS).optional(),
-});
-export type AiChat = z.infer<typeof AiChat>;
-
-export const AiQuestions = z.object({
-  profile: z.enum(EXAM_PROFILE_KEYS).default("board_general"),
-  subject: z.string().min(1).max(80),
-  topic: z.string().trim().min(3).max(120),
-  count: z.number().int().min(1).max(10).default(5),
-  difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
-  lang: z.enum(["bn", "en"]).default("en"),
-});
-export type AiQuestions = z.infer<typeof AiQuestions>;
-
 export const BANNER_TARGETS = ["batch", "test", "lecture", "material", "link"] as const;
 export type BannerTarget = (typeof BANNER_TARGETS)[number];
 
@@ -221,25 +191,72 @@ export const BannerUpsert = z
   });
 export type BannerUpsert = z.infer<typeof BannerUpsert>;
 
+// Accepts a bare 11-char video id as-is, or pulls one out of whatever
+// YouTube link someone pastes (watch?v=, youtu.be/, /embed/, /shorts/,
+// /live/, with any extra query string or trailing slash). Teachers
+// shouldn't have to know what a "video id" even is.
+const YOUTUBE_ID_RE = /^[\w-]{11}$/;
+export function extractYouTubeId(input: string): string | null {
+  const value = input.trim();
+  if (YOUTUBE_ID_RE.test(value)) return value;
+  try {
+    const url = new URL(value);
+    if (!/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(url.hostname)) return null;
+    const fromQuery = url.searchParams.get("v");
+    if (fromQuery && YOUTUBE_ID_RE.test(fromQuery)) return fromQuery;
+    const match = url.pathname.match(/\/(?:embed|shorts|live)\/([\w-]{11})/) ?? url.pathname.match(/^\/([\w-]{11})$/);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const YouTubeInput = z
+  .string()
+  .trim()
+  .min(1)
+  .max(200)
+  .transform((value, ctx) => {
+    const id = extractYouTubeId(value);
+    if (!id) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Paste a YouTube link or video id" });
+      return z.NEVER;
+    }
+    return id;
+  });
+
 export const LectureUpsert = z.object({
   batchId: z.string().min(1),
   chapter: z.string().trim().min(1).max(120),
   titleBn: z.string().trim().min(1).max(160),
   titleEn: z.string().trim().min(1).max(160),
-  youtubeId: z.string().trim().min(1).max(60),
+  youtubeId: YouTubeInput,
   durationSec: z.number().int().positive().optional(),
   orderIndex: z.number().int().default(0),
   isLive: z.boolean().default(false),
   liveAt: z.number().int().positive().nullable().optional(),
-  subjectId: Subject.optional(),
+  // Learning structure: which subject it belongs to, whether students can see
+  // it yet, and an optional date when it opens by itself.
+  subjectId: z.string().min(1).nullable().optional(),
+  // A chapter is a further, optional grouping within that subject.
+  chapterId: z.string().min(1).nullable().optional(),
   status: z.enum(["draft", "published"]).default("published"),
   releaseAt: z.number().int().positive().nullable().optional(),
 });
 export type LectureUpsert = z.infer<typeof LectureUpsert>;
 
+export const ChapterUpsert = z.object({
+  batchId: z.string().min(1),
+  subjectId: z.string().min(1),
+  titleBn: z.string().trim().min(1).max(160),
+  titleEn: z.string().trim().min(1).max(160),
+  orderIndex: z.number().int().default(0),
+});
+export type ChapterUpsert = z.infer<typeof ChapterUpsert>;
+
 export const LectureProgressUpdate = z.object({
-  positionSec: z.number().int().nonnegative(),
-  durationSec: z.number().int().positive().optional(),
+  positionSec: z.number().int().min(0).max(86_400),
+  durationSec: z.number().int().positive().max(86_400).optional(),
   completed: z.boolean().optional(),
 });
 export type LectureProgressUpdate = z.infer<typeof LectureProgressUpdate>;
@@ -278,6 +295,7 @@ export type TestUpsert = z.infer<typeof TestUpsert>;
 export const NoteUpsert = z.object({
   batchId: z.string().min(1).nullable().optional(),
   lectureId: z.string().min(1).nullable().optional(),
+  chapterId: z.string().min(1).nullable().optional(),
   titleBn: z.string().trim().min(1).max(160),
   titleEn: z.string().trim().min(1).max(160),
   driveFileId: z.string().trim().min(1).max(200),
@@ -285,6 +303,12 @@ export const NoteUpsert = z.object({
   isFree: z.boolean().default(false),
 });
 export type NoteUpsert = z.infer<typeof NoteUpsert>;
+
+export const TeacherInvite = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  subjects: z.array(Subject).min(1).max(8),
+});
+export type TeacherInvite = z.infer<typeof TeacherInvite>;
 
 export const DoubtCreate = z.object({
   batchId: z.string().min(1).nullable().optional(),
