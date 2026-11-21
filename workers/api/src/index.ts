@@ -17,6 +17,7 @@ import teacher from "./routes/teacher";
 import doubts from "./routes/doubts";
 import banners from "./routes/banners";
 import push from "./routes/push";
+import ai from "./routes/ai";
 import { sendClassReminders } from "./lib/classReminders";
 
 export { SessionGuard } from "./do/SessionGuard";
@@ -24,10 +25,15 @@ export { SessionGuard } from "./do/SessionGuard";
 export type Env = {
   DB: D1Database;
   SESSIONS: DurableObjectNamespace;
+  AI: Ai;
   FIREBASE_PROJECT_ID: string;
   TURNSTILE_SECRET: string;
   ALLOWED_ORIGIN: string;
   FCM_SERVICE_ACCOUNT_JSON?: string;
+  AI_MODEL?: string;
+  AI_TEACHER_DAILY_LIMIT?: string;
+  AI_USER_DAILY_LIMIT?: string;
+  AI_GLOBAL_DAILY_LIMIT?: string;
 };
 
 export type AppEnv = { Bindings: Env; Variables: { uid: string; email: string | null; role: string; isTeacher: boolean } };
@@ -58,6 +64,7 @@ app.route("/api/me", me);
 app.use("/api/*", requireRegistered());
 app.route("/api/batches", batches.authed);
 app.route("/api/learning", learning);
+app.route("/api/ai", ai);
 app.route("/api/notices", notices);
 app.route("/api/subjects", subjects);
 app.route("/api/payments", payments);

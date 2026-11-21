@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EXAM_PROFILE_KEYS } from "./examProfiles";
 
 export const Role = z.enum(["student", "teacher", "support", "super_admin"]);
 
@@ -353,3 +354,26 @@ export const PushTokenUnregister = z.object({
   token: z.string().trim().min(1).max(4096),
 });
 export type PushTokenUnregister = z.infer<typeof PushTokenUnregister>;
+
+export const AiChat = z.object({
+  message: z.string().trim().min(1).max(4000),
+  profile: z.string().optional(),
+});
+export type AiChat = z.infer<typeof AiChat>;
+
+export const AiExplain = z.object({
+  testId: z.string().min(1),
+  questionId: z.string().min(1),
+  lang: z.enum(["bn", "en"]),
+});
+export type AiExplain = z.infer<typeof AiExplain>;
+
+export const AiQuestions = z.object({
+  profile: z.enum(EXAM_PROFILE_KEYS),
+  subject: Subject,
+  topic: z.string().trim().min(1).max(200),
+  count: z.number().int().min(1).max(10),
+  difficulty: z.enum(["easy", "medium", "hard"]),
+  lang: z.enum(["bn", "en"]),
+});
+export type AiQuestions = z.infer<typeof AiQuestions>;
