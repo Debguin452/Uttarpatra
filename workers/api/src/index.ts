@@ -4,7 +4,6 @@ import { firebaseAuth, requireRegistered } from "./middleware/firebaseAuth";
 import { guard } from "./middleware/guard";
 import { edgeCache } from "./middleware/edgeCache";
 import batches from "./routes/batches";
-import learning from "./routes/learning";
 import me from "./routes/me";
 import notices from "./routes/notices";
 import subjects from "./routes/subjects";
@@ -17,6 +16,7 @@ import teacher from "./routes/teacher";
 import doubts from "./routes/doubts";
 import banners from "./routes/banners";
 import push from "./routes/push";
+import learning from "./routes/learning";
 import { sendClassReminders } from "./lib/classReminders";
 
 export { SessionGuard } from "./do/SessionGuard";
@@ -30,7 +30,7 @@ export type Env = {
   FCM_SERVICE_ACCOUNT_JSON?: string;
 };
 
-export type AppEnv = { Bindings: Env; Variables: { uid: string; role: string; isTeacher: boolean } };
+export type AppEnv = { Bindings: Env; Variables: { uid: string; email: string | null; role: string; isTeacher: boolean } };
 
 const app = new Hono<AppEnv>();
 
@@ -57,13 +57,13 @@ app.route("/api/me", me);
 
 app.use("/api/*", requireRegistered());
 app.route("/api/batches", batches.authed);
-app.route("/api/learning", learning);
 app.route("/api/notices", notices);
 app.route("/api/subjects", subjects);
 app.route("/api/payments", payments);
 app.route("/api/tests", tests);
 app.route("/api/attempts", attempts);
 app.route("/api/doubts", doubts);
+app.route("/api/learning", learning);
 app.route("/api/teacher", teacher);
 app.route("/api/teacher-application", teacherApplication);
 app.route("/api/admin", admin);

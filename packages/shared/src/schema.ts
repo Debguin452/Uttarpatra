@@ -126,6 +126,12 @@ export const TeacherAccessUpdate = z.object({
 });
 export type TeacherAccessUpdate = z.infer<typeof TeacherAccessUpdate>;
 
+export const TeacherInvite = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  subjects: z.array(Subject).min(1).max(8),
+});
+export type TeacherInvite = z.infer<typeof TeacherInvite>;
+
 export const EnrollGrant = z.object({
   batchId: z.string().min(1),
   expiresAt: z.number().int().positive().nullable().optional(),
@@ -201,17 +207,15 @@ export const LectureUpsert = z.object({
   orderIndex: z.number().int().default(0),
   isLive: z.boolean().default(false),
   liveAt: z.number().int().positive().nullable().optional(),
-  // Learning structure: which subject it belongs to, whether students can see
-  // it yet, and an optional date when it opens by itself.
-  subjectId: z.string().min(1).nullable().optional(),
+  subjectId: Subject.optional(),
   status: z.enum(["draft", "published"]).default("published"),
   releaseAt: z.number().int().positive().nullable().optional(),
 });
 export type LectureUpsert = z.infer<typeof LectureUpsert>;
 
 export const LectureProgressUpdate = z.object({
-  positionSec: z.number().int().min(0).max(86_400),
-  durationSec: z.number().int().positive().max(86_400).optional(),
+  positionSec: z.number().int().nonnegative(),
+  durationSec: z.number().int().positive().optional(),
   completed: z.boolean().optional(),
 });
 export type LectureProgressUpdate = z.infer<typeof LectureProgressUpdate>;

@@ -17,18 +17,17 @@ export type Batch = {
 
 export type Lecture = {
   id: string;
+  subject_id: string | null;
   chapter: string;
   title_bn: string;
   title_en: string;
-  // null while a scheduled lecture is still locked: the server withholds it
   youtube_id: string | null;
   duration_sec: number | null;
+  order_index: number;
   is_live: number;
   live_at: number | null;
-  subject_id: string | null;
   release_at: number | null;
   locked: number;
-  order_index: number;
 };
 
 export type LiveLecture = {
@@ -147,6 +146,13 @@ export type AdminTeacher = {
   subjects: Subject[] | null;
   experience_years: number | null;
   batch_count: number;
+};
+
+export type AdminTeacherInvite = {
+  email: string;
+  subjects: Subject[];
+  invited_by: string;
+  created_at: number;
 };
 
 export type TeacherStudentRow = {
@@ -270,8 +276,9 @@ export type BatchNote = {
   kind: string;
 };
 
-export type ContentSubject = { id: string; name_bn: string; name_en: string; sort_order: number };
-export type BatchContent = { lectures: Lecture[]; subjects: ContentSubject[]; notes: BatchNote[] };
+export type BatchSubject = { id: string; name_bn: string; name_en: string; sort_order: number };
+
+export type BatchContent = { lectures: Lecture[]; notes: BatchNote[]; subjects: BatchSubject[] };
 
 export type LectureProgress = {
   lecture_id: string;
@@ -285,8 +292,8 @@ export type LearningSummary = {
   batch_id: string;
   title_bn: string;
   title_en: string;
-  track: string;
-  kind: string;
+  track: Track;
+  kind: "paid" | "free";
   banner_url: string | null;
   total: number;
   done: number;
