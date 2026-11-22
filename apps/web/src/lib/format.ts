@@ -24,9 +24,11 @@ export function clock(totalSec: number): string {
 
 export function greeting(): string {
   const hour = new Date().getHours();
+  if (hour < 5) return t("greeting_night");
   if (hour < 12) return t("greeting_morning");
   if (hour < 17) return t("greeting_afternoon");
-  return t("greeting_evening");
+  if (hour < 21) return t("greeting_evening");
+  return t("greeting_night");
 }
 
 export function ago(timestamp: number): string {

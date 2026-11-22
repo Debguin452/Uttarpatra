@@ -187,6 +187,7 @@ export type TeacherDoubt = {
   subject: string | null;
   question_text: string;
   image_drive_id: string | null;
+  image_b64: string | null;
   status: "open" | "answered";
   answer_text: string | null;
   created_at: number;
@@ -198,6 +199,7 @@ export type MyDoubt = {
   subject: string | null;
   question_text: string;
   image_drive_id: string | null;
+  image_b64: string | null;
   status: "open" | "answered";
   answer_text: string | null;
   ai_answer: string | null;

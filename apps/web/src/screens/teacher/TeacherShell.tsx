@@ -201,7 +201,8 @@ function TeacherDoubts() {
             <p class="small" style="white-space:pre-wrap">
               {doubt.question_text}
             </p>
-            {doubt.image_drive_id && (
+            {doubt.image_b64 && <img class="doubt-photo-preview" src={`data:image/jpeg;base64,${doubt.image_b64}`} alt="" />}
+            {!doubt.image_b64 && doubt.image_drive_id && (
               <a
                 class="small"
                 href={`https://drive.google.com/file/d/${doubt.image_drive_id}/view`}

@@ -315,7 +315,12 @@ export const DoubtCreate = z.object({
   batchId: z.string().min(1).nullable().optional(),
   subject: Subject.optional(),
   questionText: z.string().trim().min(5).max(1000),
+  // imageDriveId is kept only so any already-submitted doubt that used the
+  // old paste-a-Drive-ID field still validates; the app itself now always
+  // sends imageBase64 (a plain photo upload, shrunk client-side like a
+  // payment screenshot).
   imageDriveId: z.string().trim().max(200).optional(),
+  imageBase64: z.string().max(220_000, "Photo is too large even after compression").optional(),
 });
 export type DoubtCreate = z.infer<typeof DoubtCreate>;
 
@@ -340,6 +345,7 @@ export type AvatarUpdate = z.infer<typeof AvatarUpdate>;
 
 export const QUOTA = {
   maxScreenshotBytes: 150_000,
+  maxDoubtImageBytes: 150_000,
   videoProgressWriteIntervalSec: 120,
   sessionTokenTtlSec: 15 * 60,
 } as const;
@@ -377,3 +383,13 @@ export const AiQuestions = z.object({
   lang: z.enum(["bn", "en"]),
 });
 export type AiQuestions = z.infer<typeof AiQuestions>;
+
+// A single title/body pair, not bilingual — Firebase Cloud Messaging only
+// carries one of each per message anyway, same choice the automated
+// class-reminder pushes already make.
+export const NotificationSend = z.object({
+  title: z.string().trim().min(1).max(120),
+  body: z.string().trim().min(1).max(500),
+  batchId: z.string().min(1).nullable().optional(),
+});
+export type NotificationSend = z.infer<typeof NotificationSend>;
