@@ -200,6 +200,7 @@ export type MyDoubt = {
   image_drive_id: string | null;
   status: "open" | "answered";
   answer_text: string | null;
+  ai_answer: string | null;
   created_at: number;
 };
 
