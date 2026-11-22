@@ -10,11 +10,11 @@ app.get("/", async (c) => {
     .prepare(
       batchId
         ? `SELECT l.id, l.batch_id, b.title_en AS batch_title_en, l.chapter, l.title_bn, l.title_en,
-                  l.youtube_id, l.duration_sec, l.order_index, l.is_live, l.live_at, l.subject_id, l.chapter_id, l.status, l.release_at, l.created_at
+                  l.youtube_id, l.source, l.drive_file_id, l.duration_sec, l.order_index, l.is_live, l.live_at, l.subject_id, l.chapter_id, l.status, l.release_at, l.created_at
            FROM lectures l JOIN batches b ON b.id = l.batch_id
            WHERE l.batch_id = ? ORDER BY l.order_index, l.created_at`
         : `SELECT l.id, l.batch_id, b.title_en AS batch_title_en, l.chapter, l.title_bn, l.title_en,
-                  l.youtube_id, l.duration_sec, l.order_index, l.is_live, l.live_at, l.subject_id, l.chapter_id, l.status, l.release_at, l.created_at
+                  l.youtube_id, l.source, l.drive_file_id, l.duration_sec, l.order_index, l.is_live, l.live_at, l.subject_id, l.chapter_id, l.status, l.release_at, l.created_at
            FROM lectures l JOIN batches b ON b.id = l.batch_id
            ORDER BY l.live_at IS NULL, l.live_at, l.created_at DESC LIMIT 200`,
     )
@@ -26,16 +26,19 @@ app.get("/", async (c) => {
 app.post("/", async (c) => {
   const parsed = LectureUpsert.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
-  const { batchId, chapter, titleBn, titleEn, youtubeId, durationSec, orderIndex, isLive, liveAt, subjectId, chapterId, status, releaseAt } = parsed.data;
+  const { batchId, chapter, titleBn, titleEn, source, youtubeId, driveFileId, durationSec, orderIndex, isLive, liveAt, subjectId, chapterId, status, releaseAt } =
+    parsed.data;
 
   const id = crypto.randomUUID();
   await c.env.DB
     .prepare(
-      `INSERT INTO lectures (id, batch_id, chapter, title_bn, title_en, youtube_id, duration_sec, order_index, is_live, live_at, subject_id, chapter_id, status, release_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO lectures (id, batch_id, chapter, title_bn, title_en, youtube_id, source, drive_file_id, duration_sec, order_index, is_live, live_at, subject_id, chapter_id, status, release_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
-      id, batchId, chapter, titleBn, titleEn, youtubeId, durationSec ?? null, orderIndex, isLive ? 1 : 0, liveAt ?? null,
+      // youtube_id is NOT NULL in the schema, so a drive-sourced lecture gets ''
+      // there instead of null (see migration 0017's note).
+      id, batchId, chapter, titleBn, titleEn, youtubeId ?? "", source, driveFileId ?? null, durationSec ?? null, orderIndex, isLive ? 1 : 0, liveAt ?? null,
       subjectId ?? null, chapterId ?? null, status, releaseAt ?? null,
     )
     .run();
@@ -46,17 +49,18 @@ app.post("/", async (c) => {
 app.put("/:id", async (c) => {
   const parsed = LectureUpsert.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
-  const { batchId, chapter, titleBn, titleEn, youtubeId, durationSec, orderIndex, isLive, liveAt, subjectId, chapterId, status, releaseAt } = parsed.data;
+  const { batchId, chapter, titleBn, titleEn, source, youtubeId, driveFileId, durationSec, orderIndex, isLive, liveAt, subjectId, chapterId, status, releaseAt } =
+    parsed.data;
 
   const result = await c.env.DB
     .prepare(
-      `UPDATE lectures SET batch_id = ?, chapter = ?, title_bn = ?, title_en = ?, youtube_id = ?,
+      `UPDATE lectures SET batch_id = ?, chapter = ?, title_bn = ?, title_en = ?, youtube_id = ?, source = ?, drive_file_id = ?,
               duration_sec = ?, order_index = ?, is_live = ?, live_at = ?,
               subject_id = ?, chapter_id = ?, status = ?, release_at = ?
        WHERE id = ?`,
     )
     .bind(
-      batchId, chapter, titleBn, titleEn, youtubeId, durationSec ?? null, orderIndex, isLive ? 1 : 0, liveAt ?? null,
+      batchId, chapter, titleBn, titleEn, youtubeId ?? "", source, driveFileId ?? null, durationSec ?? null, orderIndex, isLive ? 1 : 0, liveAt ?? null,
       subjectId ?? null, chapterId ?? null, status, releaseAt ?? null, c.req.param("id"),
     )
     .run();

@@ -27,9 +27,6 @@ export type AdminBatchDetail = {
     summary_en: string | null;
     preview_video_id: string | null;
     banner_url: string | null;
-    start_date: number | null;
-    end_date: number | null;
-    mrp_paise: number | null;
     status: BatchStatus;
     created_at: number;
     updated_at: number;
@@ -49,6 +46,15 @@ export type AdminNotice = {
   created_at: number;
 };
 
+export type AdminSentNotification = {
+  id: number;
+  title: string;
+  body: string;
+  batchId: string | null;
+  sentCount: number;
+  createdAt: number;
+};
+
 export type AdminSubject = {
   id: string;
   name_bn: string;
@@ -63,6 +69,7 @@ export type AdminNote = {
   batch_id: string | null;
   batch_title_en: string | null;
   lecture_id: string | null;
+  chapter_id: string | null;
   title_bn: string;
   title_en: string;
   drive_file_id: string;
@@ -73,6 +80,7 @@ export type AdminNote = {
 
 export type AdminLecture = {
   subject_id: string | null;
+  chapter_id: string | null;
   status: "draft" | "published";
   release_at: number | null;
   id: string;
@@ -81,11 +89,32 @@ export type AdminLecture = {
   chapter: string;
   title_bn: string;
   title_en: string;
+  source: "youtube" | "drive";
   youtube_id: string;
+  drive_file_id: string | null;
   duration_sec: number | null;
   order_index: number;
   is_live: number;
   live_at: number | null;
+  created_at: number;
+};
+
+export type AdminChapter = {
+  id: string;
+  batch_id: string;
+  batch_title_en: string;
+  subject_id: string;
+  subject_name_en: string;
+  title_bn: string;
+  title_en: string;
+  order_index: number;
+  created_at: number;
+};
+
+export type AdminTeacherInvite = {
+  email: string;
+  subjects: string[];
+  invited_by: string;
   created_at: number;
 };
 
@@ -145,19 +174,9 @@ export type AdminTestDetail = {
 
 export type AdminBanner = {
   id: string;
-  kind: "launch" | "community";
   image_url: string;
   title_bn: string;
   title_en: string;
-  description_bn: string | null;
-  description_en: string | null;
-  cta: "details" | "enroll";
-  support_hours_bn: string | null;
-  support_hours_en: string | null;
-  phone: string | null;
-  buttons: { labelBn: string; labelEn: string; url: string }[];
-  starts_at: number | null;
-  ends_at: number | null;
   batch_id: string | null;
   link_url: string | null;
   target_type: "batch" | "test" | "lecture" | "material" | "link" | null;

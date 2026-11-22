@@ -1,12 +1,14 @@
 import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
-import { extractYouTubeId, LectureUpsert } from "@coaching-app/shared/schema";
-import { ConfirmSheet, Field } from "../../components/adminUi";
+import { extractYouTubeId, LectureUpsert, type LectureSource } from "@coaching-app/shared/schema";
+import { ConfirmSheet, Field, Segmented } from "../../components/adminUi";
 import { Select } from "../../components/Select";
 import { Loading, Sheet } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
 import type { AdminBatchRow, AdminChapter, AdminLecture } from "../../lib/adminTypes";
+import { extractDriveFileId, isDrivePickerConfigured, openDrivePicker } from "../../lib/drive";
 import { errorText, pick, when } from "../../lib/format";
+import { isNativeApp } from "../../lib/platform";
 import { useSubjects } from "../../lib/queries";
 import { useLoad } from "../../lib/useLoad";
 
@@ -17,7 +19,9 @@ type Draft = {
   chapterId: string;
   titleBn: string;
   titleEn: string;
+  source: LectureSource;
   youtubeId: string;
+  driveFileId: string;
   durationSec: string;
   orderIndex: string;
   isLive: boolean;
@@ -43,7 +47,9 @@ const EMPTY: Draft = {
   chapterId: "",
   titleBn: "",
   titleEn: "",
+  source: "youtube",
   youtubeId: "",
+  driveFileId: "",
   durationSec: "",
   orderIndex: "0",
   isLive: false,
@@ -60,7 +66,9 @@ const toDraft = (l: AdminLecture): Draft => ({
   chapterId: l.chapter_id ?? "",
   titleBn: l.title_bn,
   titleEn: l.title_en,
+  source: l.source ?? "youtube",
   youtubeId: l.youtube_id,
+  driveFileId: l.drive_file_id ?? "",
   durationSec: l.duration_sec ? String(l.duration_sec) : "",
   orderIndex: String(l.order_index),
   isLive: Boolean(l.is_live),
@@ -84,6 +92,8 @@ export function AdminLectures() {
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const showPicker = isDrivePickerConfigured() && !isNativeApp();
 
   const close = () => {
     setDraft(null);
@@ -91,6 +101,26 @@ export function AdminLectures() {
     setErrors({});
     setFailure(null);
   };
+
+  async function pickFromDrive() {
+    setPicking(true);
+    setFailure(null);
+    try {
+      const picked = await openDrivePicker();
+      if (picked) {
+        setDraft((current) =>
+          current
+            ? { ...current, driveFileId: picked.id, titleEn: current.titleEn || picked.name, titleBn: current.titleBn || picked.name }
+            : current,
+        );
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("drive picker failed", e);
+      setFailure(t("drive_picker_failed"));
+    }
+    setPicking(false);
+  }
 
   async function save() {
     if (!draft) return;
@@ -100,7 +130,9 @@ export function AdminLectures() {
       chapterId: draft.chapterId || null,
       titleBn: draft.titleBn,
       titleEn: draft.titleEn,
-      youtubeId: draft.youtubeId.trim(),
+      source: draft.source,
+      youtubeId: draft.source === "youtube" ? draft.youtubeId.trim() : undefined,
+      driveFileId: draft.source === "drive" ? draft.driveFileId.trim() : undefined,
       durationSec: draft.durationSec ? Number.parseInt(draft.durationSec, 10) : undefined,
       orderIndex: Number.parseInt(draft.orderIndex, 10) || 0,
       isLive: draft.isLive,
@@ -191,23 +223,51 @@ export function AdminLectures() {
             <Field id="l-title-bn" label={t("admin_title_bn")} error={problem("titleBn")}>
               <input id="l-title-bn" class="input" value={draft.titleBn} onInput={(e) => patch({ titleBn: e.currentTarget.value })} />
             </Field>
-            <Field id="l-yt" label={t("admin_youtube_id")} error={problem("youtubeId")} hint={t("admin_youtube_id_hint")}>
-              <input
-                id="l-yt"
-                class="input"
-                placeholder={t("admin_youtube_id_placeholder")}
-                value={draft.youtubeId}
-                onInput={(e) => patch({ youtubeId: e.currentTarget.value })}
+            <Field label={t("admin_lecture_source")}>
+              <Segmented
+                label={t("admin_lecture_source")}
+                value={draft.source}
+                onChange={(source) => patch({ source })}
+                options={[
+                  { id: "youtube", label: t("admin_lecture_source_youtube") },
+                  { id: "drive", label: t("admin_lecture_source_drive") },
+                ]}
               />
-              {(() => {
-                const previewId = extractYouTubeId(draft.youtubeId);
-                return previewId ? (
-                  <img class="youtube-preview" src={`https://i.ytimg.com/vi/${previewId}/mqdefault.jpg`} alt="" width={160} height={90} />
-                ) : (
-                  draft.youtubeId.trim() && <p class="hint error-text">{t("admin_youtube_id_invalid")}</p>
-                );
-              })()}
             </Field>
+            {draft.source === "youtube" ? (
+              <Field id="l-yt" label={t("admin_youtube_id")} error={problem("youtubeId")} hint={t("admin_youtube_id_hint")}>
+                <input
+                  id="l-yt"
+                  class="input"
+                  placeholder={t("admin_youtube_id_placeholder")}
+                  value={draft.youtubeId}
+                  onInput={(e) => patch({ youtubeId: e.currentTarget.value })}
+                />
+                {(() => {
+                  const previewId = extractYouTubeId(draft.youtubeId);
+                  return previewId ? (
+                    <img class="youtube-preview" src={`https://i.ytimg.com/vi/${previewId}/mqdefault.jpg`} alt="" width={160} height={90} />
+                  ) : (
+                    draft.youtubeId.trim() && <p class="hint error-text">{t("admin_youtube_id_invalid")}</p>
+                  );
+                })()}
+              </Field>
+            ) : (
+              <Field id="l-drive" label={t("admin_drive_file_id")} error={problem("driveFileId")} hint={t("admin_drive_file_id_hint")}>
+                <input
+                  id="l-drive"
+                  class="input"
+                  value={draft.driveFileId}
+                  onInput={(e) => patch({ driveFileId: e.currentTarget.value })}
+                  onBlur={(e) => patch({ driveFileId: extractDriveFileId(e.currentTarget.value) })}
+                />
+                {showPicker && (
+                  <button type="button" class="btn quiet" onClick={pickFromDrive} disabled={picking}>
+                    {picking ? t("drive_picker_opening") : t("drive_picker_choose")}
+                  </button>
+                )}
+              </Field>
+            )}
             <Field id="l-chapter-id" label={t("admin_chapter_link")}>
               <Select
                 id="l-chapter-id"

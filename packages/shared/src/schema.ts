@@ -83,9 +83,6 @@ export const BatchUpsert = z
     summaryBn: z.string().max(2000).optional(),
     summaryEn: z.string().max(2000).optional(),
     previewVideoId: z.string().regex(/^[A-Za-z0-9_-]{11}$/, "Not a YouTube video id").optional(),
-    startDate: z.number().int().positive().nullable().optional(),
-    endDate: z.number().int().positive().nullable().optional(),
-    mrpPaise: z.number().int().min(0).nullable().optional(),
     bannerUrl: z
       .string()
       .trim()
@@ -130,12 +127,6 @@ export const TeacherAccessUpdate = z.object({
 });
 export type TeacherAccessUpdate = z.infer<typeof TeacherAccessUpdate>;
 
-export const TeacherInvite = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  subjects: z.array(Subject).min(1).max(8),
-});
-export type TeacherInvite = z.infer<typeof TeacherInvite>;
-
 export const EnrollGrant = z.object({
   batchId: z.string().min(1),
   expiresAt: z.number().int().positive().nullable().optional(),
@@ -176,149 +167,119 @@ export const BulkQuestionRow = z.object({
 });
 export type BulkQuestionRow = z.infer<typeof BulkQuestionRow>;
 
-const NotificationText = {
-  titleBn: z.string().trim().min(1).max(120),
-  titleEn: z.string().trim().min(1).max(120),
-  bodyBn: z.string().trim().max(600).nullable().optional(),
-  bodyEn: z.string().trim().max(600).nullable().optional(),
-};
-
-// An admin can reach everyone, one batch, one class, the teachers, or one person.
-export const NotificationSend = z
-  .object({
-    audience: z.enum(["all", "batch", "class", "teachers", "user"]),
-    batchId: z.string().min(1).optional(),
-    studentClass: z.string().min(1).max(40).optional(),
-    userId: z.string().min(1).max(128).optional(),
-    ...NotificationText,
-  })
-  .superRefine((v, ctx) => {
-    if (v.audience === "batch" && !v.batchId) ctx.addIssue({ code: "custom", path: ["batchId"], message: "Choose a batch" });
-    if (v.audience === "class" && !v.studentClass) ctx.addIssue({ code: "custom", path: ["studentClass"], message: "Choose a class" });
-    if (v.audience === "user" && !v.userId) ctx.addIssue({ code: "custom", path: ["userId"], message: "Choose a person" });
-  });
-export type NotificationSend = z.infer<typeof NotificationSend>;
-
-// A teacher can only write to the students of a batch they are assigned to.
-export const TeacherNotificationSend = z.object({ batchId: z.string().min(1), ...NotificationText });
-export type TeacherNotificationSend = z.infer<typeof TeacherNotificationSend>;
-
-export const NotificationRead = z.object({ ids: z.array(z.string().min(1)).max(100).optional(), all: z.boolean().optional() });
-
-export const AiExplain = z.object({
-  testId: z.string().min(1).max(80),
-  questionId: z.string().min(1).max(80),
-  lang: z.enum(["bn", "en"]).default("en"),
-});
-export type AiExplain = z.infer<typeof AiExplain>;
-
-export const AiChat = z.object({
-  message: z.string().min(1).max(4000),
-  profile: z.enum(EXAM_PROFILE_KEYS).optional(),
-});
-export type AiChat = z.infer<typeof AiChat>;
-
-export const AiQuestions = z.object({
-  profile: z.enum(EXAM_PROFILE_KEYS).default("board_general"),
-  subject: z.string().min(1).max(80),
-  topic: z.string().trim().min(3).max(120),
-  count: z.number().int().min(1).max(10).default(5),
-  difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
-  lang: z.enum(["bn", "en"]).default("en"),
-});
-export type AiQuestions = z.infer<typeof AiQuestions>;
-
 export const BANNER_TARGETS = ["batch", "test", "lecture", "material", "link"] as const;
 export type BannerTarget = (typeof BANNER_TARGETS)[number];
 
-export const BANNER_KINDS = ["launch", "community"] as const;
-export type BannerKind = (typeof BANNER_KINDS)[number];
-
-// A contact button on a community banner: open a website, WhatsApp or Telegram
-// link, or call a number. Only https and tel links are accepted.
-export const BannerButton = z.object({
-  labelBn: z.string().trim().min(1).max(40),
-  labelEn: z.string().trim().min(1).max(40),
-  url: z
-    .string()
-    .trim()
-    .max(300)
-    .refine((u) => /^https:\/\/\S+$/.test(u) || /^tel:\+?[0-9]{6,15}$/.test(u), "Use an https:// link or tel:+91…"),
-});
-export type BannerButton = z.infer<typeof BannerButton>;
-
-const imageOrEmpty = z
-  .string()
-  .trim()
-  .max(500)
-  .refine((u) => u === "" || /^https:\/\/\S+$/.test(u), "Use an image link that starts with https://");
-
 export const BannerUpsert = z
   .object({
-    kind: z.enum(BANNER_KINDS).default("launch"),
-    imageUrl: imageOrEmpty,
+    imageUrl: z.string().trim().url().max(500),
     titleBn: z.string().trim().min(1).max(160),
     titleEn: z.string().trim().min(1).max(160),
-    descriptionBn: z.string().trim().max(800).nullable().optional(),
-    descriptionEn: z.string().trim().max(800).nullable().optional(),
-    // What a tap opens (launch banners). batchId / linkUrl are kept so older clients still work.
+    // What a tap opens. batchId / linkUrl are kept so older clients still work.
     targetType: z.enum(BANNER_TARGETS).nullable().optional(),
     targetId: z.string().min(1).max(80).nullable().optional(),
     batchId: z.string().min(1).nullable().optional(),
     linkUrl: z.string().trim().url().max(500).optional(),
-    cta: z.enum(["details", "enroll"]).default("details"),
-    // Community banners: when the helpline is staffed, a phone number and up to three buttons.
-    supportHoursBn: z.string().trim().max(200).nullable().optional(),
-    supportHoursEn: z.string().trim().max(200).nullable().optional(),
-    phone: z
-      .string()
-      .trim()
-      .regex(/^\+?[0-9 ]{6,18}$/, "Enter a phone number")
-      .nullable()
-      .optional(),
-    buttons: z.array(BannerButton).max(3).default([]),
-    // When it shows. Empty means "from now" and "until switched off".
-    startsAt: z.number().int().positive().nullable().optional(),
-    endsAt: z.number().int().positive().nullable().optional(),
     orderIndex: z.number().int().default(0),
     status: z.enum(["active", "inactive"]).default("active"),
   })
   .superRefine((value, ctx) => {
-    if (value.kind === "launch") {
-      if (!value.imageUrl) ctx.addIssue({ code: "custom", path: ["imageUrl"], message: "A launch banner needs an image" });
-      const type = value.targetType ?? (value.batchId ? "batch" : value.linkUrl ? "link" : null);
-      if (type === "link" && !value.linkUrl) ctx.addIssue({ code: "custom", path: ["linkUrl"], message: "Add the website link" });
-      if (type && type !== "link" && !(value.targetId ?? value.batchId)) {
-        ctx.addIssue({ code: "custom", path: ["targetId"], message: "Choose what the banner opens" });
-      }
-    } else if (!value.descriptionBn && !value.descriptionEn && !value.phone && value.buttons.length === 0) {
-      ctx.addIssue({ code: "custom", path: ["descriptionBn"], message: "Add a description, a phone number or a button" });
-    }
-    if (value.startsAt && value.endsAt && value.endsAt <= value.startsAt) {
-      ctx.addIssue({ code: "custom", path: ["endsAt"], message: "The end must be after the start" });
+    const type = value.targetType ?? (value.batchId ? "batch" : value.linkUrl ? "link" : null);
+    if (type === "link" && !value.linkUrl) ctx.addIssue({ code: "custom", path: ["linkUrl"], message: "Add the website link" });
+    if (type && type !== "link" && !(value.targetId ?? value.batchId)) {
+      ctx.addIssue({ code: "custom", path: ["targetId"], message: "Choose what the banner opens" });
     }
   });
 export type BannerUpsert = z.infer<typeof BannerUpsert>;
 
-export const LectureUpsert = z.object({
-  batchId: z.string().min(1),
-  chapter: z.string().trim().min(1).max(120),
-  titleBn: z.string().trim().min(1).max(160),
-  titleEn: z.string().trim().min(1).max(160),
-  youtubeId: z.string().trim().min(1).max(60),
-  durationSec: z.number().int().positive().optional(),
-  orderIndex: z.number().int().default(0),
-  isLive: z.boolean().default(false),
-  liveAt: z.number().int().positive().nullable().optional(),
-  subjectId: Subject.optional(),
-  status: z.enum(["draft", "published"]).default("published"),
-  releaseAt: z.number().int().positive().nullable().optional(),
-});
+// Accepts a bare 11-char video id as-is, or pulls one out of whatever
+// YouTube link someone pastes (watch?v=, youtu.be/, /embed/, /shorts/,
+// /live/, with any extra query string or trailing slash). Teachers
+// shouldn't have to know what a "video id" even is.
+const YOUTUBE_ID_RE = /^[\w-]{11}$/;
+export function extractYouTubeId(input: string): string | null {
+  const value = input.trim();
+  if (YOUTUBE_ID_RE.test(value)) return value;
+  try {
+    const url = new URL(value);
+    if (!/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(url.hostname)) return null;
+    const fromQuery = url.searchParams.get("v");
+    if (fromQuery && YOUTUBE_ID_RE.test(fromQuery)) return fromQuery;
+    const match = url.pathname.match(/\/(?:embed|shorts|live)\/([\w-]{11})/) ?? url.pathname.match(/^\/([\w-]{11})$/);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const YouTubeInput = z
+  .string()
+  .trim()
+  .min(1)
+  .max(200)
+  .transform((value, ctx) => {
+    const id = extractYouTubeId(value);
+    if (!id) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Paste a YouTube link or video id" });
+      return z.NEVER;
+    }
+    return id;
+  });
+
+// A lecture's video is either an (unlisted) YouTube upload or a video file a
+// teacher has sitting in Google Drive — some teachers only ever record
+// straight to Drive and never touch YouTube, so requiring a YouTube link was
+// a hard wall for them. Exactly one of youtubeId/driveFileId is required,
+// matching which `source` was chosen.
+export const LECTURE_SOURCES = ["youtube", "drive"] as const;
+export type LectureSource = (typeof LECTURE_SOURCES)[number];
+
+export const LectureUpsert = z
+  .object({
+    batchId: z.string().min(1),
+    chapter: z.string().trim().min(1).max(120),
+    titleBn: z.string().trim().min(1).max(160),
+    titleEn: z.string().trim().min(1).max(160),
+    source: z.enum(LECTURE_SOURCES).default("youtube"),
+    youtubeId: YouTubeInput.optional(),
+    // Extracted client-side from whatever Drive share link a teacher pastes
+    // (see apps/web/src/lib/drive.ts's extractDriveFileId), same as a
+    // material's driveFileId below — not re-validated server-side.
+    driveFileId: z.string().trim().min(1).max(200).optional(),
+    durationSec: z.number().int().positive().optional(),
+    orderIndex: z.number().int().default(0),
+    isLive: z.boolean().default(false),
+    liveAt: z.number().int().positive().nullable().optional(),
+    // Learning structure: which subject it belongs to, whether students can see
+    // it yet, and an optional date when it opens by itself.
+    subjectId: z.string().min(1).nullable().optional(),
+    // A chapter is a further, optional grouping within that subject.
+    chapterId: z.string().min(1).nullable().optional(),
+    status: z.enum(["draft", "published"]).default("published"),
+    releaseAt: z.number().int().positive().nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.source === "youtube" && !value.youtubeId) {
+      ctx.addIssue({ code: "custom", path: ["youtubeId"], message: "Paste a YouTube link or video id" });
+    }
+    if (value.source === "drive" && !value.driveFileId) {
+      ctx.addIssue({ code: "custom", path: ["driveFileId"], message: "Paste a Google Drive link or choose a file" });
+    }
+  });
 export type LectureUpsert = z.infer<typeof LectureUpsert>;
 
+export const ChapterUpsert = z.object({
+  batchId: z.string().min(1),
+  subjectId: z.string().min(1),
+  titleBn: z.string().trim().min(1).max(160),
+  titleEn: z.string().trim().min(1).max(160),
+  orderIndex: z.number().int().default(0),
+});
+export type ChapterUpsert = z.infer<typeof ChapterUpsert>;
+
 export const LectureProgressUpdate = z.object({
-  positionSec: z.number().int().nonnegative(),
-  durationSec: z.number().int().positive().optional(),
+  positionSec: z.number().int().min(0).max(86_400),
+  durationSec: z.number().int().positive().max(86_400).optional(),
   completed: z.boolean().optional(),
 });
 export type LectureProgressUpdate = z.infer<typeof LectureProgressUpdate>;
@@ -357,6 +318,7 @@ export type TestUpsert = z.infer<typeof TestUpsert>;
 export const NoteUpsert = z.object({
   batchId: z.string().min(1).nullable().optional(),
   lectureId: z.string().min(1).nullable().optional(),
+  chapterId: z.string().min(1).nullable().optional(),
   titleBn: z.string().trim().min(1).max(160),
   titleEn: z.string().trim().min(1).max(160),
   driveFileId: z.string().trim().min(1).max(200),
@@ -365,11 +327,22 @@ export const NoteUpsert = z.object({
 });
 export type NoteUpsert = z.infer<typeof NoteUpsert>;
 
+export const TeacherInvite = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  subjects: z.array(Subject).min(1).max(8),
+});
+export type TeacherInvite = z.infer<typeof TeacherInvite>;
+
 export const DoubtCreate = z.object({
-  batchId: z.string().min(1, "Choose the batch this doubt is about"),
+  batchId: z.string().min(1).nullable().optional(),
   subject: Subject.optional(),
   questionText: z.string().trim().min(5).max(1000),
+  // imageDriveId is kept only so any already-submitted doubt that used the
+  // old paste-a-Drive-ID field still validates; the app itself now always
+  // sends imageBase64 (a plain photo upload, shrunk client-side like a
+  // payment screenshot).
   imageDriveId: z.string().trim().max(200).optional(),
+  imageBase64: z.string().max(220_000, "Photo is too large even after compression").optional(),
 });
 export type DoubtCreate = z.infer<typeof DoubtCreate>;
 
@@ -394,6 +367,7 @@ export type AvatarUpdate = z.infer<typeof AvatarUpdate>;
 
 export const QUOTA = {
   maxScreenshotBytes: 150_000,
+  maxDoubtImageBytes: 150_000,
   videoProgressWriteIntervalSec: 120,
   sessionTokenTtlSec: 15 * 60,
 } as const;
@@ -408,3 +382,36 @@ export const PushTokenUnregister = z.object({
   token: z.string().trim().min(1).max(4096),
 });
 export type PushTokenUnregister = z.infer<typeof PushTokenUnregister>;
+
+export const AiChat = z.object({
+  message: z.string().trim().min(1).max(4000),
+  profile: z.string().optional(),
+});
+export type AiChat = z.infer<typeof AiChat>;
+
+export const AiExplain = z.object({
+  testId: z.string().min(1),
+  questionId: z.string().min(1),
+  lang: z.enum(["bn", "en"]),
+});
+export type AiExplain = z.infer<typeof AiExplain>;
+
+export const AiQuestions = z.object({
+  profile: z.enum(EXAM_PROFILE_KEYS),
+  subject: Subject,
+  topic: z.string().trim().min(1).max(200),
+  count: z.number().int().min(1).max(10),
+  difficulty: z.enum(["easy", "medium", "hard"]),
+  lang: z.enum(["bn", "en"]),
+});
+export type AiQuestions = z.infer<typeof AiQuestions>;
+
+// A single title/body pair, not bilingual — Firebase Cloud Messaging only
+// carries one of each per message anyway, same choice the automated
+// class-reminder pushes already make.
+export const NotificationSend = z.object({
+  title: z.string().trim().min(1).max(120),
+  body: z.string().trim().min(1).max(500),
+  batchId: z.string().min(1).nullable().optional(),
+});
+export type NotificationSend = z.infer<typeof NotificationSend>;

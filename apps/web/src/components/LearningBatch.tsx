@@ -19,6 +19,7 @@ import { mergedProgress, saveProgress } from "../lib/progress";
 import { useBatchContent, useLectureProgress } from "../lib/queries";
 import { go } from "../lib/router";
 import type { BatchContent, BatchNote, Lecture } from "../lib/types";
+import { DriveVideoPlayer } from "./DriveVideoPlayer";
 import { MaterialViewer } from "./MaterialViewer";
 import { YouTubePlayer } from "./YouTubePlayer";
 import { Async, SectionHead } from "./ui";
@@ -67,7 +68,7 @@ function LectureView({
   const { prev, next } = neighbours(groups, lecture.id);
   const mine = progress.get(lecture.id);
   const done = Boolean(mine?.completed);
-  const locked = Boolean(lecture.locked) || !lecture.youtube_id;
+  const locked = Boolean(lecture.locked) || (lecture.source === "drive" ? !lecture.drive_file_id : !lecture.youtube_id);
   const start = useRef(resumeAt(mine)).current; // fixed for this lecture: resume point, not a moving target
 
   useEffect(() => {
@@ -96,6 +97,8 @@ function LectureView({
           <strong>{t("learn_locked_title")}</strong>
           <p class="muted small">{lecture.release_at ? t("learn_opens", { date: when(lecture.release_at) }) : t("learn_locked_hint")}</p>
         </div>
+      ) : lecture.source === "drive" ? (
+        <DriveVideoPlayer key={lecture.id} fileId={lecture.drive_file_id!} title={pick(lecture, "title")} />
       ) : (
         <YouTubePlayer
           key={lecture.id}
