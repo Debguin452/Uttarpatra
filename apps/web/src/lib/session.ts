@@ -1,9 +1,9 @@
 import { signal } from "@preact/signals";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
-import { idbClear } from "@coaching-app/shared/cache/idbStore";
+import { idbClear, idbGet, idbSet } from "@coaching-app/shared/cache/idbStore";
 import { invalidateQuery } from "@coaching-app/shared/cache/useCachedQuery";
 import { api, ApiError, fatal } from "./api";
-import { myBatchesKey, paymentsKey } from "./cacheKeys";
+import { meKey, myBatchesKey, paymentsKey } from "./cacheKeys";
 import { auth } from "./firebase";
 import type { Me } from "./types";
 
@@ -11,12 +11,29 @@ export const authUser = signal<User | null | undefined>(undefined);
 export const me = signal<Me | null>(null);
 export const meError = signal<string | null>(null);
 
+// Kept around for a signed-in user to fall back on when /api/me can't be
+// reached at all (app opened offline, or straight after an Android cold
+// start before connectivity comes back) — without this, a perfectly valid,
+// already-persisted sign-in would still dead-end on a blocking error screen
+// instead of reaching Home/Batches, which is the one thing the whole
+// useCachedQuery offline-catalog setup is meant to avoid.
+const ME_CACHE_TTL_MS = 30 * 24 * 60 * 60_000; // staleness only bounds how long we'll trust it at all
+
 export async function loadMe(): Promise<void> {
+  const uid = authUser.value?.uid;
   try {
-    me.value = await api<Me>("/api/me");
+    const result = await api<Me>("/api/me");
+    me.value = result;
     meError.value = null;
+    if (uid) await idbSet(meKey(uid), result, ME_CACHE_TTL_MS);
   } catch (error) {
     if (fatal.value) return;
+    const cached = uid ? await idbGet<Me>(meKey(uid)) : null;
+    if (cached) {
+      me.value = cached.value;
+      meError.value = null;
+      return;
+    }
     meError.value = error instanceof ApiError ? error.code : "network";
   }
 }
