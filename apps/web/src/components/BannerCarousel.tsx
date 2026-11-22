@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { Banner } from "../lib/types";
 import { go } from "../lib/router";
 import { focusTarget } from "../lib/focus";
-import { pick } from "../lib/format";
+import { feeLabel } from "@coaching-app/shared/bannerDisplay";
+import { t } from "@coaching-app/shared/i18n";
+import { dateOnly } from "../lib/enrollment";
+import { money, pick } from "../lib/format";
 import { BannerImage } from "./BannerImage";
 
 const AUTO_ADVANCE_MS = 5000;
@@ -33,9 +36,52 @@ function openBanner(b: Banner) {
     focusTarget.value = { type: b.target_type, id: b.target_id };
     return go(`batches/${b.batch_id}`);
   }
+  // "Enroll now" goes straight to the payment page; the payment page itself
+  // sends someone who is already enrolled, or in a free batch, to the batch.
+  if (b.batch_id && b.cta === "enroll") return go(`enroll/${b.batch_id}`);
   if (b.batch_id) return go(`batches/${b.batch_id}`);
   const href = externalHref(b.link_url);
   if (href) window.open(href, "_blank", "noopener,noreferrer");
+}
+
+// The words under a launch banner: what it is, who it is for, what it costs, when it
+// starts. The batch's own details are used, so they can never disagree with the batch page.
+function BannerInfo({ banner: b }: { banner: Banner }) {
+  const hasBatch = Boolean(b.batch_id && b.batch_title_en);
+  const fee = hasBatch ? feeLabel(b.batch_price_paise ?? 0, b.batch_mrp_paise, b.batch_kind ?? "paid") : null;
+  const about = [
+    b.batch_track ? t(`filter_${b.batch_track}`) : null,
+    b.batch_start_date ? t("banner_starts", { date: dateOnly(b.batch_start_date) }) : null,
+  ].filter(Boolean);
+  const description = pick(b, "description") || (hasBatch ? pick({ summary_bn: b.batch_summary_bn, summary_en: b.batch_summary_en }, "summary") : "");
+
+  return (
+    <span class="banner-info">
+      {about.length > 0 && <span class="eyebrow">{about.join(" · ")}</span>}
+      <span class="banner-title">{pick(b, "title")}</span>
+      {description && <span class="banner-desc">{description}</span>}
+      <span class="banner-foot">
+        {fee && (
+          <span class="banner-fee">
+            {fee.free ? (
+              <strong>{t("free")}</strong>
+            ) : (
+              <>
+                <strong>{money(fee.price)}</strong>
+                {fee.mrp && (
+                  <>
+                    <s class="muted">{money(fee.mrp)}</s>
+                    <span class="badge mark">{t("banner_off", { n: fee.off ?? 0 })}</span>
+                  </>
+                )}
+              </>
+            )}
+          </span>
+        )}
+        {(hasBatch || b.link_url) && <span class="btn primary small banner-cta">{b.cta === "enroll" && fee && !fee.free ? t("enroll") : t("banner_view")}</span>}
+      </span>
+    </span>
+  );
 }
 
 export function BannerCarousel({ banners }: { banners: Banner[] }) {
@@ -111,6 +157,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
               alt={pick(b, "title")}
               onFail={() => setBroken((prev) => new Set(prev).add(b.id))}
             />
+            <BannerInfo banner={b} />
           </button>
         ))}
       </div>

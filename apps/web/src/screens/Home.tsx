@@ -4,6 +4,7 @@ import { IconChevronRight, IconTray } from "@coaching-app/ui/icons";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { GettingStarted } from "../components/GettingStarted";
 import { Logo } from "../components/Logo";
+import { NotificationBell } from "../components/NotificationBell";
 import { Async, EmptyState, SectionHead, SyncNote } from "../components/ui";
 import { getContinueLearning } from "../lib/continueLearning";
 import { greeting, pick, when } from "../lib/format";
@@ -87,7 +88,10 @@ export function Home() {
           <p class="eyebrow">{greeting()}</p>
           <h1 class="title">{name}</h1>
         </div>
-        <Logo width={56} start />
+        <span class="row-inline">
+          <NotificationBell />
+          <Logo width={56} start />
+        </span>
       </header>
 
       <div class="field">

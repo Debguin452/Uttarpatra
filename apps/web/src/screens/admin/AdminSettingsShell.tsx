@@ -4,9 +4,10 @@ import { AdminAnalytics } from "./AdminAnalytics";
 import { AdminBanners } from "./AdminBanners";
 import { AdminCoupons } from "./AdminCoupons";
 import { AdminNotices } from "./AdminNotices";
+import { AdminNotifications } from "./AdminNotifications";
 import { AdminSubjects } from "./AdminSubjects";
 
-type Sub = "notices" | "banners" | "coupons" | "subjects" | "analytics";
+type Sub = "notices" | "notifications" | "banners" | "coupons" | "subjects" | "analytics";
 
 export function AdminSettingsShell({ isSuperAdmin, initialSub = "notices" }: { isSuperAdmin: boolean; initialSub?: Sub }) {
   const [sub, setSub] = useState<Sub>(initialSub);
@@ -15,6 +16,7 @@ export function AdminSettingsShell({ isSuperAdmin, initialSub = "notices" }: { i
   // hidden from support).
   const subs: { id: Sub; label: string }[] = [
     { id: "notices", label: "admin_settings_tab_notices" },
+    { id: "notifications", label: "admin_settings_tab_notifications" },
     { id: "banners", label: "admin_settings_tab_banners" },
     { id: "coupons", label: "admin_settings_tab_coupons" },
     ...(isSuperAdmin ? ([{ id: "subjects", label: "admin_settings_tab_subjects" }] as const) : []),
@@ -32,6 +34,7 @@ export function AdminSettingsShell({ isSuperAdmin, initialSub = "notices" }: { i
         ))}
       </div>
       {sub === "notices" && <AdminNotices />}
+      {sub === "notifications" && <AdminNotifications />}
       {sub === "banners" && <AdminBanners />}
       {sub === "coupons" && <AdminCoupons />}
       {sub === "subjects" && isSuperAdmin && <AdminSubjects />}

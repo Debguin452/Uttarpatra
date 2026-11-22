@@ -59,3 +59,8 @@ export const useLectureProgress = (batchId: string) =>
 
 export const useLearningSummary = () =>
   useCachedQuery<LearningSummary[]>(learningSummaryKey(uid()), () => api<LearningSummary[]>("/api/learning/summary"), { ttlMs: 30_000 });
+
+export const useCommunityBanners = () =>
+  useCachedQuery<Banner[]>("public:banners:community", () => api<Banner[]>("/public/banners?kind=community", { auth: false }), {
+    ttlMs: 5 * 60_000,
+  });

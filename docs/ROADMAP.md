@@ -24,7 +24,7 @@ existing repository" rule is followed by extending these, not adding apps.
 | 7 | Test engine + analytics | Partial | timed tests, results, leaderboard. Missing: question palette/mark for review check, percentile, chapter-wise weakness, PYQ category |
 | 8 | Live classes + recordings | Partial | a lecture can be flagged live with a time. Missing: real-time live room (`workers/live`) |
 | 9 | Razorpay + subscriptions | Missing | payments are manual UPI with admin approval. D1 payments table already has Razorpay columns |
-| 10 | Admin analytics + banner manager | Partial | analytics and banner manager exist; banners link to batch/test/lecture/material. Missing: scheduling, desktop/mobile images, community banners |
+| 10 | Admin analytics + banner manager | **Done in this update (core)** | launch + community banners, details, scheduling, ordering, CTA; admin and teacher notifications; admin doubts. Missing: separate desktop/mobile images |
 | 11 | AI doubt solver + question generator | **Done in this update (core)** | Cloudflare Workers AI; see `docs/AI.md`. Missing: image doubts, AI performance analysis, quiz battle |
 | 12 | Certificates, referrals | Missing | |
 | 13 | Streaks, goals | Partial | streak shown; goals and rings missing |

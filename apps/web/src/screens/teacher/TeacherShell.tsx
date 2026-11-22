@@ -2,9 +2,12 @@ import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { DoubtAnswer } from "@coaching-app/shared/schema";
 import { Logo } from "../../components/Logo";
+import { NotificationBell } from "../../components/NotificationBell";
+import { TeacherNotifications } from "./TeacherNotifications";
 import { LangToggle } from "../../components/LangToggle";
 import { Loading, Sheet } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
+import { askDoubtAi } from "../../lib/ai";
 import { errorText, pick, when } from "../../lib/format";
 import { segments } from "../../lib/router";
 import { useSubjects } from "../../lib/queries";
@@ -14,7 +17,6 @@ import type { TeacherDoubt, TeacherPortal, TeacherStudentDetail, TeacherStudentR
 import { useLoad } from "../../lib/useLoad";
 import { Profile } from "../Profile";
 import { Register } from "../Register";
-import { TeacherChapters } from "./TeacherChapters";
 import { TeacherLectures } from "./TeacherLectures";
 import { TeacherMaterials } from "./TeacherMaterials";
 import { TeacherNotices } from "./TeacherNotices";
@@ -23,12 +25,12 @@ import { TeacherTests } from "./TeacherTests";
 const TABS = [
   { id: "batches", label: "teach_tab_batches" },
   { id: "lectures", label: "teach_tab_lectures" },
-  { id: "chapters", label: "admin_tab_chapters" },
   { id: "materials", label: "teach_tab_materials" },
   { id: "tests", label: "teach_tab_tests" },
   { id: "notices", label: "teach_tab_notices" },
   { id: "students", label: "teach_tab_students" },
   { id: "doubts", label: "teach_tab_doubts" },
+  { id: "notify", label: "teach_tab_notify" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -153,6 +155,8 @@ function TeacherDoubts() {
   const subjects = useSubjects();
   const [answering, setAnswering] = useState<TeacherDoubt | null>(null);
   const [answer, setAnswer] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -201,8 +205,7 @@ function TeacherDoubts() {
             <p class="small" style="white-space:pre-wrap">
               {doubt.question_text}
             </p>
-            {doubt.image_b64 && <img class="doubt-photo-preview" src={`data:image/jpeg;base64,${doubt.image_b64}`} alt="" />}
-            {!doubt.image_b64 && doubt.image_drive_id && (
+            {doubt.image_drive_id && (
               <a
                 class="small"
                 href={`https://drive.google.com/file/d/${doubt.image_drive_id}/view`}
@@ -235,6 +238,26 @@ function TeacherDoubts() {
           <p class="small muted" style="white-space:pre-wrap">
             {answering.question_text}
           </p>
+          <button
+            class="btn small"
+            disabled={drafting || busy}
+            onClick={async () => {
+              setDrafting(true);
+              setDraftError(null);
+              try {
+                const draft = (await askDoubtAi(answering.id)).answer.slice(0, 2000);
+                setAnswer((current) => (current.trim() ? current : draft));
+              } catch (e) {
+                setDraftError(errorText(e instanceof ApiError ? e.code : "network"));
+              } finally {
+                setDrafting(false);
+              }
+            }}
+          >
+            {drafting ? t("ai_thinking") : t("ai_draft")}
+          </button>
+          {draftError && <p class="error-text small">{draftError}</p>}
+          <p class="hint">{t("ai_draft_hint")}</p>
           <div class="field">
             <label for="ans">{t("teach_doubt_answer")}</label>
             <textarea
@@ -281,6 +304,7 @@ export function TeacherShell() {
           <nav aria-label="Teacher">{links}</nav>
         </div>
         <div class="stack">
+          <NotificationBell />
           <a href="#/profile" class="who" aria-current={onProfile ? "page" : undefined}>
             <strong>{name}</strong>
             <span class="small muted">{t("role_teacher")}</span>
@@ -297,9 +321,12 @@ export function TeacherShell() {
             <Logo width={46} start />
             <strong class="brand">{t("teach_console")}</strong>
           </span>
-          <a href="#/profile" class="small">
-            {name}
-          </a>
+          <span class="row-inline">
+            <NotificationBell />
+            <a href="#/profile" class="small">
+              {name}
+            </a>
+          </span>
         </div>
         <nav class="admin-tabs" aria-label="Teacher">
           {links}
@@ -320,8 +347,6 @@ export function TeacherShell() {
           <TeacherBatches />
         ) : current === "lectures" ? (
           <TeacherLectures />
-        ) : current === "chapters" ? (
-          <TeacherChapters />
         ) : current === "materials" ? (
           <TeacherMaterials />
         ) : current === "tests" ? (
@@ -330,6 +355,8 @@ export function TeacherShell() {
           <TeacherNotices />
         ) : current === "students" ? (
           <TeacherStudents />
+        ) : current === "notify" ? (
+          <TeacherNotifications />
         ) : (
           <TeacherDoubts />
         )}

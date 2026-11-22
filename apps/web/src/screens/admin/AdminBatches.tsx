@@ -8,6 +8,7 @@ import { Loading, SectionHead } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
 import type { AdminBatchDetail, AdminBatchRow, BatchStatus } from "../../lib/adminTypes";
 import { errorText, money, pick } from "../../lib/format";
+import { toLocalInput, toUnixSec } from "../../lib/datetime";
 import { imageSrc } from "../../lib/image";
 import { useSubjects } from "../../lib/queries";
 import { go } from "../../lib/router";
@@ -94,6 +95,9 @@ type FormState = {
   summaryEn: string;
   video: string;
   banner: string;
+  mrp: string;
+  startDate: string;
+  endDate: string;
   status: BatchStatus;
 };
 
@@ -108,6 +112,9 @@ const BLANK: FormState = {
   summaryEn: "",
   video: "",
   banner: "",
+  mrp: "",
+  startDate: "",
+  endDate: "",
   status: "draft",
 };
 
@@ -123,6 +130,9 @@ function fromBatch(b: AdminBatchDetail["batch"]): FormState {
     summaryEn: b.summary_en ?? "",
     video: b.preview_video_id ?? "",
     banner: b.banner_url ?? "",
+    mrp: b.mrp_paise ? String(b.mrp_paise / 100) : "",
+    startDate: toLocalInput(b.start_date).slice(0, 10),
+    endDate: toLocalInput(b.end_date).slice(0, 10),
     status: b.status,
   };
 }
@@ -299,6 +309,9 @@ function BatchForm({
       summaryEn: form.summaryEn.trim() || undefined,
       previewVideoId: videoId ?? undefined,
       bannerUrl: form.banner.trim() ? imageSrc(form.banner) : undefined,
+      mrpPaise: form.kind === "free" || !form.mrp ? null : Math.round((Number.parseFloat(form.mrp) || 0) * 100),
+      startDate: toUnixSec(form.startDate),
+      endDate: toUnixSec(form.endDate),
       status: form.status,
     });
     if (!parsed.success) {
@@ -397,6 +410,22 @@ function BatchForm({
                 value={form.kind === "free" ? "" : form.price}
                 onInput={(e) => patch({ price: e.currentTarget.value.replace(/[^0-9.]/g, "") })}
               />
+            </Field>
+            <Field id="mrp" label={t("admin_mrp_rupees")} hint={t("admin_mrp_hint")} error={problem("mrpPaise")}>
+              <input
+                id="mrp"
+                class="input"
+                inputMode="decimal"
+                disabled={form.kind === "free"}
+                value={form.kind === "free" ? "" : form.mrp}
+                onInput={(e) => patch({ mrp: e.currentTarget.value.replace(/[^0-9.]/g, "") })}
+              />
+            </Field>
+            <Field id="start-date" label={t("admin_start_date")} error={problem("startDate")}>
+              <input id="start-date" class="input" type="date" value={form.startDate} onInput={(e) => patch({ startDate: e.currentTarget.value })} />
+            </Field>
+            <Field id="end-date" label={t("admin_end_date")} error={problem("endDate")}>
+              <input id="end-date" class="input" type="date" value={form.endDate} onInput={(e) => patch({ endDate: e.currentTarget.value })} />
             </Field>
             <Field label={t("admin_visibility")} hint={t(`batch_status_hint_${form.status}`)} span>
               <Segmented

@@ -3,35 +3,23 @@ import { LangToggle } from "../../components/LangToggle";
 import { Logo } from "../../components/Logo";
 import { currentRole, logOut, me } from "../../lib/session";
 import { segments } from "../../lib/router";
-import { AdminPayments, AdminUsers } from "../Admin";
-import { AdminTeachers } from "../AdminTeachers";
+import { AdminPayments } from "../Admin";
 import { Profile } from "../Profile";
 import { Register } from "../Register";
-import { AdminAnalytics } from "./AdminAnalytics";
-import { AdminBanners } from "./AdminBanners";
-import { AdminBatchEditor, AdminBatches } from "./AdminBatches";
-import { AdminChapters } from "./AdminChapters";
-import { AdminCoupons } from "./AdminCoupons";
-import { AdminLectures } from "./AdminLectures";
-import { AdminMaterials } from "./AdminMaterials";
-import { AdminNotices } from "./AdminNotices";
-import { AdminSubjects } from "./AdminSubjects";
-import { AdminTests } from "./AdminTests";
+import { AdminBatchesShell } from "./AdminBatchesShell";
+import { NotificationBell } from "../../components/NotificationBell";
+import { AdminDoubts } from "./AdminDoubts";
+import { AdminOverview } from "./AdminOverview";
+import { AdminPeople } from "./AdminPeople";
+import { AdminSettingsShell } from "./AdminSettingsShell";
 
 const TABS = [
-  { id: "payments", label: "admin_tab_payments", superOnly: false },
-  { id: "users", label: "admin_tab_users", superOnly: false },
+  { id: "overview", label: "admin_tab_overview", superOnly: false },
+  { id: "people", label: "admin_tab_people", superOnly: false },
   { id: "batches", label: "admin_tab_batches", superOnly: false },
-  { id: "lectures", label: "admin_tab_lectures", superOnly: false },
-  { id: "chapters", label: "admin_tab_chapters", superOnly: false },
-  { id: "materials", label: "admin_tab_materials", superOnly: false },
-  { id: "tests", label: "admin_tab_tests", superOnly: false },
-  { id: "coupons", label: "admin_tab_coupons", superOnly: false },
-  { id: "notices", label: "admin_tab_notices", superOnly: false },
-  { id: "banners", label: "admin_tab_banners", superOnly: false },
-  { id: "teachers", label: "admin_tab_teachers", superOnly: true },
-  { id: "subjects", label: "admin_tab_subjects", superOnly: true },
-  { id: "analytics", label: "admin_tab_analytics", superOnly: true },
+  { id: "payments", label: "admin_tab_payments", superOnly: false },
+  { id: "doubts", label: "admin_tab_doubts", superOnly: false },
+  { id: "settings", label: "admin_tab_settings", superOnly: false },
 ] as const;
 
 export function AdminShell() {
@@ -41,7 +29,13 @@ export function AdminShell() {
   const name = me.value && me.value.registered ? me.value.user.name : "";
   const visible = TABS.filter((entry) => isSuper || !entry.superOnly);
   const onProfile = head === "profile";
-  const current = onProfile ? "profile" : (visible.find((entry) => entry.id === tab)?.id ?? "payments");
+  // "analytics" is reachable as a deep link (from the Overview screen's "see
+  // all") without being its own sidebar item - it lives inside Settings now.
+  const current = onProfile
+    ? "profile"
+    : tab === "analytics" && isSuper
+      ? "analytics"
+      : (visible.find((entry) => entry.id === tab)?.id ?? "overview");
 
   const links = visible.map((entry) => (
     <a href={`#/admin/${entry.id}`} aria-current={current === entry.id ? "page" : undefined}>
@@ -58,6 +52,7 @@ export function AdminShell() {
           <nav aria-label="Admin">{links}</nav>
         </div>
         <div class="stack">
+          <NotificationBell />
           <a href="#/profile" class="who" aria-current={onProfile ? "page" : undefined}>
             <strong>{name}</strong>
             <span class="small muted">{t(`role_${role}`)}</span>
@@ -74,9 +69,12 @@ export function AdminShell() {
             <Logo width={46} start />
             <strong class="brand">{t("admin_console")}</strong>
           </span>
-          <a href="#/profile" class="small">
-            {name}
-          </a>
+          <span class="row-inline">
+            <NotificationBell />
+            <a href="#/profile" class="small">
+              {name}
+            </a>
+          </span>
         </div>
         <nav class="admin-tabs" aria-label="Admin">
           {links}
@@ -84,34 +82,19 @@ export function AdminShell() {
       </header>
 
       <main class="admin-main">
+        {current === "overview" && <AdminOverview isSuperAdmin={isSuper} />}
+        {current === "people" && <AdminPeople isSuperAdmin={isSuper} />}
+        {current === "batches" && <AdminBatchesShell batchId={sub} />}
+        {current === "doubts" && <AdminDoubts />}
         {current === "payments" && (
           <>
             <h1 class="title">{t("admin_tab_payments")}</h1>
             <AdminPayments />
           </>
         )}
-        {current === "users" && (
-          <>
-            <h1 class="title">{t("admin_tab_users")}</h1>
-            <AdminUsers isSuperAdmin={isSuper} />
-          </>
+        {(current === "settings" || current === "analytics") && (
+          <AdminSettingsShell key={current} isSuperAdmin={isSuper} initialSub={current === "analytics" ? "analytics" : "notices"} />
         )}
-        {current === "batches" && (sub ? <AdminBatchEditor id={sub} /> : <AdminBatches />)}
-        {current === "lectures" && <AdminLectures />}
-        {current === "chapters" && <AdminChapters />}
-        {current === "materials" && <AdminMaterials />}
-        {current === "tests" && <AdminTests />}
-        {current === "coupons" && <AdminCoupons />}
-        {current === "notices" && <AdminNotices />}
-        {current === "banners" && <AdminBanners />}
-        {current === "teachers" && (
-          <>
-            <h1 class="title">{t("admin_tab_teachers")}</h1>
-            <AdminTeachers />
-          </>
-        )}
-        {current === "subjects" && <AdminSubjects />}
-        {current === "analytics" && <AdminAnalytics />}
         {current === "profile" && (tab === "edit" ? <Register mode="edit" /> : (
           <div class="stack">
             <LangToggle />

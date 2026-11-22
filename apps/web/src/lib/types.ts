@@ -13,23 +13,24 @@ export type Batch = {
   summary_en: string | null;
   preview_video_id: string | null;
   banner_url: string | null;
+  start_date: number | null;
+  end_date: number | null;
+  mrp_paise: number | null;
 };
 
 export type Lecture = {
   id: string;
+  subject_id: string | null;
   chapter: string;
   title_bn: string;
   title_en: string;
-  // null while a scheduled lecture is still locked: the server withholds it
   youtube_id: string | null;
   duration_sec: number | null;
+  order_index: number;
   is_live: number;
   live_at: number | null;
-  subject_id: string | null;
-  chapter_id: string | null;
   release_at: number | null;
   locked: number;
-  order_index: number;
 };
 
 export type LiveLecture = {
@@ -150,6 +151,13 @@ export type AdminTeacher = {
   batch_count: number;
 };
 
+export type AdminTeacherInvite = {
+  email: string;
+  subjects: Subject[];
+  invited_by: string;
+  created_at: number;
+};
+
 export type TeacherStudentRow = {
   uid: string;
   name: string;
@@ -187,9 +195,9 @@ export type TeacherDoubt = {
   subject: string | null;
   question_text: string;
   image_drive_id: string | null;
-  image_b64: string | null;
   status: "open" | "answered";
   answer_text: string | null;
+  ai_answer: string | null;
   created_at: number;
 };
 
@@ -199,7 +207,6 @@ export type MyDoubt = {
   subject: string | null;
   question_text: string;
   image_drive_id: string | null;
-  image_b64: string | null;
   status: "open" | "answered";
   answer_text: string | null;
   ai_answer: string | null;
@@ -234,15 +241,48 @@ export type SubmitResult = {
   onTime: boolean;
 };
 
+export type BannerButtonRow = { labelBn: string; labelEn: string; url: string };
+
 export type Banner = {
   id: string;
+  kind: "launch" | "community";
   image_url: string;
   title_bn: string;
   title_en: string;
+  description_bn: string | null;
+  description_en: string | null;
   batch_id: string | null;
   link_url: string | null;
   target_type: "batch" | "test" | "lecture" | "material" | "link" | null;
   target_id: string | null;
+  cta: "details" | "enroll";
+  support_hours_bn: string | null;
+  support_hours_en: string | null;
+  phone: string | null;
+  buttons: BannerButtonRow[];
+  // The linked batch, so a launch banner can show its details without another request.
+  batch_title_bn: string | null;
+  batch_title_en: string | null;
+  batch_track: string | null;
+  batch_kind: "free" | "paid" | null;
+  batch_price_paise: number | null;
+  batch_mrp_paise: number | null;
+  batch_start_date: number | null;
+  batch_summary_bn: string | null;
+  batch_summary_en: string | null;
+};
+
+export type NotificationItem = {
+  id: string;
+  kind: string;
+  title_bn: string;
+  title_en: string;
+  body_bn: string | null;
+  body_en: string | null;
+  link: string | null;
+  created_at: number;
+  read: number;
+  sender_name: string | null;
 };
 
 export type TestResult = {
@@ -268,16 +308,15 @@ export type LeaderboardRow = {
 export type BatchNote = {
   id: string;
   lecture_id: string | null;
-  chapter_id: string | null;
   title_bn: string;
   title_en: string;
   drive_file_id: string;
   kind: string;
 };
 
-export type ContentSubject = { id: string; name_bn: string; name_en: string; sort_order: number };
-export type Chapter = { id: string; subject_id: string; title_bn: string; title_en: string; order_index: number };
-export type BatchContent = { lectures: Lecture[]; subjects: ContentSubject[]; chapters: Chapter[]; notes: BatchNote[] };
+export type BatchSubject = { id: string; name_bn: string; name_en: string; sort_order: number };
+
+export type BatchContent = { lectures: Lecture[]; notes: BatchNote[]; subjects: BatchSubject[] };
 
 export type LectureProgress = {
   lecture_id: string;
@@ -291,8 +330,8 @@ export type LearningSummary = {
   batch_id: string;
   title_bn: string;
   title_en: string;
-  track: string;
-  kind: string;
+  track: Track;
+  kind: "paid" | "free";
   banner_url: string | null;
   total: number;
   done: number;
@@ -312,3 +351,4 @@ export type BatchTeacher = {
   experience_years: number | null;
   bio: string | null;
 };
+
