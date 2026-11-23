@@ -305,24 +305,46 @@ const YouTubeInput = z
     return id;
   });
 
-export const LectureUpsert = z.object({
-  batchId: z.string().min(1),
-  chapter: z.string().trim().min(1).max(120),
-  titleBn: z.string().trim().min(1).max(160),
-  titleEn: z.string().trim().min(1).max(160),
-  youtubeId: YouTubeInput,
-  durationSec: z.number().int().positive().optional(),
-  orderIndex: z.number().int().default(0),
-  isLive: z.boolean().default(false),
-  liveAt: z.number().int().positive().nullable().optional(),
-  // Learning structure: which subject it belongs to, whether students can see
-  // it yet, and an optional date when it opens by itself.
-  subjectId: z.string().min(1).nullable().optional(),
-  // A chapter is a further, optional grouping within that subject.
-  chapterId: z.string().min(1).nullable().optional(),
-  status: z.enum(["draft", "published"]).default("published"),
-  releaseAt: z.number().int().positive().nullable().optional(),
-});
+export const LectureUpsert = z
+  .object({
+    batchId: z.string().min(1),
+    chapter: z.string().trim().min(1).max(120),
+    titleBn: z.string().trim().min(1).max(160),
+    titleEn: z.string().trim().min(1).max(160),
+
+    source: z.enum(["youtube", "drive"]).default("youtube"),
+    youtubeId: YouTubeInput.optional(),
+    driveFileId: z.string().trim().min(1).max(200).optional(),
+
+    durationSec: z.number().int().positive().optional(),
+    orderIndex: z.number().int().default(0),
+    isLive: z.boolean().default(false),
+    liveAt: z.number().int().positive().nullable().optional(),
+
+    subjectId: z.string().min(1).nullable().optional(),
+    chapterId: z.string().min(1).nullable().optional(),
+
+    status: z.enum(["draft", "published"]).default("published"),
+    releaseAt: z.number().int().positive().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.source === "youtube" && !data.youtubeId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["youtubeId"],
+        message: "YouTube video ID is required",
+      });
+    }
+
+    if (data.source === "drive" && !data.driveFileId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["driveFileId"],
+        message: "Google Drive file ID is required",
+      });
+    }
+  });
+
 export type LectureUpsert = z.infer<typeof LectureUpsert>;
 
 export const ChapterUpsert = z.object({
