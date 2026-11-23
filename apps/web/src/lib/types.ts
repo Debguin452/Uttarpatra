@@ -13,6 +13,9 @@ export type Batch = {
   summary_en: string | null;
   preview_video_id: string | null;
   banner_url: string | null;
+  start_date: number | null;
+  end_date: number | null;
+  mrp_paise: number | null;
 };
 
 export type Lecture = {
@@ -20,12 +23,8 @@ export type Lecture = {
   chapter: string;
   title_bn: string;
   title_en: string;
-  source: "youtube" | "drive";
   // null while a scheduled lecture is still locked: the server withholds it
   youtube_id: string | null;
-  // null while locked (same as youtube_id), or simply unset for a
-  // youtube-sourced lecture
-  drive_file_id: string | null;
   duration_sec: number | null;
   is_live: number;
   live_at: number | null;
@@ -238,15 +237,48 @@ export type SubmitResult = {
   onTime: boolean;
 };
 
+export type BannerButtonRow = { labelBn: string; labelEn: string; url: string };
+
 export type Banner = {
   id: string;
+  kind: "launch" | "community";
   image_url: string;
   title_bn: string;
   title_en: string;
+  description_bn: string | null;
+  description_en: string | null;
   batch_id: string | null;
   link_url: string | null;
   target_type: "batch" | "test" | "lecture" | "material" | "link" | null;
   target_id: string | null;
+  cta: "details" | "enroll";
+  support_hours_bn: string | null;
+  support_hours_en: string | null;
+  phone: string | null;
+  buttons: BannerButtonRow[];
+  // The linked batch, so a launch banner can show its details without another request.
+  batch_title_bn: string | null;
+  batch_title_en: string | null;
+  batch_track: string | null;
+  batch_kind: "free" | "paid" | null;
+  batch_price_paise: number | null;
+  batch_mrp_paise: number | null;
+  batch_start_date: number | null;
+  batch_summary_bn: string | null;
+  batch_summary_en: string | null;
+};
+
+export type NotificationItem = {
+  id: string;
+  kind: string;
+  title_bn: string;
+  title_en: string;
+  body_bn: string | null;
+  body_en: string | null;
+  link: string | null;
+  created_at: number;
+  read: number;
+  sender_name: string | null;
 };
 
 export type TestResult = {

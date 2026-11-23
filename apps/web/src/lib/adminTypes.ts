@@ -27,6 +27,9 @@ export type AdminBatchDetail = {
     summary_en: string | null;
     preview_video_id: string | null;
     banner_url: string | null;
+    start_date: number | null;
+    end_date: number | null;
+    mrp_paise: number | null;
     status: BatchStatus;
     created_at: number;
     updated_at: number;
@@ -44,15 +47,6 @@ export type AdminNotice = {
   batch_title_en: string | null;
   pinned: number;
   created_at: number;
-};
-
-export type AdminSentNotification = {
-  id: number;
-  title: string;
-  body: string;
-  batchId: string | null;
-  sentCount: number;
-  createdAt: number;
 };
 
 export type AdminSubject = {
@@ -89,9 +83,7 @@ export type AdminLecture = {
   chapter: string;
   title_bn: string;
   title_en: string;
-  source: "youtube" | "drive";
   youtube_id: string;
-  drive_file_id: string | null;
   duration_sec: number | null;
   order_index: number;
   is_live: number;
@@ -174,9 +166,19 @@ export type AdminTestDetail = {
 
 export type AdminBanner = {
   id: string;
+  kind: "launch" | "community";
   image_url: string;
   title_bn: string;
   title_en: string;
+  description_bn: string | null;
+  description_en: string | null;
+  cta: "details" | "enroll";
+  support_hours_bn: string | null;
+  support_hours_en: string | null;
+  phone: string | null;
+  buttons: { labelBn: string; labelEn: string; url: string }[];
+  starts_at: number | null;
+  ends_at: number | null;
   batch_id: string | null;
   link_url: string | null;
   target_type: "batch" | "test" | "lecture" | "material" | "link" | null;

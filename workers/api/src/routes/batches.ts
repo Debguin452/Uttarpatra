@@ -7,7 +7,7 @@ const publicRoutes = new Hono<{ Bindings: Env }>();
 publicRoutes.get("/", async (c) => {
   const rows = await c.env.DB
     .prepare(
-      "SELECT id, title_bn, title_en, track, kind, price_paise, summary_bn, summary_en, preview_video_id, banner_url FROM batches WHERE status = 'published' ORDER BY created_at DESC",
+      "SELECT id, title_bn, title_en, track, kind, price_paise, summary_bn, summary_en, preview_video_id, banner_url, start_date, end_date, mrp_paise FROM batches WHERE status = 'published' ORDER BY created_at DESC",
     )
     .all();
   return c.json(rows.results);
@@ -19,7 +19,7 @@ authedRoutes.get("/mine", async (c) => {
   const rows = await c.env.DB
     .prepare(
       `SELECT b.id, b.title_bn, b.title_en, b.track, b.kind, b.price_paise, b.summary_bn, b.summary_en,
-              b.preview_video_id, b.banner_url, b.status, e.expires_at
+              b.preview_video_id, b.banner_url, b.start_date, b.end_date, b.mrp_paise, b.status, e.expires_at
        FROM enrollments e JOIN batches b ON b.id = e.batch_id
        WHERE e.uid = ? AND b.status IN ('published', 'archived')
          AND (e.expires_at IS NULL OR e.expires_at > unixepoch())
@@ -92,9 +92,7 @@ authedRoutes.get("/:id/content", async (c) => {
 
   const cache = caches.default;
   // v2: payload now also includes chapters and chapter_id on lectures/notes.
-  // v3: lectures can now carry a Drive video instead of a YouTube one
-  // (source, drive_file_id).
-  const cacheKey = new Request(`https://cache.internal/batch-content-v3/${batchId}`);
+  const cacheKey = new Request(`https://cache.internal/batch-content-v2/${batchId}`);
   const hit = await cache.match(cacheKey);
   if (hit) return c.json(await hit.json());
 
@@ -103,9 +101,8 @@ authedRoutes.get("/:id/content", async (c) => {
   const [lectures, subjects, chapters, notes] = await Promise.all([
     c.env.DB
       .prepare(
-        `SELECT id, subject_id, chapter_id, chapter, title_bn, title_en, source,
+        `SELECT id, subject_id, chapter_id, chapter, title_bn, title_en,
                 CASE WHEN release_at IS NOT NULL AND release_at > unixepoch() THEN NULL ELSE youtube_id END AS youtube_id,
-                CASE WHEN release_at IS NOT NULL AND release_at > unixepoch() THEN NULL ELSE drive_file_id END AS drive_file_id,
                 duration_sec, order_index, is_live, live_at, release_at,
                 (release_at IS NOT NULL AND release_at > unixepoch()) AS locked
          FROM lectures WHERE batch_id = ? AND status = 'published' ORDER BY order_index, created_at`,

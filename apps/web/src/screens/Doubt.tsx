@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
-import { DoubtCreate } from "@coaching-app/shared/schema";
+import { DoubtCreate, QUOTA } from "@coaching-app/shared/schema";
 import { IconTray } from "@coaching-app/ui/icons";
 import { AiChat } from "../components/AiChat";
 import { CommunityBanners } from "../components/CommunityBanners";
@@ -8,6 +8,7 @@ import { AiDoubtHelper } from "../components/AiDoubtHelper";
 import { AnimatedCheck, EmptyState, SkeletonList } from "../components/ui";
 import { Select } from "../components/Select";
 import { api, ApiError } from "../lib/api";
+import { compressImage } from "../lib/compressImage";
 import { errorText, pick, when } from "../lib/format";
 import { useMyBatches, useSubjects } from "../lib/queries";
 import { subjectNames } from "../lib/subjects";
@@ -24,12 +25,25 @@ export function Doubt() {
   const batchDefault = (myBatches.data ?? []).length === 1 ? myBatches.data![0]!.id : "";
   const [subject, setSubject] = useState("");
   const [question, setQuestion] = useState("");
-  const [drive, setDrive] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [tab, setTab] = useState<"ai" | "teacher">("ai");
+
+  async function pickPhoto(event: Event) {
+    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    setPhotoError(false);
+    setPhoto(null);
+    if (!file) return;
+    try {
+      setPhoto(await compressImage(file, QUOTA.maxDoubtImageBytes));
+    } catch {
+      setPhotoError(true);
+    }
+  }
 
   async function submit(event: Event) {
     event.preventDefault();
@@ -38,7 +52,7 @@ export function Doubt() {
       batchId: batchId || batchDefault || "",
       subject: subject || undefined,
       questionText: question,
-      imageDriveId: drive.trim() || undefined,
+      imageBase64: photo ?? undefined,
     });
     if (!parsed.success) {
       setErrors(parsed.error.flatten().fieldErrors);
@@ -50,7 +64,7 @@ export function Doubt() {
     try {
       await api("/api/doubts", { body: parsed.data });
       setQuestion("");
-      setDrive("");
+      setPhoto(null);
       setSent(true);
       await mine.reload();
     } catch (e) {
@@ -122,8 +136,10 @@ export function Doubt() {
           {problem("questionText") && <span class="error-text">{problem("questionText")}</span>}
         </div>
         <div class="field">
-          <label for="d-drive">{t("doubt_drive")}</label>
-          <input id="d-drive" class="input" value={drive} onInput={(e) => setDrive(e.currentTarget.value)} />
+          <label for="d-photo">{t("doubt_drive")}</label>
+          <input id="d-photo" class="input" type="file" accept="image/*" onChange={pickPhoto} />
+          {photo && <img class="doubt-photo-preview" src={`data:image/jpeg;base64,${photo}`} alt="" />}
+          {photoError && <span class="error-text">{t("image_too_large")}</span>}
           <span class="hint">{t("doubt_drive_hint")}</span>
         </div>
         {failure && <p class="error-text">{failure}</p>}
@@ -156,6 +172,7 @@ export function Doubt() {
               <p class="small" style="white-space:pre-wrap">
                 {d.question_text}
               </p>
+              {d.image_b64 && <img class="doubt-photo-preview" src={`data:image/jpeg;base64,${d.image_b64}`} alt="" />}
               {d.answer_text && (
                 <div class="notice pinned">
                   <strong class="small">{t("doubt_answer")}</strong>

@@ -1,8 +1,10 @@
 import { Hono } from "hono";
 import { ulid } from "ulidx";
-import { ChapterUpsert, DoubtAnswer, LectureUpsert, NoteUpsert, NoticeUpsert, TestUpsert } from "@coaching-app/shared/schema";
+import { ChapterUpsert, DoubtAnswer, LectureUpsert, NoteUpsert, NoticeUpsert, TeacherNotificationSend, TestUpsert } from "@coaching-app/shared/schema";
 import { requireTeacherAccess } from "../middleware/firebaseAuth";
 import type { AppEnv } from "../index";
+import { notifyDoubtAnswered, TEACHER_SEES_DOUBT } from "../lib/doubtRouting";
+import { execCtx, sendNotification } from "../lib/notify";
 
 const app = new Hono<AppEnv>();
 
@@ -73,7 +75,7 @@ app.get("/doubts", async (c) => {
       `SELECT d.id, d.uid, u.name, d.batch_id, b.title_en AS batch_title_en, d.subject, d.question_text,
               d.image_drive_id, d.image_b64, d.status, d.answer_text, d.created_at
        FROM doubts d JOIN users u ON u.uid = d.uid LEFT JOIN batches b ON b.id = d.batch_id
-       WHERE d.batch_id IN (${MY_BATCHES})
+       WHERE ${TEACHER_SEES_DOUBT}
        ORDER BY (d.status = 'open') DESC, d.created_at DESC LIMIT 100`,
     )
     .bind(uid)
@@ -87,14 +89,18 @@ app.post("/doubts/:id/answer", async (c) => {
   const uid = c.get("uid");
   const doubtId = c.req.param("id");
 
-  const result = await c.env.DB
-    .prepare(
-      `UPDATE doubts SET status = 'answered', answered_by = ?, answer_text = ?
-       WHERE id = ? AND batch_id IN (${MY_BATCHES})`,
-    )
-    .bind(uid, parsed.data.answerText, doubtId, uid)
+  // Only a doubt that was routed to this teacher can be answered by them.
+  const doubt = await c.env.DB
+    .prepare(`SELECT d.uid FROM doubts d WHERE d.id = ?2 AND ${TEACHER_SEES_DOUBT}`)
+    .bind(uid, doubtId)
+    .first<{ uid: string }>();
+  if (!doubt) return c.json({ error: "not_found" }, 404);
+
+  await c.env.DB
+    .prepare("UPDATE doubts SET status = 'answered', answered_by = ?, answer_text = ? WHERE id = ?")
+    .bind(uid, parsed.data.answerText, doubtId)
     .run();
-  if (result.meta.changes === 0) return c.json({ error: "not_found" }, 404);
+  await notifyDoubtAnswered(c.env, execCtx(c), doubt.uid);
   return c.json({ ok: true });
 });
 
@@ -174,11 +180,11 @@ app.get("/lectures", async (c) => {
     .prepare(
       batchId
         ? `SELECT l.id, l.batch_id, b.title_en AS batch_title_en, l.chapter, l.title_bn, l.title_en,
-                  l.youtube_id, l.source, l.drive_file_id, l.duration_sec, l.order_index, l.is_live, l.live_at, l.subject_id, l.chapter_id, l.status, l.release_at, l.created_at
+                  l.youtube_id, l.duration_sec, l.order_index, l.is_live, l.live_at, l.subject_id, l.chapter_id, l.status, l.release_at, l.created_at
            FROM lectures l JOIN batches b ON b.id = l.batch_id
            WHERE l.batch_id = ? AND l.batch_id IN (${MY_BATCHES}) ORDER BY l.order_index, l.created_at`
         : `SELECT l.id, l.batch_id, b.title_en AS batch_title_en, l.chapter, l.title_bn, l.title_en,
-                  l.youtube_id, l.source, l.drive_file_id, l.duration_sec, l.order_index, l.is_live, l.live_at, l.subject_id, l.chapter_id, l.status, l.release_at, l.created_at
+                  l.youtube_id, l.duration_sec, l.order_index, l.is_live, l.live_at, l.subject_id, l.chapter_id, l.status, l.release_at, l.created_at
            FROM lectures l JOIN batches b ON b.id = l.batch_id
            WHERE l.batch_id IN (${MY_BATCHES})
            ORDER BY l.live_at IS NULL, l.live_at, l.created_at DESC LIMIT 200`,
@@ -192,18 +198,17 @@ app.post("/lectures", async (c) => {
   const uid = c.get("uid");
   const parsed = LectureUpsert.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
-  const { batchId, chapter, titleBn, titleEn, source, youtubeId, driveFileId, durationSec, orderIndex, isLive, liveAt, subjectId, chapterId, status, releaseAt } =
-    parsed.data;
+  const { batchId, chapter, titleBn, titleEn, youtubeId, durationSec, orderIndex, isLive, liveAt, subjectId, chapterId, status, releaseAt } = parsed.data;
   if (!(await ownsBatch(c.env.DB, uid, batchId))) return c.json({ error: "not_your_batch" }, 403);
 
   const id = crypto.randomUUID();
   await c.env.DB
     .prepare(
-      `INSERT INTO lectures (id, batch_id, chapter, title_bn, title_en, youtube_id, source, drive_file_id, duration_sec, order_index, is_live, live_at, subject_id, chapter_id, status, release_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO lectures (id, batch_id, chapter, title_bn, title_en, youtube_id, duration_sec, order_index, is_live, live_at, subject_id, chapter_id, status, release_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
-      id, batchId, chapter, titleBn, titleEn, youtubeId ?? "", source, driveFileId ?? null, durationSec ?? null, orderIndex, isLive ? 1 : 0, liveAt ?? null,
+      id, batchId, chapter, titleBn, titleEn, youtubeId, durationSec ?? null, orderIndex, isLive ? 1 : 0, liveAt ?? null,
       subjectId ?? null, chapterId ?? null, status, releaseAt ?? null,
     )
     .run();
@@ -215,19 +220,18 @@ app.put("/lectures/:id", async (c) => {
   const uid = c.get("uid");
   const parsed = LectureUpsert.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
-  const { batchId, chapter, titleBn, titleEn, source, youtubeId, driveFileId, durationSec, orderIndex, isLive, liveAt, subjectId, chapterId, status, releaseAt } =
-    parsed.data;
+  const { batchId, chapter, titleBn, titleEn, youtubeId, durationSec, orderIndex, isLive, liveAt, subjectId, chapterId, status, releaseAt } = parsed.data;
   if (!(await ownsBatch(c.env.DB, uid, batchId))) return c.json({ error: "not_your_batch" }, 403);
 
   const result = await c.env.DB
     .prepare(
-      `UPDATE lectures SET batch_id = ?, chapter = ?, title_bn = ?, title_en = ?, youtube_id = ?, source = ?, drive_file_id = ?,
+      `UPDATE lectures SET batch_id = ?, chapter = ?, title_bn = ?, title_en = ?, youtube_id = ?,
               duration_sec = ?, order_index = ?, is_live = ?, live_at = ?,
               subject_id = ?, chapter_id = ?, status = ?, release_at = ?
        WHERE id = ? AND batch_id IN (${MY_BATCHES})`,
     )
     .bind(
-      batchId, chapter, titleBn, titleEn, youtubeId ?? "", source, driveFileId ?? null, durationSec ?? null, orderIndex, isLive ? 1 : 0, liveAt ?? null,
+      batchId, chapter, titleBn, titleEn, youtubeId, durationSec ?? null, orderIndex, isLive ? 1 : 0, liveAt ?? null,
       subjectId ?? null, chapterId ?? null, status, releaseAt ?? null, c.req.param("id"), uid,
     )
     .run();
@@ -495,6 +499,37 @@ app.delete("/tests/:id", async (c) => {
     .run();
   if (result.meta.changes === 0) return c.json({ error: "not_found" }, 404);
   return c.json({ ok: true });
+});
+
+// Announcements from a teacher go to the students of a batch they teach, and nowhere else.
+app.get("/notifications", async (c) => {
+  const rows = await c.env.DB
+    .prepare(
+      `SELECT n.id, n.batch_id, b.title_en AS batch_title_en, n.title_bn, n.title_en, n.body_bn, n.body_en, n.recipient_count, n.created_at,
+              (SELECT COUNT(*) FROM notification_reads r WHERE r.notification_id = n.id) AS read_count
+       FROM notifications n LEFT JOIN batches b ON b.id = n.batch_id
+       WHERE n.sender_uid = ? AND n.kind = 'announcement'
+       ORDER BY n.created_at DESC LIMIT 50`,
+    )
+    .bind(c.get("uid"))
+    .all();
+  return c.json(rows.results);
+});
+
+app.post("/notifications", async (c) => {
+  const parsed = TeacherNotificationSend.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalid_input", issues: parsed.error.flatten() }, 400);
+  const n = parsed.data;
+  if (!(await ownsBatch(c.env.DB, c.get("uid"), n.batchId))) return c.json({ error: "not_your_batch" }, 403);
+
+  const result = await sendNotification(c.env, execCtx(c), {
+    senderUid: c.get("uid"),
+    audience: "batch",
+    batchId: n.batchId,
+    text: { titleBn: n.titleBn, titleEn: n.titleEn, bodyBn: n.bodyBn, bodyEn: n.bodyEn },
+    link: `batches/${n.batchId}`,
+  });
+  return c.json({ ok: true, ...result }, 201);
 });
 
 export default app;
