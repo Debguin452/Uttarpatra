@@ -22,7 +22,7 @@ tag = "v1"
 new_sqlite_classes = ["SessionGuard"]
 
 [vars]
-FIREBASE_PROJECT_ID = "Uttar-patra"
+FIREBASE_PROJECT_ID = "uttar-patra"
 ALLOWED_ORIGIN = "http://localhost:5173,https://uttarpatro.pages.dev,https://uttarpatra.pages.dev,https://localhost"
 # Switch model here without a code change, e.g. "@cf/openai/gpt-oss-120b" for better Bengali.
 AI_MODEL = "@cf/openai/gpt-oss-20b"
