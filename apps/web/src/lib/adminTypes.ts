@@ -83,7 +83,9 @@ export type AdminLecture = {
   chapter: string;
   title_bn: string;
   title_en: string;
+  source: "youtube" | "drive";
   youtube_id: string;
+  drive_file_id: string | null;
   duration_sec: number | null;
   order_index: number;
   is_live: number;

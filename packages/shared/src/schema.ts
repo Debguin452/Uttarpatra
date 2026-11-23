@@ -305,6 +305,9 @@ const YouTubeInput = z
     return id;
   });
 
+export const LECTURE_SOURCES = ["youtube", "drive"] as const;
+export type LectureSource = (typeof LECTURE_SOURCES)[number];
+
 export const LectureUpsert = z
   .object({
     batchId: z.string().min(1),
@@ -312,7 +315,7 @@ export const LectureUpsert = z
     titleBn: z.string().trim().min(1).max(160),
     titleEn: z.string().trim().min(1).max(160),
 
-    source: z.enum(["youtube", "drive"]).default("youtube"),
+    source: z.enum(LECTURE_SOURCES).default("youtube"),
     youtubeId: YouTubeInput.optional(),
     driveFileId: z.string().trim().min(1).max(200).optional(),
 

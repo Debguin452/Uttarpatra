@@ -24,7 +24,9 @@ export type Lecture = {
   title_bn: string;
   title_en: string;
   // null while a scheduled lecture is still locked: the server withholds it
+  source: "youtube" | "drive";
   youtube_id: string | null;
+  drive_file_id: string | null;
   duration_sec: number | null;
   is_live: number;
   live_at: number | null;

@@ -1,7 +1,14 @@
-import { t } from "@coaching-app/shared/i18n";
+import { locale, t } from "@coaching-app/shared/i18n";
 import { useCommunityBanners } from "../lib/queries";
 import { pick } from "../lib/format";
 import { BannerImage } from "./BannerImage";
+import type { BannerButtonRow } from "../lib/types";
+
+// Buttons are camelCase (labelBn/labelEn), unlike the snake_case fields pick() expects.
+function buttonLabel(button: BannerButtonRow): string {
+  const preferred = locale.value === "bn" ? button.labelBn : button.labelEn;
+  return preferred || button.labelEn || button.labelBn || "";
+}
 
 // Only links that are https or a phone call are ever turned into a clickable link.
 const safe = (url: string) => /^https:\/\/\S+$/.test(url) || /^tel:\+?[0-9]{6,15}$/.test(url);
@@ -37,7 +44,7 @@ export function CommunityBanners() {
                   .filter((button) => safe(button.url))
                   .map((button) => (
                     <a class="btn small" key={button.url} href={button.url} target="_blank" rel="noopener noreferrer">
-                      {pick(button, "label")}
+                      {buttonLabel(button)}
                     </a>
                   ))}
               </div>
