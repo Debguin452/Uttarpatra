@@ -257,7 +257,7 @@ app.delete("/users/:uid", requireRole("super_admin"), async (c) => {
 
   const db = c.env.DB;
   await db.batch([
-    db.prepare("DELETE FROM devices WHERE uid = ?").bind(uid),
+    // (the old one-device-per-account `devices` table was dropped in migration 0006 — nothing to clean up there)
     db.prepare("DELETE FROM batch_teachers WHERE teacher_uid = ?").bind(uid),
     db.prepare("DELETE FROM enrollments WHERE uid = ?").bind(uid),
     db.prepare("DELETE FROM payments WHERE uid = ?").bind(uid),
