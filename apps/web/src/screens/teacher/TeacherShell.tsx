@@ -4,7 +4,6 @@ import { DoubtAnswer } from "@coaching-app/shared/schema";
 import { Logo } from "../../components/Logo";
 import { NotificationBell } from "../../components/NotificationBell";
 import { TeacherNotifications } from "./TeacherNotifications";
-import { LangToggle } from "../../components/LangToggle";
 import { Loading, Sheet } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
 import { errorText, pick, when } from "../../lib/format";
@@ -315,14 +314,7 @@ export function TeacherShell() {
 
       <main class="admin-main">
         {onProfile ? (
-          tab === "edit" ? (
-            <Register mode="edit" />
-          ) : (
-            <div class="stack">
-              <LangToggle />
-              <Profile />
-            </div>
-          )
+          tab === "edit" ? <Register mode="edit" /> : <Profile />
         ) : current === "batches" ? (
           <TeacherBatches />
         ) : current === "lectures" ? (

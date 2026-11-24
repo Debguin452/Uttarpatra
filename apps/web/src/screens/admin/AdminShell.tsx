@@ -1,5 +1,4 @@
 import { t } from "@coaching-app/shared/i18n";
-import { LangToggle } from "../../components/LangToggle";
 import { Logo } from "../../components/Logo";
 import { NotificationBell } from "../../components/NotificationBell";
 import { currentRole, logOut, me } from "../../lib/session";
@@ -128,12 +127,7 @@ export function AdminShell() {
         )}
         {current === "subjects" && <AdminSubjects />}
         {current === "analytics" && <AdminAnalytics />}
-        {current === "profile" && (tab === "edit" ? <Register mode="edit" /> : (
-          <div class="stack">
-            <LangToggle />
-            <Profile />
-          </div>
-        ))}
+        {current === "profile" && (tab === "edit" ? <Register mode="edit" /> : <Profile />)}
       </main>
     </div>
   );

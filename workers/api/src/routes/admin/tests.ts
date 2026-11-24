@@ -105,8 +105,17 @@ app.put("/:id", async (c) => {
 });
 
 app.delete("/:id", async (c) => {
-  const result = await c.env.DB.prepare("DELETE FROM tests WHERE id = ?").bind(c.req.param("id")).run();
-  if (result.meta.changes === 0) return c.json({ error: "not_found" }, 404);
+  const id = c.req.param("id");
+  const db = c.env.DB;
+  // attempts and leaderboard_snapshots both have a foreign key on test_id with
+  // no cascade, so once a single student has attempted it, a plain DELETE FROM
+  // tests fails with a foreign key violation. Clear those first, same transaction.
+  const results = await db.batch([
+    db.prepare("DELETE FROM attempts WHERE test_id = ?").bind(id),
+    db.prepare("DELETE FROM leaderboard_snapshots WHERE test_id = ?").bind(id),
+    db.prepare("DELETE FROM tests WHERE id = ?").bind(id),
+  ]);
+  if (results[2]?.meta.changes === 0) return c.json({ error: "not_found" }, 404);
   return c.json({ ok: true });
 });
 

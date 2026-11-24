@@ -123,7 +123,7 @@ export function AdminPayments() {
   );
 }
 
-type Confirm = { kind: "block" | "unblock" | "grant_teacher" | "revoke_teacher"; user: AdminUser };
+type Confirm = { kind: "block" | "unblock" | "grant_teacher" | "revoke_teacher" | "delete_user"; user: AdminUser };
 
 export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [query, setQuery] = useState("");
@@ -160,6 +160,9 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         const status = confirm.kind === "block" ? "blocked" : "active";
         await api(`/api/admin/users/${confirm.user.uid}/status`, { body: { status } });
         setRows((r) => (r ?? []).map((u) => (u.uid === confirm.user.uid ? { ...u, status } : u)));
+      } else if (confirm.kind === "delete_user") {
+        await api(`/api/admin/users/${confirm.user.uid}`, { method: "DELETE" });
+        setRows((r) => (r ?? []).filter((u) => u.uid !== confirm.user.uid));
       } else {
         const enabled = confirm.kind === "grant_teacher";
         await api(`/api/admin/users/${confirm.user.uid}/teacher-access`, { body: { enabled } });
@@ -235,6 +238,11 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                       {t(u.status === "blocked" ? "admin_unblock" : "admin_block")}
                     </button>
                   )}
+                  {isSuperAdmin && (
+                    <button class="btn small danger" onClick={() => setConfirm({ kind: "delete_user", user: u })} disabled={busyUid === u.uid}>
+                      {t("admin_delete_user")}
+                    </button>
+                  )}
                 </span>
               </div>
             ))}
@@ -246,7 +254,7 @@ export function AdminUsers({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           <h2 class="subtitle">{t(`admin_confirm_${confirm.kind}_title`)}</h2>
           <p class="muted small">{t(`admin_confirm_${confirm.kind}_body`, { name: confirm.user.name })}</p>
           <button
-            class={confirm.kind === "block" || confirm.kind === "revoke_teacher" ? "btn danger block" : "btn primary block"}
+            class={confirm.kind === "block" || confirm.kind === "revoke_teacher" || confirm.kind === "delete_user" ? "btn danger block" : "btn primary block"}
             onClick={act}
             disabled={busyUid === confirm.user.uid}
           >

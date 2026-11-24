@@ -246,6 +246,40 @@ app.post("/users/:uid/enroll", requireRole("super_admin"), async (c) => {
   return c.json({ ok: true });
 });
 
+// Removes the account and every row it owns across the schema. Rows that
+// belong to someone else but merely reference this uid (who reviewed a
+// payment, who answered a doubt, who sent a notification) keep their row
+// and just forget this person touched it, since that uid is nullable there.
+app.delete("/users/:uid", requireRole("super_admin"), async (c) => {
+  const uid = c.req.param("uid");
+  if (uid === c.get("uid")) return c.json({ error: "cannot_change_self" }, 400);
+  if (!(await userExists(c.env.DB, uid))) return c.json({ error: "not_found" }, 404);
+
+  const db = c.env.DB;
+  await db.batch([
+    db.prepare("DELETE FROM devices WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM batch_teachers WHERE teacher_uid = ?").bind(uid),
+    db.prepare("DELETE FROM enrollments WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM payments WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM attempts WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM doubts WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM teacher_applications WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM push_tokens WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM lecture_progress WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM ai_messages WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM notification_reads WHERE uid = ?").bind(uid),
+    db.prepare("DELETE FROM teacher_invites WHERE invited_by = ?").bind(uid),
+    db.prepare("UPDATE payments SET reviewed_by = NULL WHERE reviewed_by = ?").bind(uid),
+    db.prepare("UPDATE doubts SET answered_by = NULL WHERE answered_by = ?").bind(uid),
+    db.prepare("UPDATE teacher_applications SET reviewed_by = NULL WHERE reviewed_by = ?").bind(uid),
+    db.prepare("UPDATE notifications SET sender_uid = NULL WHERE sender_uid = ?").bind(uid),
+    db.prepare("DELETE FROM users WHERE uid = ?").bind(uid),
+  ]);
+
+  await audit(c.env.DB, c.get("uid"), "user.delete", uid).run();
+  return c.json({ ok: true });
+});
+
 app.delete("/users/:uid/enroll/:batchId", requireRole("super_admin"), async (c) => {
   const uid = c.req.param("uid");
   const batchId = c.req.param("batchId");
