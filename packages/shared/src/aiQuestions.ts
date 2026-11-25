@@ -3,6 +3,8 @@
 // clean 4-option multiple-choice question with exactly one right answer among
 // the options is dropped, and a teacher reviews what is left before it goes live.
 
+import { normalizeAiText } from "./richText";
+
 export type GeneratedQuestion = {
   subject: string;
   type: "mcq";
@@ -11,6 +13,47 @@ export type GeneratedQuestion = {
   answer: string;
   marks: number;
 };
+
+/** Plain text for a question field: LaTeX turned into symbols and Markdown marks removed. */
+function plain(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return normalizeAiText(value)
+    .replace(/\*\*|__|`/g, "")
+    .replace(/^#{1,6}\s+/gm, "")
+    .trim();
+}
+
+const LABEL = /^\(?(?:option\s+)?([A-Da-d]|[1-4])[).:]\s*/i;
+
+/**
+ * Models often add labels ("A) ..."), answer with just the letter or number, or change the case.
+ * This reads all of those. Nothing is guessed: if the answer cannot be matched to exactly one
+ * option, the question is dropped.
+ */
+function resolveAnswer(options: string[], answerRaw: string): string | null {
+  const answer = plain(answerRaw);
+  const exact = options.filter((o) => o === answer);
+  if (exact.length === 1) return exact[0]!;
+
+  const lower = options.filter((o) => o.toLowerCase() === answer.toLowerCase());
+  if (lower.length === 1) return lower[0]!;
+
+  // "B", "b)", "Option C", "(d)", "2"
+  const labelOnly = /^\(?(?:option\s+)?([A-Da-d]|[1-4])\)?\.?$/i.exec(answer);
+  if (labelOnly) {
+    const key = labelOnly[1]!.toUpperCase();
+    const index = /\d/.test(key) ? Number(key) - 1 : key.charCodeAt(0) - 65;
+    return options[index] ?? null;
+  }
+  // "B) Joule"
+  const labelled = LABEL.exec(answer);
+  if (labelled) {
+    const rest = answer.slice(labelled[0].length).trim().toLowerCase();
+    const hit = options.filter((o) => o.toLowerCase() === rest);
+    if (hit.length === 1) return hit[0]!;
+  }
+  return null;
+}
 
 export function parseGeneratedQuestions(
   text: string,
@@ -34,9 +77,11 @@ export function parseGeneratedQuestions(
 
   for (const item of raw) {
     const q = item as { prompt?: unknown; options?: unknown; answer?: unknown };
-    const prompt = typeof q.prompt === "string" ? q.prompt.trim() : "";
-    const options = Array.isArray(q.options) ? q.options.map((o) => (typeof o === "string" ? o.trim() : "")) : [];
-    const answer = typeof q.answer === "string" ? q.answer.trim() : "";
+    const prompt = plain(q.prompt);
+    let options = Array.isArray(q.options) ? q.options.map((o) => plain(o).replace(/\s*\n\s*/g, " ")) : [];
+    // labels are stripped only when every option carries one, so real content like "1. Newton" is safe in a mixed list
+    if (options.length === 4 && options.every((o) => LABEL.test(o))) options = options.map((o) => o.replace(LABEL, "").trim());
+    const answer = options.length === 4 ? resolveAnswer(options, typeof q.answer === "string" ? q.answer : "") : null;
 
     const ok =
       prompt.length > 0 &&
@@ -44,7 +89,7 @@ export function parseGeneratedQuestions(
       options.length === 4 &&
       options.every((o) => o.length > 0 && o.length <= 300) &&
       new Set(options.map((o) => o.toLowerCase())).size === 4 &&
-      options.filter((o) => o === answer).length === 1 &&
+      answer !== null &&
       !seen.has(prompt.toLowerCase());
 
     if (!ok || questions.length >= (opts.max ?? 10)) {
@@ -52,7 +97,7 @@ export function parseGeneratedQuestions(
       continue;
     }
     seen.add(prompt.toLowerCase());
-    questions.push({ subject: opts.subject, type: "mcq", prompt, options, answer, marks: opts.marks ?? 4 });
+    questions.push({ subject: opts.subject, type: "mcq", prompt, options, answer: answer!, marks: opts.marks ?? 4 });
   }
   return { questions, dropped };
 }

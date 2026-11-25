@@ -2,6 +2,7 @@ import { useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { ApiError } from "../lib/api";
 import { askDoubtAi } from "../lib/ai";
+import { RichText } from "./RichText";
 import { errorText } from "../lib/format";
 
 // Under a posted doubt: an instant AI answer while the teacher's is awaited.
@@ -35,9 +36,7 @@ export function AiDoubtHelper({ doubtId, initial }: { doubtId: string; initial: 
   return (
     <div class="notice ai-answer">
       <strong class="small">{t("ai_answer_label")}</strong>
-      <span class="small" style="white-space:pre-wrap">
-        {answer}
-      </span>
+      <RichText class="small" text={answer} />
       <span class="hint">{t("ai_disclaimer")}</span>
     </div>
   );

@@ -3,6 +3,7 @@ import { t } from "@coaching-app/shared/i18n";
 import { DoubtAnswer } from "@coaching-app/shared/schema";
 import { Logo } from "../../components/Logo";
 import { NotificationBell } from "../../components/NotificationBell";
+import { RichText } from "../../components/RichText";
 import { TeacherNotifications } from "./TeacherNotifications";
 import { Loading, Sheet } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
@@ -217,9 +218,7 @@ function TeacherDoubts() {
             {doubt.answer_text && (
               <div class="notice pinned">
                 <strong class="small">{t("teach_doubt_your_answer")}</strong>
-                <span class="small" style="white-space:pre-wrap">
-                  {doubt.answer_text}
-                </span>
+                <RichText class="small" text={doubt.answer_text} />
               </div>
             )}
             {doubt.status === "open" && (

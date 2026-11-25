@@ -248,6 +248,7 @@ app.post("/questions", async (c) => {
       question: `${ask}\nTopic: ${screened.text}`,
       details: `Subject: ${row?.name_en ?? subject}`,
       maxTokens: 3500,
+      prose: false,
     }),
   );
   if (!result.ok) return c.json({ error: result.error }, result.status);

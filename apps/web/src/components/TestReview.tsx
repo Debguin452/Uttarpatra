@@ -4,6 +4,8 @@ import { ApiError, api } from "../lib/api";
 import { explainQuestion } from "../lib/ai";
 import { errorText } from "../lib/format";
 import { useLoad } from "../lib/useLoad";
+import { latexToUnicode } from "@coaching-app/shared/richText";
+import { RichText } from "./RichText";
 import { Loading } from "./ui";
 
 type ReviewQuestion = {
@@ -36,9 +38,7 @@ function Explain({ testId, questionId }: { testId: string; questionId: string })
     return (
       <div class="notice ai-answer">
         <strong class="small">{t("ai_answer_label")}</strong>
-        <span class="small" style="white-space:pre-wrap">
-          {text}
-        </span>
+        <RichText class="small" text={text} />
         <span class="hint">{t("ai_disclaimer")}</span>
       </div>
     );
@@ -63,12 +63,12 @@ function ReviewList({ testId }: { testId: string }) {
       {(review.data?.questions ?? []).map((q, i) => (
         <div class="panel stack" key={q.id}>
           <p class="small" style="white-space:pre-wrap">
-            <strong>{i + 1}.</strong> {q.prompt}
+            <strong>{i + 1}.</strong> {latexToUnicode(q.prompt)}
           </p>
           <div class="list">
             {q.options.map((option) => (
               <div class="item" key={option}>
-                <span class="name">{option}</span>
+                <span class="name">{latexToUnicode(option)}</span>
                 <span class="side">
                   {option === q.answer && <span class="badge mark">{t("review_correct_answer")}</span>}
                   {option === q.yourAnswer && <span class="badge">{t("review_your_answer")}</span>}

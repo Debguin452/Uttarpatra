@@ -3,6 +3,7 @@ import { t } from "@coaching-app/shared/i18n";
 import { DoubtCreate, QUOTA } from "@coaching-app/shared/schema";
 import { IconTray } from "@coaching-app/ui/icons";
 import { AiChat } from "../components/AiChat";
+import { RichText } from "../components/RichText";
 import { CommunityBanners } from "../components/CommunityBanners";
 import { AiDoubtHelper } from "../components/AiDoubtHelper";
 import { AnimatedCheck, EmptyState, SkeletonList } from "../components/ui";
@@ -176,9 +177,7 @@ export function Doubt() {
               {d.answer_text && (
                 <div class="notice pinned">
                   <strong class="small">{t("doubt_answer")}</strong>
-                  <span class="small" style="white-space:pre-wrap">
-                    {d.answer_text}
-                  </span>
+                  <RichText class="small" text={d.answer_text} />
                 </div>
               )}
               {(d.status === "open" || d.ai_answer) && <AiDoubtHelper doubtId={d.id} initial={d.ai_answer} />}

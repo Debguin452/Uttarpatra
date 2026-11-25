@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { t } from "@coaching-app/shared/i18n";
 import { EXAM_PROFILE_KEYS, type ExamProfileKey } from "@coaching-app/shared/examProfiles";
+import { RichText } from "./RichText";
 import { Select } from "./Select";
 import { ApiError } from "../lib/api";
 import { clearChat, loadChat, profileLabel, sendChat, type ChatMessage } from "../lib/ai";
@@ -69,7 +70,7 @@ export function AiChat() {
         {(messages ?? []).map((m) => (
           <div class={m.role === "user" ? "ai-msg mine" : "ai-msg"} key={m.id}>
             <span class="ai-who">{m.role === "user" ? t("you") : t("ai_name")}</span>
-            <span class="ai-text">{m.content}</span>
+            {m.role === "user" ? <span class="ai-text">{m.content}</span> : <RichText class="ai-text" text={m.content} />}
           </div>
         ))}
         {busy && <p class="muted small">{t("ai_thinking")}</p>}

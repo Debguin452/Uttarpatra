@@ -14,6 +14,7 @@
     "./aiQuestions": "./src/aiQuestions.ts",
     "./aiGuard": "./src/aiGuard.ts",
     "./bannerDisplay": "./src/bannerDisplay.ts",
+    "./richText": "./src/richText.ts",
     "./examProfiles": "./src/examProfiles.ts",
     "./i18n": "./src/i18n/index.ts",
     "./cache/idbStore": "./src/cache/idbStore.ts",
